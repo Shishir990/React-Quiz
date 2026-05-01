@@ -1,17 +1,15 @@
 import { useQuiz } from "../Context/Context";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import '../Styles/Finish.css';
 
 export function Finish() {
-  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch, submitQuiz } = useQuiz();
+  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz } = useQuiz();
   const navigate = useNavigate();
 
   const categoryId = Questions[0]?.category?._id || Questions[0]?.category;
 
   const handleSubmit = () => {
-     console.log('totalTime:', totalTime);
-  console.log('secondsRemaining:', secondsRemaining);
-  console.log('timeTaken:', totalTime - secondsRemaining);
     submitQuiz(categoryId, answersLog, totalTime - secondsRemaining);
   };
 
@@ -26,6 +24,12 @@ export function Finish() {
   return `${m}:${s}`;
 };
 
+ useEffect(() => {
+    if (result) {
+      dispatch({ type: "ResultReceived", payload: result.score });
+    }
+  }, [result]);
+
   console.log(result)
   if (result) {
     return (
@@ -35,6 +39,7 @@ export function Finish() {
         <p className="result-score">{result.percentage}%</p>
         <p className="result-sub">{result.score} out of {result.total} correct</p>
         <p className="result-sub">Time taken: {formatTime(result.timeTaken)}</p>
+        <p className="result-sub">HighestScore:{highestScore}</p>
         <div className="answer-review">
           {result.answers?.map((a, i) => (
             <div key={i} className={`review-item ${a.isCorrect ? 'correct' : 'wrong'}`}>

@@ -54,10 +54,14 @@ function reducer(state, action) {
         status: state.secondsRemaining === 0 ? "finished" : state.status
       };
 
-    case "Finish": {
-      const newHighScore = Math.max(state.score, Number(state.highestScore));
+    case "Finish": {  
+      return { ...state, status: "finished" };
+    }
+
+    case "ResultReceived":{
+        const newHighScore = Math.max(action.payload, Number(state.highestScore));
       localStorage.setItem("highestScore", newHighScore);
-      return { ...state, status: "finished", highestScore: newHighScore };
+      return { ...state, highestScore: newHighScore };
     }
 
     case "Reset":

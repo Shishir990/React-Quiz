@@ -30,15 +30,15 @@ const [loading,setLoading]=useState(false)
       </div>
     );
   }
-
-    return (
-    <div>
-      <Questions />
-      <Next isLast={hasLastQuesReached} />
-      <div className={`timer ${secondsRemaining < 30 ? "timer-alert" : ""}`}>
-        <div className="textContainer">Time Remaining:</div>
-        <Timer />
-      </div>
+return (
+  <div className="quiz-wrapper">
+    <Questions />
+    <Next isLast={hasLastQuesReached} />
+    <div className={`timer ${secondsRemaining < 30 ? "timer-alert" : ""}`}>
+      <div className="textContainer">⏱ Time Remaining:</div>
+      <Timer />
     </div>
-  );
+  </div>
+);
+   
 }
