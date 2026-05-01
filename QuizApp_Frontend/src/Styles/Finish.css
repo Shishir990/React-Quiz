@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap');
+
+/* ── Finish / Submit screen ── */
+.finish-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-family: 'Sora', sans-serif;
+  background: #f5f4f0;
+  padding: 2rem 1rem;
+}
+
+.finish-screen h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111;
+}
+
+.finish-screen p {
+  font-size: 14px;
+  color: #888;
+}
+
+.finish-screen button {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.finish-screen button:first-of-type {
+  background: #1D9E75;
+  color: #fff;
+}
+
+.finish-screen button:first-of-type:hover { background: #0F6E56; }
+.finish-screen button:first-of-type:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.finish-screen button:last-of-type {
+  background: transparent;
+  border: 0.5px solid #e2e2e2;
+  color: #888;
+}
+
+.finish-screen button:last-of-type:hover { background: #f0f0f0; color: #111; }
+
+/* ── Result screen ── */
+.result-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-family: 'Sora', sans-serif;
+  background: #f5f4f0;
+  padding: 2rem 1rem;
+}
+
+.result-icon {
+  font-size: 64px;
+  animation: bounceIn 0.5s ease;
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.1); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.result-screen h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111;
+}
+
+.result-score {
+  font-size: 64px !important;
+  font-weight: 600 !important;
+  color: #1D9E75 !important;
+  line-height: 1;
+}
+
+.result-sub {
+  font-size: 14px !important;
+  color: #888 !important;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Answer review list ── */
+.answer-review {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin: 0.5rem 0;
+}
+
+.answer-review::-webkit-scrollbar { width: 4px; }
+.answer-review::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+.answer-review::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+.review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 0.5px solid transparent;
+  animation: fadeUp 0.3s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.review-item.correct {
+  background: #E1F5EE;
+  border-color: #a8dfc8;
+  color: #0F6E56;
+}
+
+.review-item.wrong {
+  background: #FCEBEB;
+  border-color: #f09595;
+  color: #A32D2D;
+}
+
+.review-item span:last-child {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Result action buttons ── */
+.result-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+
+.result-actions button {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  border: none;
+}
+
+.result-actions button:first-child {
+  background: transparent;
+  border: 0.5px solid #e2e2e2;
+  color: #111;
+}
+
+.result-actions button:first-child:hover { background: #f0f0f0; }
+
+.result-actions button:last-child {
+  background: #1D9E75;
+  color: #fff;
+}
+
+.result-actions button:last-child:hover { background: #0F6E56; }
+.result-actions button:active { transform: scale(0.98); }

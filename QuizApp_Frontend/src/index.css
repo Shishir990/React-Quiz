@@ -1,0 +1,158 @@
+
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.auth-card {
+  background: #fff;
+  border: 0.5px solid #e2e2e2;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
+.brand-icon {
+  width: 36px; height: 36px; background: #1D9E75;
+  border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-family: 'JetBrains Mono', monospace;
+  font-size: 15px; font-weight: 500; color: #fff;
+}
+.brand-name { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; }
+
+.auth-heading { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.auth-sub { font-size: 13px; color: #888; margin-bottom: 1.75rem; }
+
+.auth-error {
+  background: #fff0f0; border: 0.5px solid #f09595;
+  color: #A32D2D; border-radius: 8px;
+  padding: 10px 12px; font-size: 13px; margin-bottom: 1rem;
+}
+
+.field { margin-bottom: 1rem; }
+.field label {
+  display: block; font-size: 11px; font-weight: 500;
+  color: #181616; margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.field input {
+  width: 100%; padding: 10px 12px;
+  border: 0.5px solid #e2e2e2; border-radius: 8px;
+  color: #08060d;
+  background: #fafafa; font-family: 'Sora', sans-serif;
+  font-size: 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.role-toggle { display: flex; gap: 8px; }
+.role-btn {
+  flex: 1; padding: 9px; border: 0.5px solid #e2e2e2;
+  border-radius: 8px; background: #fafafa;
+  font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 500;
+  color: #888; cursor: pointer; transition: all 0.15s;
+}
+.role-btn.active { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
+
+.strength-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.strength-bar { display: flex; gap: 4px; flex: 1; }
+.strength-seg { height: 3px; flex: 1; border-radius: 2px; background: #e2e2e2; transition: background 0.2s; }
+.strength-label { font-size: 11px; font-weight: 500; min-width: 36px; }
+
+.forgot { text-align: right; margin-top: -6px; margin-bottom: 1rem; }
+.forgot a { font-size: 12px; color: #1D9E75; font-weight: 500; text-decoration: none; }
+
+.auth-btn {
+  width: 100%; padding: 12px; background: #1D9E75;
+  border: none; border-radius: 8px; font-family: 'Sora', sans-serif;
+  font-size: 14px; font-weight: 500; color: #fff; cursor: pointer;
+  margin-top: 0.5rem; transition: background 0.15s, transform 0.1s;
+}
+.auth-btn:hover { background: #0F6E56; }
+.auth-btn:active { transform: scale(0.98); }
+.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.switch-text { text-align: center; font-size: 13px; color: #242121; margin-top: 1.25rem; }
+.switch-text a { color: #1D9E75; font-weight: 500; text-decoration: none; }
+
+.loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #888; }
+
+
+
+
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}

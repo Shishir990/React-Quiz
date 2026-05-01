@@ -1,0 +1,128 @@
+.optionContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    gap: 30px;
+    margin-bottom: 10px;
+}
+
+.btn {
+    width: 300px;
+    padding: 15px;
+    border-radius: 20px;
+    background-color: #2e3036;
+    text-decoration-color: rgb(65, 61, 70);
+    font-weight: bold;
+}
+
+.btn-correct {
+    width: 300px;
+    padding: 10px;
+    border-radius: 20px;
+    background-color: rgb(8, 122, 27);
+    text-decoration-color: blueviolet;
+    font-weight: bold;
+}
+
+.btn-selected {
+    width: 300px;
+    padding: 10px;
+    border-radius: 20px;
+    background-color: rgb(75, 171, 201);
+    text-decoration-color: blueviolet;
+    font-weight: bold;
+}
+
+.next-finish-btn {
+    width: 100px;
+    padding: 5px;
+    border-radius: 20px;
+    background-color: rgb(47, 47, 54);
+    text-decoration-color: rgb(27, 6, 48);
+    margin-top: 10px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background-color: #414f7a;
+}
+
+.options {
+    display: flex;
+    gap: 10px;
+    text-align: center;
+}
+
+.footer {
+    width: 300px;
+    margin: 0 auto;
+    text-align: center;
+    margin-top: 170px;
+}
+
+.questionContainer {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.timer {
+    width: 250px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2px;
+    position: fixed;
+    top: 20px;
+    right: 120px;
+    align-items: flex-start;
+    border-radius: 20px;
+    border: 2px solid black;
+    background-color: #3b3f4e;
+    padding: 8px;
+    justify-content: center;
+    margin-left: 10px
+}
+.timer-alert{
+    width: 250px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2px;
+    position: fixed;
+    top: 20px;
+    right: 120px;
+    align-items: flex-start;
+    border-radius: 20px;
+    border: 2px solid black;
+    background-color: #3b3f4e;
+    padding: 8px;
+    justify-content: center;
+    margin-left: 10px;
+    background-color: rgb(209, 6, 6);
+}
+
+.textContainer {
+    margin-bottom: 5px;
+    font-size: large;
+}
+.tableContainer{
+    margin-top: 20px;
+}
+table{
+    width:100%;
+    padding: 10px;
+}
+tr{
+     background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+tr:hover {
+  background-color: #ddd;
+}

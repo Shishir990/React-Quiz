@@ -1,0 +1,167 @@
+{"Question":[
+  {
+    "question": "What is React primarily used for?",
+    "options": [
+      "Database management",
+      "Building user interfaces",
+      "Server-side scripting",
+      "Networking"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "What is JSX in React?",
+    "options": [
+      "A database query language",
+      "A JavaScript XML syntax extension",
+      "A CSS framework",
+      "A server-side language"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "Which method is used to create components in React?",
+    "options": [
+      "React.createComponent()",
+      "React.makeComponent()",
+      "React.createElement()",
+      "Component.create()"
+    ],
+    "correctAnswer": 3,
+    "marks": 2
+  },
+  {
+    "question": "What hook is used to manage state in functional components?",
+    "options": [
+      "useEffect",
+      "useState",
+      "useContext",
+      "useReducer"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "Which hook is used for side effects in React?",
+    "options": [
+      "useState",
+      "useMemo",
+      "useEffect",
+      "useRef"
+    ],
+    "correctAnswer": 3,
+    "marks": 2
+  },
+  {
+    "question": "What is the purpose of keys in React lists?",
+    "options": [
+      "To style elements",
+      "To uniquely identify elements",
+      "To store data",
+      "To create routes"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "What is a React component?",
+    "options": [
+      "A database table",
+      "A reusable piece of UI",
+      "A CSS file",
+      "An API endpoint"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "Which hook is used to access DOM elements?",
+    "options": [
+      "useRef",
+      "useEffect",
+      "useState",
+      "useReducer"
+    ],
+    "correctAnswer": 1,
+    "marks": 2
+  },
+  {
+    "question": "What does the virtual DOM do?",
+    "options": [
+      "Stores CSS styles",
+      "Improves performance by minimizing DOM updates",
+      "Handles API requests",
+      "Creates databases"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "Which prop is used to pass data to components?",
+    "options": [
+      "state",
+      "props",
+      "data",
+      "context"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "What is the default port for React development server?",
+    "options": [
+      "8080",
+      "5000",
+      "3000",
+      "4200"
+    ],
+    "correctAnswer": 3,
+    "marks": 2
+  },
+  {
+    "question": "Which hook is used to memoize values?",
+    "options": [
+      "useMemo",
+      "useState",
+      "useEffect",
+      "useRef"
+    ],
+    "correctAnswer": 1,
+    "marks": 2
+  },
+  {
+    "question": "Which hook is used to memoize functions?",
+    "options": [
+      "useCallback",
+      "useMemo",
+      "useEffect",
+      "useRef"
+    ],
+    "correctAnswer": 1,
+    "marks": 2
+  },
+  {
+    "question": "What is the purpose of useContext hook?",
+    "options": [
+      "To manage routing",
+      "To share data across components",
+      "To style components",
+      "To fetch APIs"
+    ],
+    "correctAnswer": 2,
+    "marks": 2
+  },
+  {
+    "question": "What is the function used to render React elements to the DOM?",
+    "options": [
+      "ReactDOM.render()",
+      "React.render()",
+      "renderDOM()",
+      "React.mount()"
+    ],
+    "correctAnswer": 1,
+    "marks": 2
+  }
+]} 
