@@ -3,7 +3,7 @@ import { getMeApi, authFetch } from '../api/auth';
 
 const Context = createContext();
 
-const initialState = {
+const initialState = { 
   Questions: [],
   status: "loading",
   score: 0,

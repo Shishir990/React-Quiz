@@ -9,7 +9,7 @@
   justify-content: center;
   gap: 1rem;
   font-family: 'Sora', sans-serif;
-  background: #f5f4f0;
+  background: transparent;
   padding: 2rem 1rem;
 }
 
@@ -60,7 +60,7 @@
   justify-content: center;
   gap: 0.75rem;
   font-family: 'Sora', sans-serif;
-  background: #f5f4f0;
+  background: transparent;
   padding: 2rem 1rem;
 }
 
@@ -179,3 +179,14 @@
 
 .result-actions button:last-child:hover { background: #0F6E56; }
 .result-actions button:active { transform: scale(0.98); }
+/* ════ Clearer boundaries (matches dashboard) ════ */
+.review-item { border-width: 1px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05); }
+.review-item.correct { border-color: #8FD5B8; }
+.review-item.wrong   { border-color: #EE8A8A; }
+
+.finish-screen button:last-of-type,
+.result-actions button:first-child {
+  border: 1px solid #D3DCE6;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}

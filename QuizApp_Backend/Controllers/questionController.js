@@ -1,7 +1,6 @@
 const Question = require('../Models/Question');
 const mongoose = require('mongoose');
 
-
 exports.getAll = async (req, res) => {
   const { category } = req.query;
   const filter = category ? { category } : {};

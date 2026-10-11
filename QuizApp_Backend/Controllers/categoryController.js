@@ -1,5 +1,6 @@
 const Category = require('../Models/Category');
 const Quiz = require('../Models/Quiz');
+const Question = require('../Models/Question');
 
 exports.getAll = async (req, res) => {
   try {
@@ -11,16 +12,34 @@ exports.getAll = async (req, res) => {
       { $group: { _id: '$category', count: { $sum: 1 } } },
     ]);
 
+    // Quizzes are played per category from its questions, so count those too,
+    // broken down by difficulty
+    const questionStats = await Question.aggregate([
+      { $group: { _id: { category: '$category', difficulty: '$difficulty' }, count: { $sum: 1 } } },
+    ]);
+
     // Map counts onto categories
     const countMap = {};
     quizCounts.forEach(({ _id, count }) => {
       countMap[_id.toString()] = count;
     });
 
-    const result = categories.map((cat) => ({
-      ...cat.toObject(),
-      quizCount: countMap[cat._id.toString()] || 0,
-    }));
+    const questionMap = {};
+    questionStats.forEach(({ _id, count }) => {
+      const key = _id.category.toString();
+      questionMap[key] = questionMap[key] || { easy: 0, medium: 0, hard: 0 };
+      questionMap[key][_id.difficulty || 'medium'] += count;
+    });
+
+    const result = categories.map((cat) => {
+      const byDifficulty = questionMap[cat._id.toString()] || { easy: 0, medium: 0, hard: 0 };
+      return {
+        ...cat.toObject(),
+        quizCount: countMap[cat._id.toString()] || 0,
+        questionCount: byDifficulty.easy + byDifficulty.medium + byDifficulty.hard,
+        difficulty: byDifficulty,
+      };
+    });
 
     res.json(result);
   } catch (err) {

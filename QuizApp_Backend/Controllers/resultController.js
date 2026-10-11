@@ -52,3 +52,27 @@ exports.submit = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// GET /api/results/me — the logged-in user's quiz history, newest first
+exports.myHistory = async (req, res) => {
+  try {
+    const results = await Result.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .select('-answers')
+      // `quiz` holds the category id (see submit), so populate from Category
+      .populate({ path: 'quiz', model: 'Category', select: 'name icon' })
+      .lean();
+
+    res.json(results.map((r) => ({
+      _id: r._id,
+      category: r.quiz ? { _id: r.quiz._id, name: r.quiz.name, icon: r.quiz.icon } : null,
+      score: r.score,
+      percentage: r.percentage,
+      passed: r.passed,
+      timeTaken: r.timeTaken,
+      createdAt: r.createdAt,
+    })));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
