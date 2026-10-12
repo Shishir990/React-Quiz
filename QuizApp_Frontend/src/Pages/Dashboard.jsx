@@ -27,14 +27,6 @@ const LEADERBOARD = [
   { rank: 5, name: 'Neha Gupta', points: 3200, avatar: 'NG' },
 ];
 
-const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg, #F59E0B, #F97316)',
-  'linear-gradient(135deg, #94A3B8, #64748B)',
-  'linear-gradient(135deg, #D97706, #92400E)',
-  'linear-gradient(135deg, #8B5CF6, #6366F1)',
-  'linear-gradient(135deg, #EC4899, #F43F5E)',
-];
-
 // Minimal inline icon set (stroke icons, inherit currentColor)
 const Icon = ({ name, size = 18 }) => {
   const paths = {
@@ -661,7 +653,7 @@ export default function Dashboard() {
                     <div className="db-cat-meta">
                       {playable ? (
                         <>
-                          <span className="db-cat-count" style={{ color: cat.text }}>
+                          <span className="db-cat-count">
                             {cat.questionCount} {cat.questionCount === 1 ? 'question' : 'questions'}
                           </span>
                           {level && <span className={`db-diff db-diff-${level}`}>{DIFFICULTY_TEXT[level]}</span>}
@@ -778,7 +770,7 @@ export default function Dashboard() {
               {filteredPlayers.map((p) => (
                 <div key={p.rank} className={`db-lb-item ${p.rank <= 3 ? `db-lb-top db-lb-${p.rank}` : ''}`}>
                   <span className="db-lb-rank">{p.rank}</span>
-                  <div className="db-avatar db-avatar-sm" style={{ background: AVATAR_GRADIENTS[(p.rank - 1) % AVATAR_GRADIENTS.length] }}>
+                  <div className="db-avatar db-avatar-sm">
                     {p.avatar}
                   </div>
                   <p className="db-lb-name">{p.name}</p>

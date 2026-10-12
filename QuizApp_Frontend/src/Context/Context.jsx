@@ -9,6 +9,8 @@ const initialState = {
   score: 0,
   index: 0,
   answer: null,
+  answers: {},          // { [questionIndex]: optionIndex }
+  visited: { 0: true }, // questions the user has opened
   answersLog: [],
   questionsAttempted: 0,
   questionsCorrect: 0,
@@ -21,7 +23,17 @@ function reducer(state, action) {
   switch (action.type) {
 
     case "dataReceived":
-      return { ...state, Questions: action.payload, status: "ready" };
+      return {
+        ...state,
+        Questions: action.payload,
+        status: "ready",
+        index: 0,
+        answer: null,
+        answers: {},
+        visited: { 0: true },
+        answersLog: [],
+        questionsAttempted: 0,
+      };
 
     case "Error":
       return { ...state, status: "Error" };
@@ -32,20 +44,38 @@ function reducer(state, action) {
     case "Start":
       return { ...state, status: "start", secondsRemaining: action.payload, totalTime: action.payload ,  };
     case "AnswerClicked": {
-      if (state.answer !== null) return state;
-      const selectedOption = state.Questions[state.index].options[action.payload]; // ✅ get string
+      // Answers can be changed when revisiting a question via the palette
+      const answers = { ...state.answers, [state.index]: action.payload };
+      const answersLog = Object.keys(answers)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((i) => ({
+          question: state.Questions[i]._id,
+          selectedOption: state.Questions[i].options[answers[i]], // ✅ store string e.g. "Paris"
+        }));
       return {
         ...state,
         answer: action.payload,
-        answersLog: [...state.answersLog, {
-          question: state.Questions[state.index]._id,
-          selectedOption: selectedOption  // ✅ store string e.g. "Paris"
-        }],
-        questionsAttempted: state.questionsAttempted + 1,
+        answers,
+        answersLog,
+        questionsAttempted: answersLog.length,
       };
     }
     case "Next":
-      return { ...state, index: state.index + 1, answer: null };
+    case "Prev":
+    case "GoTo": {
+      const target =
+        action.type === "Next" ? state.index + 1 :
+        action.type === "Prev" ? state.index - 1 :
+        action.payload;
+      if (target < 0 || target >= state.Questions.length) return state;
+      return {
+        ...state,
+        index: target,
+        answer: state.answers[target] ?? null,
+        visited: { ...state.visited, [target]: true },
+      };
+    }
 
     case "tick":
       return {
@@ -82,7 +112,7 @@ function reducer(state, action) {
 export function ContextProvider({ children }) {
 
   const [
-    { Questions, status, score, index, answer, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
+    { Questions, status, score, index, answer, answers, visited, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
     dispatch
   ] = useReducer(reducer, initialState);
 
@@ -167,6 +197,8 @@ export function ContextProvider({ children }) {
         status,
         index,
         answer,
+        answers,
+        visited,
         score,
         numQuestions,
         secondsRemaining,

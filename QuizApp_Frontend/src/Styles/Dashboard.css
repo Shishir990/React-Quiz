@@ -1379,3 +1379,123 @@
   .db-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .db-chart-plot { gap: 4px; height: 170px; }
 }
+
+/* ════ Professional pass: one accent (emerald), neutral surfaces, calmer type ════ */
+
+/* Surfaces: near-neutral page, plain white chrome */
+.db-wrapper {
+  background: linear-gradient(180deg, #F7F9FB 0%, #F4F6F9 100%);
+}
+.db-sidebar,
+.db-navbar { background: #FFFFFF; }
+.db-navbar .db-search,
+.db-navbar .db-clock { background: #F5F7FA; }
+.db-clock { color: var(--muted); }
+.db-avatar-brand { background: #059669; }
+.db-logo-icon { background: #059669; box-shadow: none; }
+.db-nav-item.active,
+.db-nav-item.active:hover { background: #EEF7F3; box-shadow: none; }
+
+/* Typography: smaller, lighter bold text */
+.db-wrapper .db-hero-title { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+.db-hero-sub { font-size: 13px; color: var(--muted); }
+.db-hero-badge {
+  background: #F1F5F9; border-color: #E2E8F0; color: var(--ink-2);
+  font-size: 11px; font-weight: 600;
+}
+.db-wrapper .db-navbar-heading { font-size: 15px; font-weight: 600; }
+.db-logo-name { font-size: 15px; font-weight: 700; }
+.db-wrapper .db-section-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.db-section-sub { font-size: 12px; }
+.db-wrapper .db-challenge-title { font-size: 15px; font-weight: 600; }
+.db-wrapper .db-goal-title { font-size: 14px; font-weight: 600; }
+.db-goal-num { font-size: 17px; font-weight: 700; }
+.db-stat-label { font-size: 12px; font-weight: 500; }
+.db-stat-value { font-size: 20px; font-weight: 700; }
+.db-cat-name { font-size: 14px; font-weight: 600; }
+.db-recent-title { font-size: 13px; font-weight: 600; }
+.db-lb-name { font-size: 13px; font-weight: 500; }
+.db-lb-pts { font-size: 13px; font-weight: 600; }
+.db-ring-num { font-size: 11px; font-weight: 700; }
+.db-empty-title { font-size: 14px; font-weight: 600; }
+.db-navbar-name, .db-dropdown-name { font-weight: 600; }
+.db-btn-light, .db-btn-ghost, .db-cat-start, .db-promo-btn { font-weight: 600; }
+.db-pill { font-weight: 500; background: #F1F5F9; color: var(--muted); border: 1px solid #E2E8F0; }
+
+/* Today row: plain cards */
+.db-challenge { background: #FFFFFF; border-color: var(--edge, #D3DCE6); }
+.db-challenge-icon { background: #F5F7FA; border-color: #E2E8F0; font-size: 24px; width: 48px; height: 48px; border-radius: 12px; }
+
+/* Stats: neutral tiles, accent only on the icon */
+.db-stat-card::after { display: none; }
+.db-stat-icon { background: #F1F5F9; width: 38px; height: 38px; border-radius: 10px; }
+.db-stat-trend { color: var(--muted); font-weight: 500; }
+
+/* Category cards: neutral by default, emerald on interaction */
+.db-cat-blob,
+.db-cat-bar { display: none; }
+.db-cat-icon-wrap {
+  width: 60px; height: 60px; border-radius: 16px;
+  background: #F5F7FA;
+  box-shadow: inset 0 0 0 1px #E2E8F0;
+}
+.db-cat-icon { font-size: 28px; }
+.db-cat-card:hover .db-cat-icon-wrap { transform: translateY(-2px); }
+.db-cat-card:hover .db-cat-icon { animation: none; }
+.db-cat-card:hover {
+  transform: translateY(-3px);
+  border-color: #059669;
+  box-shadow: 0 10px 24px -16px rgba(15, 23, 42, 0.35);
+}
+.db-cat-active,
+.db-cat-active:hover {
+  transform: translateY(-3px);
+  border-color: #059669;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14);
+}
+.db-cat-count {
+  background: #F1F5F9;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.db-cat-start {
+  background: #059669;
+  box-shadow: none;
+}
+.db-cat-start:hover:not(:disabled) { background: #047857; filter: none; }
+.db-cat-flag { background: var(--ink); }
+
+/* Difficulty: neutral pill + small colored dot (label carries the meaning) */
+.db-diff,
+.db-diff-easy, .db-diff-medium, .db-diff-hard, .db-diff-mixed {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.db-diff::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.db-diff-easy::before   { background: #059669; }
+.db-diff-medium::before { background: #D97706; }
+.db-diff-hard::before   { background: #DC2626; }
+.db-diff-mixed::before  { background: #64748B; }
+
+/* Lists: neutral tags and avatars */
+.db-tag { background: #F1F5F9; color: var(--ink-2); font-weight: 500; }
+.db-tag-pass { background: #ECFDF5; color: #047857; }
+.db-tag-fail { background: #FEF2F2; color: #B91C1C; }
+.db-avatar-sm { background: #E2E8F0; color: var(--ink-2); font-weight: 600; }
+.db-lb-1, .db-lb-1:hover { background: #F8FAFC; border-color: #E2E8F0; }
+.db-lb-1 .db-lb-rank { background: #B7791F; }
+.db-lb-2 .db-lb-rank { background: #8A94A6; }
+.db-lb-3 .db-lb-rank { background: #9C5B2E; }
+.db-lb-pts { color: var(--ink); }
+
+/* Mobile type */
+@media (max-width: 560px) {
+  .db-wrapper .db-hero-title { font-size: 19px; }
+  .db-stat-value { font-size: 18px; }
+  .db-cat-icon-wrap { width: 52px; height: 52px; }
+  .db-cat-icon { font-size: 24px; }
+}

@@ -6,11 +6,11 @@ export function Questions() {
     const Question = Questions[index]
 
     return (
-        <div >
-            <div className="questionContainer">
-            <span>{`Q) ${Question?.text}`}</span>
-            </div>
+        <section className="qz-question" aria-labelledby="qz-question-text">
+            <p className="qz-eyebrow">Question {String(index + 1).padStart(2, "0")}</p>
+            <h1 id="qz-question-text" className="qz-question-text">{Question?.text}</h1>
+            <p className="qz-hint">Select one correct answer.</p>
             <Options options={Question?.options} Question={Question} />
-        </div>
+        </section>
     )
 }

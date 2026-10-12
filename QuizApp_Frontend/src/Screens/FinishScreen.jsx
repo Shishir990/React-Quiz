@@ -64,7 +64,11 @@ export function Finish() {
   // Submit screen
   return (
     <div className="finish-screen">
-      <h2>You've answered all {Questions.length} questions!</h2>
+      <h2>
+        {answersLog?.length === Questions.length
+          ? `You've answered all ${Questions.length} questions!`
+          : 'Ready to submit your quiz?'}
+      </h2>
       <p>Answered: {answersLog?.length} / {Questions.length}</p>
       <button onClick={handleSubmit} disabled={resloading}>
         {resloading ? 'Submitting...' : 'Submit Quiz ✓'}

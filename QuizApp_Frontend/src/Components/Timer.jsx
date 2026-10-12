@@ -9,7 +9,7 @@ export function Timer(){
     useEffect(
         ()=>{
             const interval=setInterval((
-                
+
 
             )=>{dispatch({type:"tick"})},1000
 
@@ -18,15 +18,8 @@ export function Timer(){
         },[]
     )
     return(
-        <div>
-           {
-            <span >
-                {
-                    `${minutes<10?0:""}${minutes}:${seconds<10?0:""}${seconds}
-                    `
-                }
-            </span>
-           }
-        </div>
+        <span className="qz-timer-value">
+            {`${minutes<10?0:""}${minutes}:${seconds<10?0:""}${seconds}`}
+        </span>
     )
 }
