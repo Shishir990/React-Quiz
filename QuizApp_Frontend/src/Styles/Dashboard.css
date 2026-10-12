@@ -1499,3 +1499,27 @@
   .db-cat-icon-wrap { width: 52px; height: 52px; }
   .db-cat-icon { font-size: 24px; }
 }
+
+/* ════ Restore light gradients (page, sidebar, navbar) ════ */
+.db-wrapper {
+  background:
+    radial-gradient(1100px 650px at 0% 0%, rgba(16, 185, 129, 0.08), transparent 60%),
+    radial-gradient(900px 600px at 100% 10%, rgba(56, 189, 248, 0.07), transparent 60%),
+    radial-gradient(1000px 700px at 85% 100%, rgba(99, 102, 241, 0.06), transparent 60%),
+    radial-gradient(800px 600px at 10% 100%, rgba(20, 184, 166, 0.05), transparent 60%),
+    linear-gradient(135deg, #F8FDFB 0%, #F9FBFE 50%, #FAF9FF 100%);
+}
+.db-sidebar {
+  background:
+    radial-gradient(260px 220px at 0% 0%, rgba(16, 185, 129, 0.09), transparent 70%),
+    radial-gradient(240px 260px at 100% 55%, rgba(56, 189, 248, 0.06), transparent 70%),
+    radial-gradient(280px 240px at 30% 100%, rgba(99, 102, 241, 0.07), transparent 70%),
+    linear-gradient(180deg, #F9FEFC 0%, #FAFCFE 50%, #FAFAFF 100%);
+}
+.db-navbar {
+  background:
+    radial-gradient(320px 120px at 0% 0%, rgba(16, 185, 129, 0.09), transparent 70%),
+    radial-gradient(360px 120px at 55% 100%, rgba(56, 189, 248, 0.06), transparent 70%),
+    radial-gradient(320px 120px at 100% 0%, rgba(99, 102, 241, 0.07), transparent 70%),
+    linear-gradient(90deg, #F9FEFC 0%, #FAFCFE 50%, #FAFAFF 100%);
+}
