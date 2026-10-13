@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:8080/api';
+const BASE = '/api';
 
 export const authFetch = async (url, options = {}) => {
   const response = await fetch(`${BASE}${url}`, {

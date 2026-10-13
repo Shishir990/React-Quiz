@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const Category = require('./Models/Category');
 
 dotenv.config();
+require('./Config/dns')(); // public DNS fallback for mongodb+srv (local only)
 
 const categories = [
   { name: 'Science',           description: 'Physics, Chemistry, Biology and more', icon: '⚗️' },

@@ -4,6 +4,7 @@ const Category = require('./Models/Category');
 const Question = require('./Models/Question');
 
 dotenv.config();
+require('./Config/dns')(); // public DNS fallback for mongodb+srv (local only)
 
 const questionsByCategory = {
   Science: [
