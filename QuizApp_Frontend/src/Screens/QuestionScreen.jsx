@@ -3,7 +3,7 @@ import { useQuiz } from "../Context/Context";
 import { Questions } from "../Components/Questions";
 import { Timer } from "../Components/Timer";
 import { QuestionPalette } from "../Components/QuestionPalette";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { Finish } from "./FinishScreen";
 import "../Styles/Pages.css";
@@ -12,7 +12,8 @@ import "../Styles/Quiz.css";
 export function QuestionScreen() {
   const { index, numQuestions, secondsRemaining, fetchQues, status, dispatch, answers, Questions: questions } = useQuiz();
   const hasLastQuesReached = index === numQuestions - 1;
-  const { categoryId } = useParams();
+  const [searchParams] = useSearchParams();
+  const categoryId = searchParams.get("category");
   const navigate = useNavigate();
 
   useEffect(() => {

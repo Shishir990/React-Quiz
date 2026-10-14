@@ -41,7 +41,7 @@ function App() {
             }
           />
             <Route
-               path="/quiz/:categoryId"
+               path="/quiz"
             element={
               <ProtectedRoute>
                 <QuestionScreen/>

@@ -18,20 +18,6 @@
       }
     },
     {
-      "source": "/(login|register|dashboard|error|finish|admin)",
-      "destination": {
-        "service": "quizapp_frontend",
-        "path": "/index.html"
-      }
-    },
-    {
-      "source": "/quiz/(.*)",
-      "destination": {
-        "service": "quizapp_frontend",
-        "path": "/index.html"
-      }
-    },
-    {
       "source": "/(.*)",
       "destination": {
         "service": "quizapp_frontend"

@@ -419,7 +419,7 @@ export default function Dashboard() {
     },
   ];
 
-  const startQuiz = (id) => navigate(`/quiz/${id}`);
+  const startQuiz = (id) => navigate(`/quiz?category=${id}`);
   const randomCategory = () => {
     if (!categories.length) return;
     startQuiz(categories[Math.floor(Math.random() * categories.length)]._id);
