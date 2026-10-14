@@ -9,6 +9,9 @@ import { ProtectedRoute } from './Components/ProtectedRoute';
 import Dashboard from './Pages/Dashboard';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
+import Results from './Pages/Results';
+import ResultDetail from './Pages/ResultDetail';
+import Leaderboard from './Pages/Leaderboard';
 import { ErrorScreen } from './Screens/ErrorScreen'
 import { StartScreen } from './Screens/StartScreen'
 import { QuestionScreen } from './Screens/QuestionScreen'
@@ -29,6 +32,30 @@ function App() {
             element={
               <ProtectedRoute>
                     <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results"
+            element={
+              <ProtectedRoute>
+                <Results />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results/:id"
+            element={
+              <ProtectedRoute>
+                <ResultDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />

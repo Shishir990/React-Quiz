@@ -56,6 +56,14 @@ export function Finish() {
             setResult(null)
             navigate("/dashboard")
           }}>Dashboard</button>
+          {result._id && (
+            <button onClick={() => {
+              const id = result._id
+              dispatch({type:"HardReset"})
+              setResult(null)
+              navigate(`/results/${id}`)
+            }}>Review answers</button>
+          )}
         </div>
       </div>
     );

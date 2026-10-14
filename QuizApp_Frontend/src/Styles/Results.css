@@ -1,0 +1,131 @@
+/* ════ Results pages ════ */
+
+.rs-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── History ── */
+.rs-filters {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rs-selects { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.rs-list { list-style: none; margin: 0; padding: 0; }
+.rs-item { color: inherit; text-decoration: none; }
+.rs-item .db-recent-meta { flex-wrap: wrap; row-gap: 4px; }
+.rs-chev { color: var(--faint); flex-shrink: 0; transition: transform 0.15s, color 0.15s; }
+.rs-item:hover .rs-chev,
+.rs-item:focus-visible .rs-chev { color: #059669; transform: translateX(3px); }
+
+.rs-more { width: 100%; justify-content: center; margin-top: 12px; border: 1px solid #DCE3EB; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; }
+
+/* ── By category ── */
+.rs-cats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rs-cat {
+  width: 100%;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: #F8FAFC;
+  font: inherit; text-align: left; color: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.rs-cat:hover { background: #fff; border-color: #E3E9F0; }
+.rs-cat.is-active { background: #fff; border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
+.rs-cat-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rs-cat-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rs-cat-name { font-size: 13px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-cat-best { font-size: 13px; font-weight: 700; color: var(--ink); }
+.rs-cat-meta { font-size: 11px; color: var(--muted); }
+
+/* Average as a filled bar, best as a tick */
+.rs-bar { position: relative; height: 6px; border-radius: 999px; background: #E2E8F0; }
+.rs-bar-avg { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: #6EE7B7; }
+.rs-bar-best {
+  position: absolute; top: -3px; width: 3px; height: 12px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #047857;
+}
+
+/* ── Single result ── */
+.rs-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 13px; font-weight: 600;
+  text-decoration: none;
+}
+.rs-back:hover { color: var(--ink); }
+
+.rs-summary {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+}
+.rs-summary-body { flex: 1; min-width: 0; }
+.rs-summary-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 6px;
+  font-size: 13px; color: var(--muted);
+}
+.rs-summary .db-ring { transform: scale(1.15); }
+.rs-summary-skeleton { height: 104px; margin-bottom: 24px; border-radius: 18px; }
+.rs-q-skeleton { height: 220px; border-radius: 18px; }
+
+.rs-questions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.rs-q { border-left: 4px solid #E2E8F0; }
+.rs-q.is-right { border-left-color: #10B981; }
+.rs-q.is-wrong { border-left-color: #EF4444; }
+
+.rs-q-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.rs-q-num { font-size: 12px; font-weight: 700; color: var(--muted); }
+.rs-q-verdict { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+.rs-q-verdict.is-right { color: #047857; }
+.rs-q-verdict.is-wrong { color: #B91C1C; }
+.rs-q-text { font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.45; margin-bottom: 12px; }
+.rs-q-missing { font-weight: 500; color: var(--muted); font-style: italic; margin-bottom: 0; }
+
+.rs-options { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rs-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #E3E9F0;
+  border-radius: 12px;
+  background: #F8FAFC;
+  font-size: 13px; color: var(--ink-2);
+}
+.rs-option.is-answer { background: #ECFDF5; border-color: #6EE7B7; color: #065F46; font-weight: 600; }
+.rs-option.is-picked-wrong { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; font-weight: 600; }
+.rs-option-tag { flex-shrink: 0; font-size: 11px; font-weight: 600; opacity: 0.85; }
+
+.rs-explain {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #F1F5F9;
+  font-size: 13px; color: var(--ink-2); line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .rs-layout { grid-template-columns: minmax(0, 1fr); }
+  /* Show the topic overview above the long history list */
+  .rs-layout > :last-child { order: -1; }
+}
+@media (max-width: 560px) {
+  .rs-filters { flex-direction: column; align-items: stretch; }
+  .rs-filters .pg-chips { display: flex; }
+  .rs-filters .pg-chip { flex: 1; }
+  .rs-selects .pg-select { flex: 1; }
+  .rs-chev { display: none; }
+  .rs-summary { flex-wrap: wrap; }
+  .rs-summary .db-btn-light { width: 100%; justify-content: center; }
+  .rs-options { grid-template-columns: minmax(0, 1fr); }
+}

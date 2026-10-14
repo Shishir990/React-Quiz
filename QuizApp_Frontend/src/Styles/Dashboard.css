@@ -1523,3 +1523,71 @@
     radial-gradient(320px 120px at 100% 0%, rgba(99, 102, 241, 0.07), transparent 70%),
     linear-gradient(90deg, #F9FEFC 0%, #FAFCFE 50%, #FAFAFF 100%);
 }
+
+/* ════ Shared page bits (Results, Leaderboard) ════ */
+.pg-head {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.db-wrapper .pg-title { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
+
+.pg-chips {
+  display: inline-flex; gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #EEF2F6;
+  border: 1px solid #E2E8F0;
+}
+.pg-chip {
+  min-height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.pg-chip:hover { color: var(--ink); }
+.pg-chip.is-active { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1); }
+
+.pg-select {
+  min-height: 38px;
+  padding: 0 34px 0 12px;
+  border: 1px solid #DCE3EB;
+  border-radius: 12px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  appearance: none;
+  color: var(--ink);
+  font: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  max-width: 100%;
+}
+.pg-select:hover { border-color: #C3CEDB; }
+
+.pg-dot { color: #CBD5E1; }
+
+.lb-you {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ECFDF5;
+  color: #047857;
+  font-size: 11px; font-weight: 600;
+  vertical-align: middle;
+}
+
+.db-panel-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .db-wrapper .pg-title { font-size: 19px; }
+  .pg-head > .db-btn-light { width: 100%; justify-content: center; }
+}

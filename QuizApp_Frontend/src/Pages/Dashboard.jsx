@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuiz } from '../Context/Context';
-import { useNavigate } from 'react-router-dom';
 import { getCategoriesApi } from '../api/categories';
-import { getMyResultsApi } from '../api/results';
+import { getMyResultsApi, getLeaderboardApi } from '../api/results';
+import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
+import { initialsOf, timeAgo } from '../utils/format';
 import '../Styles/Dashboard.css';
 
 // Color palette to assign to categories dynamically
@@ -19,141 +21,6 @@ const COLOR_PALETTE = [
   { color: '#14B8A6', bg: '#CCFBF1', text: '#0F766E' },
 ];
 
-const LEADERBOARD = [
-  { rank: 1, name: 'Priya Sharma', points: 4820, avatar: 'PS' },
-  { rank: 2, name: 'Arjun Mehta', points: 4310, avatar: 'AM' },
-  { rank: 3, name: 'Riya Patel', points: 3990, avatar: 'RP' },
-  { rank: 4, name: 'Karan Singh', points: 3750, avatar: 'KS' },
-  { rank: 5, name: 'Neha Gupta', points: 3200, avatar: 'NG' },
-];
-
-// Minimal inline icon set (stroke icons, inherit currentColor)
-const Icon = ({ name, size = 18 }) => {
-  const paths = {
-    dashboard: <><rect x="3" y="3" width="7" height="9" rx="2" /><rect x="14" y="3" width="7" height="5" rx="2" /><rect x="14" y="12" width="7" height="9" rx="2" /><rect x="3" y="16" width="7" height="5" rx="2" /></>,
-    quizzes: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>,
-    results: <><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-6" /></>,
-    trophy: <><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z" /><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></>,
-    logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></>,
-    search: <><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></>,
-    bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></>,
-    check: <><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></>,
-    target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></>,
-    flame: <path d="M12 2c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 1-3s-3 1-3 5a6 6 0 0 0 12 0c0-6-6-8-6-11z" />,
-    star: <path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" />,
-    arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
-    play: <path d="M7 4l13 8-13 8z" />,
-    chevron: <path d="M6 9l6 6 6-6" />,
-    menu: <path d="M4 6h16M4 12h16M4 18h16" />,
-    close: <path d="M18 6L6 18M6 6l12 12" />,
-    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-  };
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  );
-};
-
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: 'dashboard', active: true },
-  { label: 'My Quizzes', icon: 'quizzes' },
-  { label: 'Results', icon: 'results' },
-  { label: 'Leaderboard', icon: 'trophy' },
-  { label: 'Settings', icon: 'settings', separate: true },
-];
-
-function ScoreRing({ score }) {
-  const r = 20;
-  const c = 2 * Math.PI * r;
-  const clr = score >= 80 ? '#10B981' : score >= 60 ? '#F59E0B' : '#EF4444';
-  return (
-    <div className="db-ring">
-      <svg width="52" height="52" viewBox="0 0 52 52">
-        <circle cx="26" cy="26" r={r} className="db-ring-track" />
-        <circle
-          cx="26" cy="26" r={r}
-          className="db-ring-bar"
-          style={{ stroke: clr, strokeDasharray: c, strokeDashoffset: c * (1 - score / 100) }}
-        />
-      </svg>
-      <span className="db-ring-num">{score}%</span>
-    </div>
-  );
-}
-
-function LiveClock() {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="db-clock">
-      <Icon name="clock" size={16} />
-      <div>
-        <p className="db-clock-time">
-          {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-        </p>
-        <p className="db-clock-date">
-          {now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function UserMenu({ user, initials, onLogout }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  // Close on outside click or Escape
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e) => ref.current && !ref.current.contains(e.target) && setOpen(false);
-    const onKey = (e) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  return (
-    <div className="db-user-menu" ref={ref}>
-      <button
-        className={`db-navbar-user ${open ? 'is-open' : ''}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <div className="db-avatar db-avatar-brand">{initials}</div>
-        <div className="db-navbar-user-info">
-          <p className="db-navbar-name">{user?.name || 'User'}</p>
-          <p className="db-navbar-role">{user?.role || 'player'}</p>
-        </div>
-        <Icon name="chevron" size={14} />
-      </button>
-
-      {open && (
-        <div className="db-dropdown" role="menu">
-          <div className="db-dropdown-head">
-            <p className="db-dropdown-name">{user?.name || 'User'}</p>
-            {user?.email && <p className="db-dropdown-email">{user.email}</p>}
-          </div>
-          <button className="db-dropdown-item db-dropdown-danger" role="menuitem" onClick={onLogout}>
-            <Icon name="logout" size={16} /> Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function greeting() {
   const h = new Date().getHours();
@@ -176,16 +43,6 @@ function addDays(date, n) {
   return d;
 }
 
-function timeAgo(date) {
-  const mins = Math.round((Date.now() - new Date(date)) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
-  const days = Math.round(hrs / 24);
-  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
-  return new Date(date).toLocaleDateString([], { day: 'numeric', month: 'short' });
-}
 
 // Streaks are counted in consecutive calendar days with at least one quiz
 function computeStreaks(results) {
@@ -300,7 +157,7 @@ function GoalRing({ done, goal }) {
 }
 
 export default function Dashboard() {
-  const { user, logout, highestScore } = useQuiz();
+  const { user, highestScore } = useQuiz();
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
@@ -308,9 +165,10 @@ export default function Dashboard() {
   const [catError, setCatError] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
   const [playerQuery, setPlayerQuery] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [results, setResults] = useState([]);
   const [resultsLoading, setResultsLoading] = useState(true);
+  const [leaders, setLeaders] = useState([]);
+  const [leadersLoading, setLeadersLoading] = useState(true);
 
   useEffect(() => {
     getMyResultsApi()
@@ -319,17 +177,16 @@ export default function Dashboard() {
       .finally(() => setResultsLoading(false));
   }, []);
 
-  // Close the mobile drawer with Escape
   useEffect(() => {
-    if (!drawerOpen) return;
-    const onKey = (e) => e.key === 'Escape' && setDrawerOpen(false);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [drawerOpen]);
+    getLeaderboardApi({ period: 'week' })
+      .then((data) => setLeaders(Array.isArray(data?.players) ? data.players : []))
+      .catch(() => setLeaders([]))
+      .finally(() => setLeadersLoading(false));
+  }, []);
 
-  const filteredPlayers = LEADERBOARD.filter((p) =>
-    p.name.toLowerCase().includes(playerQuery.trim().toLowerCase())
-  );
+  const filteredPlayers = leaders
+    .slice(0, 5)
+    .filter((p) => p.name.toLowerCase().includes(playerQuery.trim().toLowerCase()));
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -356,15 +213,6 @@ export default function Dashboard() {
 
     fetchCategories();
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -426,98 +274,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="db-wrapper">
-
-      {/* Sidebar */}
-      {/* Backdrop behind the mobile drawer */}
-      <div
-        className={`db-backdrop ${drawerOpen ? 'is-open' : ''}`}
-        onClick={() => setDrawerOpen(false)}
-        aria-hidden="true"
-      />
-
-      <aside
-        id="db-sidebar"
-        className={`db-sidebar ${drawerOpen ? 'is-open' : ''}`}
-        onClick={(e) => e.target.closest('.db-nav-item') && setDrawerOpen(false)}
-      >
-        <div className="db-logo">
-          <div className="db-logo-icon">Q/</div>
-          <span className="db-logo-name">QuizApp</span>
-          <button
-            className="db-drawer-close"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Close menu"
-          >
-            <Icon name="close" size={18} />
-          </button>
-        </div>
-
-        <nav className="db-nav">
-          {NAV_ITEMS.filter((item) => !item.separate).map((item) => (
-            <a key={item.label} className={`db-nav-item ${item.active ? 'active' : ''}`} href="#">
-              <Icon name={item.icon} size={17} />
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <nav className="db-nav db-nav-secondary">
-          {NAV_ITEMS.filter((item) => item.separate).map((item) => (
-            <a key={item.label} className="db-nav-item" href="#">
-              <Icon name={item.icon} size={17} />
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="db-sidebar-user">
-          <div className="db-avatar db-avatar-brand">{initials}</div>
-          <div className="db-sidebar-user-info">
-            <p className="db-sidebar-name">{user?.name || 'User'}</p>
-            <p className="db-sidebar-role">{user?.role || 'player'}</p>
-          </div>
-          <button className="db-logout-btn" onClick={handleLogout} title="Logout" aria-label="Logout">
-            <Icon name="logout" size={16} />
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="db-main">
-
-        {/* Navbar */}
-        <header className="db-navbar">
-          <button
-            className="db-icon-btn db-menu-btn"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-            aria-controls="db-sidebar"
-            aria-expanded={drawerOpen}
-          >
-            <Icon name="menu" size={18} />
-          </button>
-          <div className="db-navbar-title">
-            <p className="db-crumb">QuizApp / <span>Dashboard</span></p>
-            <h2 className="db-navbar-heading">Dashboard</h2>
-          </div>
-
-          <div className="db-search">
-            <Icon name="search" size={16} />
-            <input type="text" placeholder="Search quizzes, topics..." className="db-search-input" />
-          </div>
-
-          <div className="db-navbar-right">
-            <LiveClock />
-            <button className="db-icon-btn" title="Notifications">
-              <Icon name="bell" size={18} />
-              <span className="db-dot" />
-            </button>
-            <UserMenu user={user} initials={initials} onLogout={handleLogout} />
-          </div>
-        </header>
-
-        <div className="db-content">
+    <AppShell title="Dashboard">
 
         {/* Hero */}
         <section className="db-hero">
@@ -708,7 +465,7 @@ export default function Dashboard() {
           <section className="db-panel">
             <div className="db-section-header">
               <h2 className="db-section-title">Recent quizzes</h2>
-              {hasHistory && <span className="db-pill">{results.length} total</span>}
+              {hasHistory && <Link className="db-link" to="/results">View all {results.length}</Link>}
             </div>
             {resultsLoading ? (
               <div className="db-recent-list">
@@ -764,25 +521,30 @@ export default function Dashboard() {
               />
             </div>
             <div className="db-lb-list">
-              {filteredPlayers.length === 0 && (
+              {leadersLoading && [0, 1, 2].map((i) => <div key={i} className="db-recent-skeleton" />)}
+              {!leadersLoading && leaders.length === 0 && (
+                <p className="db-lb-empty">No scores this week yet. Finish a quiz to claim the top spot!</p>
+              )}
+              {!leadersLoading && leaders.length > 0 && filteredPlayers.length === 0 && (
                 <p className="db-lb-empty">No players match "{playerQuery}"</p>
               )}
               {filteredPlayers.map((p) => (
-                <div key={p.rank} className={`db-lb-item ${p.rank <= 3 ? `db-lb-top db-lb-${p.rank}` : ''}`}>
+                <div key={p.userId} className={`db-lb-item ${p.rank <= 3 ? `db-lb-top db-lb-${p.rank}` : ''}`}>
                   <span className="db-lb-rank">{p.rank}</span>
                   <div className="db-avatar db-avatar-sm">
-                    {p.avatar}
+                    {initialsOf(p.name)}
                   </div>
-                  <p className="db-lb-name">{p.name}</p>
+                  <p className="db-lb-name">{p.name}{p.userId === (user?._id || user?.id) && <span className="lb-you">You</span>}</p>
                   <p className="db-lb-pts">{p.points.toLocaleString()} <span>pts</span></p>
                 </div>
               ))}
             </div>
+            <Link className="db-link db-panel-link" to="/leaderboard">
+              View full leaderboard <Icon name="arrow" size={14} />
+            </Link>
           </section>
 
         </div>
-        </div>
-      </main>
-    </div>
+    </AppShell>
   );
 }
