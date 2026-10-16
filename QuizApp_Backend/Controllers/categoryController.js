@@ -1,6 +1,7 @@
 const Category = require('../Models/Category');
 const Quiz = require('../Models/Quiz');
 const Question = require('../Models/Question');
+const mongoose = require('mongoose');
 
 exports.getAll = async (req, res) => {
   try {
@@ -47,29 +48,54 @@ exports.getAll = async (req, res) => {
   }
 };
 
+// Pick and check the editable fields; returns { data } or { error }
+function readCategory(body) {
+  const name = String(body.name || '').trim();
+  if (!name) return { error: 'Category name is required' };
+  if (name.length > 60) return { error: 'Keep the name under 60 characters' };
+  return {
+    data: {
+      name,
+      description: String(body.description || '').trim(),
+      icon: String(body.icon || '').trim(),
+    },
+  };
+}
+
+const duplicateName = (err) => err.code === 11000;
+
 exports.create = async (req, res) => {
   try {
-    const category = await Category.create({ ...req.body, createdBy: req.user._id });
+    const { data, error } = readCategory(req.body);
+    if (error) return res.status(400).json({ message: error });
+    const category = await Category.create({ ...data, createdBy: req.user._id });
     res.status(201).json(category);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: duplicateName(err) ? 'A category with this name already exists' : err.message });
   }
 };
 
 exports.update = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Category not found' });
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { data, error } = readCategory(req.body);
+    if (error) return res.status(400).json({ message: error });
+    const category = await Category.findByIdAndUpdate(req.params.id, data, { returnDocument: 'after', runValidators: true });
     if (!category) return res.status(404).json({ message: 'Category not found' });
     res.json(category);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message: duplicateName(err) ? 'A category with this name already exists' : err.message });
   }
 };
 
+// Deletes the category and its questions; past results keep their scores
 exports.remove = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Category not found' });
   try {
-    await Category.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Category deleted' });
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) return res.status(404).json({ message: 'Category not found' });
+    const { deletedCount } = await Question.deleteMany({ category: category._id });
+    res.json({ message: 'Category deleted', questionsDeleted: deletedCount });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

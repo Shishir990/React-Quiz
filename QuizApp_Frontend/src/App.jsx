@@ -12,6 +12,11 @@ import Register from './Pages/Register';
 import Results from './Pages/Results';
 import ResultDetail from './Pages/ResultDetail';
 import Leaderboard from './Pages/Leaderboard';
+import AdminLayout from './Admin/AdminLayout';
+import AdminOverview from './Admin/Overview';
+import AdminQuestions from './Admin/Questions';
+import AdminCategories from './Admin/Categories';
+import AdminUsers from './Admin/Users';
 import { ErrorScreen } from './Screens/ErrorScreen'
 import { StartScreen } from './Screens/StartScreen'
 import { QuestionScreen } from './Screens/QuestionScreen'
@@ -89,10 +94,15 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute adminOnly>
-                <div>Admin Panel coming soon</div>
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AdminOverview />} />
+            <Route path="questions" element={<AdminQuestions />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

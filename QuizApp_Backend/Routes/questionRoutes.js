@@ -9,7 +9,7 @@ console.log('create:', create);
 console.log('update:', update);
 console.log('remove:', remove);
 
-router.get('/', protect, getAll);
+router.get('/', protect, adminOnly, getAll);
 router.post('/', protect, adminOnly, create);
 router.put('/:id', protect, adminOnly, update);
 router.delete('/:id', protect, adminOnly, remove);

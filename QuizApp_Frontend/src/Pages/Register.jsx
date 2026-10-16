@@ -25,7 +25,6 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'player',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +61,6 @@ export default function Register() {
         name: `${form.firstName} ${form.lastName}`,
         email: form.email,
         password: form.password,
-        role: form.role,
       });
 
       if (data.token) {
@@ -93,26 +91,6 @@ export default function Register() {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
-
-          <div className="field">
-            <label>I am a</label>
-            <div className="role-toggle">
-              <button
-                type="button"
-                className={`role-btn ${form.role === 'player' ? 'active' : ''}`}
-                onClick={() => setForm({ ...form, role: 'player' })}
-              >
-                Player
-              </button>
-              <button
-                type="button"
-                className={`role-btn ${form.role === 'admin' ? 'active' : ''}`}
-                onClick={() => setForm({ ...form, role: 'admin' })}
-              >
-                Admin
-              </button>
-            </div>
-          </div>
 
           <div className="field-row">
             <div className="field">

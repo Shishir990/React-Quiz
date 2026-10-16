@@ -14,6 +14,10 @@ exports.protect = async (req, res, next) => {
 
     req.user = await User.findById(decoded.id).select('-password');
     console.log('👤 user found:', req.user ? req.user.email : 'NOT FOUND');
+    // Deleted or deactivated accounts lose access even with an unexpired token
+    if (!req.user || req.user.isActive === false) {
+      return res.status(401).json({ message: 'Account not found or disabled' });
+    }
 
     console.log('➡️ calling next()');
     next();

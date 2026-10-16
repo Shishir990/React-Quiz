@@ -27,6 +27,16 @@ export const Icon = ({ name, size = 18 }) => {
     close: <path d="M18 6L6 18M6 6l12 12" />,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
     x: <><circle cx="12" cy="12" r="9" /><path d="M15 9l-6 6M9 9l6 6" /></>,
+    shield: <path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z" />,
+    users: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></>,
+    folder: <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />,
+    plus: <path d="M12 5v14M5 12h14" />,
+    edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
+    trash: <><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></>,
+    ban: <><circle cx="12" cy="12" r="9" /><path d="M5.6 5.6l12.8 12.8" /></>,
+    more: <><circle cx="12" cy="5" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="12" cy="19" r="1.4" /></>,
+    help: <><circle cx="12" cy="12" r="9" /><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" /></>,
+    box: <><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" /></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -60,6 +70,7 @@ const NAV_ITEMS = [
   { label: 'My Quizzes', icon: 'quizzes' },
   { label: 'Results', icon: 'results', to: '/results' },
   { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
+  { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
   { label: 'Settings', icon: 'settings', separate: true },
 ];
 
@@ -146,7 +157,7 @@ function UserMenu({ user, initials, onLogout }) {
 
 // Sidebar + top navbar shared by every signed-in page
 export default function AppShell({ title, children }) {
-  const { user, logout } = useQuiz();
+  const { user, logout, isAdmin } = useQuiz();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -202,7 +213,7 @@ export default function AppShell({ title, children }) {
         </nav>
 
         <nav className="db-nav db-nav-secondary">
-          {NAV_ITEMS.filter((item) => item.separate).map((item) => <NavItem key={item.label} item={item} />)}
+          {NAV_ITEMS.filter((item) => item.separate && (!item.adminOnly || isAdmin)).map((item) => <NavItem key={item.label} item={item} />)}
         </nav>
 
         <div className="db-sidebar-user">
