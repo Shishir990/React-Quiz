@@ -3,9 +3,12 @@ const Category = require('../Models/Category');
 const mongoose = require('mongoose');
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
+const MAX_OPTIONS = 6;
+const MAX_BULK = 500;
 
-// Pick and check the editable fields; returns { data } or { error }
-async function readQuestion(body) {
+// Pick and check the editable fields; returns { data } or { error }.
+// Pass the set of existing category ids to skip a lookup per question (bulk import).
+async function readQuestion(body, categoryIds) {
   const text = String(body.text || '').trim();
   const options = Array.isArray(body.options)
     ? body.options.map((o) => String(o).trim()).filter(Boolean)
@@ -17,12 +20,13 @@ async function readQuestion(body) {
 
   if (!text) return { error: 'Question text is required' };
   if (options.length < 2) return { error: 'Add at least two options' };
+  if (options.length > MAX_OPTIONS) return { error: `Use at most ${MAX_OPTIONS} options` };
   if (new Set(options.map((o) => o.toLowerCase())).size !== options.length) return { error: 'Options must be different from each other' };
   if (!options.includes(correctAnswer)) return { error: 'The correct answer must be one of the options' };
   if (!DIFFICULTIES.includes(difficulty)) return { error: 'Difficulty must be easy, medium or hard' };
-  if (!mongoose.isValidObjectId(category) || !(await Category.exists({ _id: category }))) {
-    return { error: 'Choose an existing category' };
-  }
+  const categoryOk = mongoose.isValidObjectId(category)
+    && (categoryIds ? categoryIds.has(String(category)) : await Category.exists({ _id: category }));
+  if (!categoryOk) return { error: 'Choose an existing category' };
   return { data: { text, options, correctAnswer, explanation, difficulty, category } };
 }
 
@@ -53,6 +57,33 @@ exports.create = async (req, res) => {
     res.status(201).json(question);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+// POST /api/questions/bulk  { questions: [...] }
+// Saves every valid question and reports the rest by position, so one bad row
+// doesn't block a whole spreadsheet
+exports.bulkCreate = async (req, res) => {
+  const list = req.body?.questions;
+  if (!Array.isArray(list) || list.length === 0) return res.status(400).json({ message: 'Send a list of questions' });
+  if (list.length > MAX_BULK) return res.status(400).json({ message: `Import at most ${MAX_BULK} questions at a time` });
+  try {
+    const categoryIds = new Set((await Category.find().select('_id').lean()).map((c) => String(c._id)));
+    const valid = [];
+    const errors = [];
+    for (let i = 0; i < list.length; i++) {
+      const { data, error } = await readQuestion(list[i] || {}, categoryIds);
+      if (error) errors.push({ index: i, message: error });
+      else valid.push({ ...data, createdBy: req.user._id });
+    }
+    const created = valid.length ? await Question.insertMany(valid) : [];
+    res.status(created.length ? 201 : 400).json({
+      created: created.length,
+      errors,
+      message: created.length ? `${created.length} questions imported` : 'No questions were valid',
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

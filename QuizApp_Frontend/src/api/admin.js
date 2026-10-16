@@ -35,3 +35,4 @@ export const getQuestionsApi = () => adminFetch('/questions');
 export const createQuestionApi = (data) => adminFetch('/questions', { method: 'POST', body: data });
 export const updateQuestionApi = (id, data) => adminFetch(`/questions/${id}`, { method: 'PUT', body: data });
 export const deleteQuestionApi = (id) => adminFetch(`/questions/${id}`, { method: 'DELETE' });
+export const bulkCreateQuestionsApi = (questions) => adminFetch('/questions/bulk', { method: 'POST', body: { questions } });

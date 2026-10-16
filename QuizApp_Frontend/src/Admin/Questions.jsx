@@ -7,6 +7,7 @@ import {
 import { Icon } from '../Components/AppShell';
 import { Modal, ConfirmDialog, EmptyState } from './ui';
 import { categoryTints } from './tints';
+import ImportQuestions from './ImportQuestions';
 
 const PAGE_SIZE = 15;
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
@@ -209,14 +210,27 @@ export default function Questions() {
   // Start of the "added this week" window, fixed when the page opens
   const [weekAgo] = useState(() => Date.now() - WEEK);
 
+  const [importing, setImporting] = useState(false);
+
+  const load = () => Promise.all([getQuestionsApi(), getAdminCategoriesApi()])
+    .then(([qs, cats]) => {
+      setQuestions(qs);
+      setCategories(cats);
+    })
+    .catch((err) => setError(err.message));
+
   useEffect(() => {
-    Promise.all([getQuestionsApi(), getAdminCategoriesApi()])
-      .then(([qs, cats]) => {
-        setQuestions(qs);
-        setCategories(cats);
-      })
-      .catch((err) => setError(err.message));
+    load();
   }, []);
+
+  const finishImport = (res) => {
+    setImporting(false);
+    toast(res.errors?.length
+      ? `${res.created} questions imported, ${res.errors.length} rejected by the server`
+      : `${res.created} ${res.created === 1 ? 'question' : 'questions'} imported`);
+    setPage(1);
+    load();
+  };
 
   const closeForm = () => {
     setEditing(null);
@@ -332,6 +346,9 @@ export default function Questions() {
             {Object.entries(SORTS).map(([value, s]) => <option key={value} value={value}>{s.label}</option>)}
           </select>
         </label>
+        <button className="ad-btn ad-btn-glass ad-filterbar-import" onClick={() => setImporting(true)} disabled={!categories.length || !questions}>
+          <Icon name="box" size={15} /> Import CSV
+        </button>
         <button className="ad-btn ad-btn-primary ad-filterbar-cta" onClick={() => setEditing({})} disabled={!categories.length}>
           <Icon name="plus" size={15} /> Add question
         </button>
@@ -412,6 +429,16 @@ export default function Questions() {
           isEdit={!!editing.question}
           onSave={save}
           onClose={closeForm}
+        />
+      )}
+
+      {importing && (
+        <ImportQuestions
+          categories={categories}
+          existing={questions || []}
+          defaultCategory={category}
+          onImported={finishImport}
+          onClose={() => setImporting(false)}
         />
       )}
 

@@ -14,7 +14,8 @@ connectDB().catch(() => {});
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// 1mb leaves room for bulk question imports (up to 500 rows)
+app.use(express.json({ limit: '1mb' }));
 
 // Debug logger (local only — it would print tokens and user data to production logs)
 if (!isProduction) {
