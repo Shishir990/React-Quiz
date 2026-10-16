@@ -4,8 +4,9 @@ const Question = require('../Models/Question');
 const Quiz = require('../Models/Quiz');
 
 exports.submit = async (req, res) => {
-  const { categoryId, answers, timeTaken } = req.body;
+  const { categoryId, answers = [], timeTaken, questionIds } = req.body;
   // answers: [{ question: "questionId", selectedOption: "answer" }]
+  // questionIds: every question the player was shown, answered or not
   console.log('Submit body received:', { categoryId, answers, timeTaken });
   try {
     // Fetch questions WITH correctAnswer from DB
@@ -15,17 +16,32 @@ exports.submit = async (req, res) => {
       return res.status(404).json({ message: 'Questions not found' });
     }
 
+    const inCategory = new Map(questions.map((q) => [q._id.toString(), q]));
+    // Score out of the questions actually served. Older clients don't send
+    // questionIds, so fall back to the whole category as before.
+    const served = Array.isArray(questionIds)
+      ? [...new Set(questionIds.map(String))].filter((id) => inCategory.has(id))
+      : [...inCategory.keys()];
+    const servedSet = new Set(served);
+
     let score = 0;
+    const seen = new Set();
 
-    // Check each answer against DB
-    const evaluated = answers.map(({ question, selectedOption }) => {
-      const q = questions.find(q => q._id.toString() === question);
-      const isCorrect = q?.correctAnswer === selectedOption;
-      if (isCorrect) score++;
-      return { question, selectedOption, isCorrect };
-    });
+    // Check each answer against DB; count each served question at most once
+    const evaluated = (Array.isArray(answers) ? answers : [])
+      .filter(({ question }) => {
+        const id = String(question);
+        if (!servedSet.has(id) || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map(({ question, selectedOption }) => {
+        const isCorrect = inCategory.get(String(question)).correctAnswer === selectedOption;
+        if (isCorrect) score++;
+        return { question, selectedOption, isCorrect };
+      });
 
-    const total = questions.length;
+    const total = served.length || questions.length;
     const percentage = Math.round((score / total) * 100);
     const passed = percentage >= 50; // pass mark
 

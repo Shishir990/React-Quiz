@@ -164,7 +164,8 @@ export function ContextProvider({ children }) {
     try {
       const data = await authFetch('/results/submit', {
         method: 'POST',
-        body: JSON.stringify({ categoryId, answers, timeTaken }),
+        // questionIds lets the server score out of the questions shown, not the whole category
+        body: JSON.stringify({ categoryId, answers, timeTaken, questionIds: Questions.map((q) => q._id) }),
       });
       setResult(data);
       dispatch({ type: "Finish" });

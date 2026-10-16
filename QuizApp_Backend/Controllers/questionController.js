@@ -84,12 +84,19 @@ exports.remove = async (req, res) => {
 exports.getQuizQuestions = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const limit = parseInt(req.query.limit) || 15;
+    if (!mongoose.isValidObjectId(categoryId)) {
+      return res.status(404).json({ message: 'No questions found for this category' });
+    }
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 15, 1), 50);
 
-    const questions = await Question.find({ category: categoryId })
-      .populate('category', 'name icon')
-      .limit(limit)
-      .select('-correctAnswer -createdBy'); // hide answer from frontend
+    // A random set each time, so every question in the category gets asked,
+    // including ones added after the first `limit`
+    const sampled = await Question.aggregate([
+      { $match: { category: new mongoose.Types.ObjectId(categoryId) } },
+      { $sample: { size: limit } },
+      { $project: { correctAnswer: 0, createdBy: 0 } }, // hide answer from frontend
+    ]);
+    const questions = await Question.populate(sampled, { path: 'category', select: 'name icon' });
 
     if (!questions.length) {
       return res.status(404).json({ message: 'No questions found for this category' });
