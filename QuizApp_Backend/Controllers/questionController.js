@@ -87,13 +87,16 @@ exports.getQuizQuestions = async (req, res) => {
     if (!mongoose.isValidObjectId(categoryId)) {
       return res.status(404).json({ message: 'No questions found for this category' });
     }
-    const limit = Math.min(Math.max(parseInt(req.query.limit) || 15, 1), 50);
+    const match = { category: new mongoose.Types.ObjectId(categoryId) };
+    // Every question in the category by default; ?limit=N asks for a random N instead
+    const limit = parseInt(req.query.limit) > 0
+      ? parseInt(req.query.limit)
+      : await Question.countDocuments(match);
 
-    // A random set each time, so every question in the category gets asked,
-    // including ones added after the first `limit`
+    // $sample also shuffles, so the order changes from quiz to quiz
     const sampled = await Question.aggregate([
-      { $match: { category: new mongoose.Types.ObjectId(categoryId) } },
-      { $sample: { size: limit } },
+      { $match: match },
+      { $sample: { size: Math.max(limit, 1) } },
       { $project: { correctAnswer: 0, createdBy: 0 } }, // hide answer from frontend
     ]);
     const questions = await Question.populate(sampled, { path: 'category', select: 'name icon' });

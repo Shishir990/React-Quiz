@@ -176,10 +176,11 @@ export function ContextProvider({ children }) {
     }
   };
 
-  const fetchQues = async (categoryId, limit = 15) => {
+  // Without a limit the server sends every question in the category
+  const fetchQues = async (categoryId, limit) => {
     console.log('1. fetchQues called, categoryId:', categoryId);
     try {
-      const data = await authFetch(`/questions/quiz/${categoryId}?limit=${limit}`);
+      const data = await authFetch(`/questions/quiz/${categoryId}${limit ? `?limit=${limit}` : ''}`);
       if (data.questions) {
         dispatch({ type: "dataReceived", payload: data.questions });
         dispatch({ type: "Start", payload: data.questions.length * 10 })
