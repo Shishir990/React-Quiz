@@ -87,7 +87,7 @@ export default function Overview() {
       text: s.content.emptyCategories.length
         ? s.content.emptyCategories.map((c) => c.name).join(', ')
         : 'Players can start any topic.',
-      to: s.content.emptyCategories[0] && `/admin/questions/${s.content.emptyCategories[0]._id}?new=1`,
+      to: s.content.emptyCategories[0] && `/admin/questions/category?id=${s.content.emptyCategories[0]._id}&new=1`,
       action: 'Add questions',
     },
     {

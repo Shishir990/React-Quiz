@@ -100,7 +100,8 @@ function App() {
           >
             <Route index element={<AdminOverview />} />
             <Route path="questions" element={<AdminQuestionBank />} />
-            <Route path="questions/:categoryId" element={<AdminCategoryQuestions />} />
+            {/* Category id goes in ?id= so a refresh finds a real file on the host (see vite.config.js) */}
+            <Route path="questions/category" element={<AdminCategoryQuestions />} />
             {/* Categories now live on the Questions page */}
             <Route path="categories" element={<Navigate to="/admin/questions" replace />} />
             <Route path="users" element={<AdminUsers />} />

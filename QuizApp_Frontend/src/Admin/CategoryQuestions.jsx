@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import {
   getQuestionsApi, getAdminCategoriesApi,
   createQuestionApi, updateQuestionApi, deleteQuestionApi,
@@ -18,10 +18,10 @@ const byCreated = (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt ||
 // One category's questions, laid out like the player's quiz screen:
 // one question at a time with a numbered palette, or the whole paper at once
 export default function CategoryQuestions() {
-  const { categoryId } = useParams();
   const { toast } = useOutletContext();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const categoryId = params.get('id') || '';
 
   const [questions, setQuestions] = useState(null);
   const [categories, setCategories] = useState([]);

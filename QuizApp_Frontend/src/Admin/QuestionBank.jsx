@@ -130,7 +130,7 @@ function CardMenu({ category, onEdit, onDelete }) {
           <button className="ad-dropdown-item" role="menuitem" onClick={pick(onEdit)}>
             <Icon name="edit" size={15} /> Edit category
           </button>
-          <Link className="ad-dropdown-item" role="menuitem" to={`/admin/questions/${category._id}`}>
+          <Link className="ad-dropdown-item" role="menuitem" to={`/admin/questions/category?id=${category._id}`}>
             <Icon name="quizzes" size={15} /> Open questions
           </Link>
           <button className="ad-dropdown-item is-danger" role="menuitem" onClick={pick(onDelete)}>
@@ -313,7 +313,7 @@ export default function Categories() {
 
                 <h2 className="ad-cat-name">
                   {/* Stretched link: the whole card opens the category */}
-                  <Link className="ad-cat-link" to={`/admin/questions/${c._id}`}>{c.name}</Link>
+                  <Link className="ad-cat-link" to={`/admin/questions/category?id=${c._id}`}>{c.name}</Link>
                 </h2>
 
                 <div className="ad-cat-tags">
@@ -324,10 +324,10 @@ export default function Categories() {
                 </div>
 
                 <div className="ad-cat-foot">
-                  <Link className="ad-btn ad-btn-xs" to={`/admin/questions/${c._id}`}>Open questions</Link>
+                  <Link className="ad-btn ad-btn-xs" to={`/admin/questions/category?id=${c._id}`}>Open questions</Link>
                   <Link
                     className="ad-btn ad-btn-primary ad-btn-square"
-                    to={`/admin/questions/${c._id}?new=1`}
+                    to={`/admin/questions/category?id=${c._id}&new=1`}
                     aria-label={`Add a question to ${c.name}`}
                     title="Add question"
                   >
