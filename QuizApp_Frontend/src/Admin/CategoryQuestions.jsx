@@ -224,7 +224,7 @@ export default function CategoryQuestions() {
                 </div>
                 <h1 id="ad-qv-text" className="qz-question-text">{question.text}</h1>
                 <p className="qz-hint">
-                  {showAnswers ? 'The correct answer is highlighted.' : `${question.options.length} options`}
+                  {showAnswers ? '' : `${question.options.length} options`}
                 </p>
 
                 <div className="qz-options" aria-label="Options">
