@@ -211,21 +211,9 @@ export default function CategoryQuestions() {
           {!paperView && question && (
             <>
               <section className="qz-question" aria-labelledby="ad-qv-text">
-                <div className="ad-qv-eyebrow-row">
-                  <p className="qz-eyebrow">Question {String(current + 1).padStart(2, '0')}</p>
-                  <div className="ad-qv-tools">
-                    <button className="ad-qv-tool" onClick={() => setEditing({ question })}>
-                      <Icon name="edit" size={14} /> Edit
-                    </button>
-                    <button className="ad-qv-tool is-danger" onClick={() => setDeleting(question)}>
-                      <Icon name="trash" size={14} /> Delete
-                    </button>
-                  </div>
-                </div>
+                <p className="qz-eyebrow">Question {String(current + 1).padStart(2, '0')}</p>
                 <h1 id="ad-qv-text" className="qz-question-text">{question.text}</h1>
-                <p className="qz-hint">
-                  {showAnswers ? '' : `${question.options.length} options`}
-                </p>
+                {!showAnswers && <p className="qz-hint">{question.options.length} options</p>}
 
                 <div className="qz-options" aria-label="Options">
                   {question.options.map((opt, i) => {
@@ -258,15 +246,23 @@ export default function CategoryQuestions() {
                 <button className="qz-prev" onClick={() => setIndex(current - 1)} disabled={current === 0}>
                   <Icon name="back" size={16} /> Previous
                 </button>
-                {current < total - 1 ? (
-                  <button className="qz-next" onClick={() => setIndex(current + 1)}>
-                    Next question <Icon name="arrow" size={16} />
+                <div className="ad-qv-footer-actions">
+                  <button className="ad-qv-tool" onClick={() => setEditing({ question })} aria-label="Edit question" title="Edit question">
+                    <Icon name="edit" size={15} /> <span>Edit</span>
                   </button>
-                ) : (
-                  <button className="qz-next" onClick={() => setEditing({})}>
-                    <Icon name="plus" size={16} /> Add question
+                  <button className="ad-qv-tool is-danger" onClick={() => setDeleting(question)} aria-label="Delete question" title="Delete question">
+                    <Icon name="trash" size={15} /> <span>Delete</span>
                   </button>
-                )}
+                  {current < total - 1 ? (
+                    <button className="qz-next" onClick={() => setIndex(current + 1)}>
+                      Next question <Icon name="arrow" size={16} />
+                    </button>
+                  ) : (
+                    <button className="qz-next" onClick={() => setEditing({})}>
+                      <Icon name="plus" size={16} /> Add question
+                    </button>
+                  )}
+                </div>
               </div>
             </>
           )}

@@ -783,6 +783,34 @@ select.ad-input { cursor: pointer; }
 .ad-qv { min-height: 100%; }
 .ad-qv :focus-visible { outline-color: var(--qz-brand); }
 
+/* Admin theme: blue accent, Inter and the console's gradient instead of the player's green.
+   Green is kept only for the correct answer, where it means "correct". */
+.qz-page.ad-qv {
+  --qz-brand: var(--ad-accent);
+  --qz-brand-dark: var(--ad-accent-hover);
+  --qz-ink: var(--ad-ink);
+  --qz-ink-2: var(--ad-ink-2);
+  --qz-muted: var(--ad-muted);
+  --qz-line: var(--ad-line);
+  --qz-edge: var(--ad-line);
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(180deg, #DBEAFE 0%, #EEF5FF 35%, #FFFFFF 100%);
+  background-attachment: fixed;
+}
+.ad-qv .qz-header {
+  background: linear-gradient(90deg, #DBEAFE 0%, #F0F7FF 50%, #FFFFFF 100%);
+  border-bottom-color: #DBEAFE;
+}
+.ad-qv .qz-brand-icon { border-color: var(--ad-line); }
+.ad-qv .qz-progress { background: #DBEAFE; }
+.ad-qv .qz-progress-bar { background: var(--ad-accent); }
+.ad-qv .qz-palette { border-color: var(--ad-line); }
+.ad-qv .qz-palette-submit:hover:not(:disabled) { background: var(--ad-accent-soft); }
+
+/* Breathing room between the question and its options */
+.ad-qv .qz-hint { margin: 10px 0 0; }
+.ad-qv .qz-options { margin-top: 28px; }
+
 /* Header buttons */
 .ad-qv-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -820,31 +848,29 @@ select.ad-input { cursor: pointer; }
   color: var(--qz-brand-dark); font-size: 12px; font-weight: 600;
 }
 
-/* Edit / delete next to "QUESTION 01" */
-.ad-qv-eyebrow-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.ad-qv-eyebrow-row .qz-eyebrow { margin-bottom: 0; }
-.ad-qv-tools { display: flex; gap: 6px; }
+/* Footer: edit / delete sit to the left of "Next question" */
+.ad-qv-footer-actions { display: flex; align-items: center; gap: 8px; }
 .ad-qv-tool {
-  display: inline-flex; align-items: center; gap: 5px;
-  height: 30px;
-  padding: 0 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 44px;
+  padding: 0 14px;
   border: 1px solid var(--qz-edge);
-  border-radius: 9px;
+  border-radius: 12px;
   background: #fff;
   color: var(--qz-ink-2);
-  font: inherit; font-size: 12px; font-weight: 600;
+  font: inherit; font-size: 14px; font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.ad-qv-tool:hover { border-color: var(--qz-brand); color: var(--qz-brand-dark); background: #F0FDF8; }
+.ad-qv-tool:hover { border-color: var(--qz-brand); color: var(--qz-brand-dark); background: var(--ad-accent-soft); }
 .ad-qv-tool.is-danger:hover { border-color: #FCA5A5; color: #DC2626; background: #FEF2F2; }
 
 .ad-qv-explain {
   margin-top: 16px;
   padding: 12px 14px;
-  border-left: 3px solid #6EE7B7;
+  border-left: 3px solid #93C5FD;
   border-radius: 0 12px 12px 0;
-  background: #F0FDF8;
+  background: var(--ad-accent-soft);
   color: var(--qz-ink-2); font-size: 14px; line-height: 1.55;
 }
 .ad-qv-explain.is-missing { border-left-color: #FCD34D; background: #FFFBEB; color: #92400E; }
@@ -856,9 +882,9 @@ select.ad-input { cursor: pointer; }
   border-style: dashed;
   border-color: var(--qz-brand);
   color: var(--qz-brand-dark);
-  background: #F0FDF8;
+  background: var(--ad-accent-soft);
 }
-.ad-qv-add:hover:not(:disabled) { background: #DCFCE7; }
+.ad-qv-add:hover:not(:disabled) { background: #DBEAFE; }
 .ad-qv-options { margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--qz-line); }
 .ad-qv .ad-switch input:checked + .ad-switch-track { background: var(--qz-brand); }
 .ad-qv .ad-switch input:focus-visible + .ad-switch-track { outline-color: var(--qz-brand); }
@@ -891,10 +917,15 @@ select.ad-input { cursor: pointer; }
   .ad-qv-paper { padding: 4px 14px; }
   .ad-qv-correct { font-size: 0; }
   .ad-qv-correct svg { font-size: 12px; }
+  /* Four buttons in one row: edit / delete go icon-only */
+  .ad-qv-footer-actions { flex: 2; }
+  .ad-qv-footer-actions .qz-next { flex: 1; }
+  .ad-qv-tool { padding: 0 13px; }
+  .ad-qv-tool span { display: none; }
 }
 
 @media print {
-  .ad-qv .qz-header-actions, .ad-qv-palette, .ad-qv .qz-footer, .ad-qv-link, .ad-qv-tools { display: none !important; }
+  .ad-qv .qz-header-actions, .ad-qv-palette, .ad-qv .qz-footer, .ad-qv-link { display: none !important; }
   .ad-qv .qz-header { position: static; background: none; }
   .ad-qv .qz-layout { display: block; padding: 0; }
   .ad-qv-paper { border: none; box-shadow: none; padding: 0; }
