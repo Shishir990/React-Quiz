@@ -9,7 +9,6 @@ import '../Styles/Admin.css';
 const NAV = [
   { to: '/admin', label: 'Overview', icon: 'dashboard', end: true },
   { to: '/admin/questions', label: 'Questions', icon: 'quizzes' },
-  { to: '/admin/categories', label: 'Categories', icon: 'folder' },
   { to: '/admin/users', label: 'Users', icon: 'users' },
 ];
 
@@ -69,6 +68,8 @@ export default function AdminLayout() {
   const nextId = useRef(0);
 
   const current = [...NAV].reverse().find((n) => pathname.startsWith(n.to)) || NAV[0];
+  // A category's question screen is full-page like the quiz, without the navbar
+  const focusMode = /^\/admin\/questions\/[^/]+/.test(pathname);
 
   useEffect(() => {
     document.title = `${current.label} · QuizApp Admin`;
@@ -90,6 +91,7 @@ export default function AdminLayout() {
 
   return (
     <div className="ad-wrapper">
+      {!focusMode && (
       <header className="ad-navbar">
         <div className="ad-navbar-inner">
           <Link to="/admin" className="ad-brand">
@@ -115,8 +117,9 @@ export default function AdminLayout() {
           </div>
         </div>
       </header>
+      )}
 
-      <main className="ad-content">
+      <main className={`ad-content ${focusMode ? 'is-focus' : ''}`}>
         <Outlet context={{ toast }} />
       </main>
 

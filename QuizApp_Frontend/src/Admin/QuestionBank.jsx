@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { getAdminCategoriesApi, createCategoryApi, updateCategoryApi, deleteCategoryApi } from '../api/admin';
 import { Icon } from '../Components/AppShell';
 import { Modal, ConfirmDialog, EmptyState } from './ui';
@@ -130,8 +130,8 @@ function CardMenu({ category, onEdit, onDelete }) {
           <button className="ad-dropdown-item" role="menuitem" onClick={pick(onEdit)}>
             <Icon name="edit" size={15} /> Edit category
           </button>
-          <Link className="ad-dropdown-item" role="menuitem" to={`/admin/questions?category=${category._id}`}>
-            <Icon name="quizzes" size={15} /> View questions
+          <Link className="ad-dropdown-item" role="menuitem" to={`/admin/questions/${category._id}`}>
+            <Icon name="quizzes" size={15} /> Open questions
           </Link>
           <button className="ad-dropdown-item is-danger" role="menuitem" onClick={pick(onDelete)}>
             <Icon name="trash" size={15} /> Delete
@@ -146,7 +146,18 @@ export default function Categories() {
   const { toast } = useOutletContext();
   const [categories, setCategories] = useState(null);
   const [error, setError] = useState('');
-  const [editing, setEditing] = useState(null); // { category } or {} for new
+  const [params, setParams] = useSearchParams();
+  // { category } or {} for new; ?newCategory=1 (from Overview) opens the form right away
+  const [editing, setEditing] = useState(() => (params.get('newCategory') ? {} : null));
+
+  const closeForm = () => {
+    setEditing(null);
+    if (params.has('newCategory')) {
+      params.delete('newCategory');
+      setParams(params, { replace: true });
+    }
+  };
+
   const [deleting, setDeleting] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [query, setQuery] = useState('');
@@ -167,7 +178,7 @@ export default function Categories() {
       await createCategoryApi(data);
       toast(`${data.name} created. Add some questions so players can start it.`);
     }
-    setEditing(null);
+    closeForm();
     // Reload to get fresh question counts
     load();
   };
@@ -211,10 +222,10 @@ export default function Categories() {
     <>
       <div className="ad-hero">
         <div className="ad-hero-title">
-          <span className="ad-hero-icon"><Icon name="quizzes" size={22} /></span>
+          <span className="ad-hero-icon"><Icon name="help" size={22} /></span>
           <div>
-            <h1 className="ad-title">Categories</h1>
-            <p className="ad-subtitle">Manage quiz topics and question banks.</p>
+            <h1 className="ad-title">Questions</h1>
+            <p className="ad-subtitle">Pick a category to add, edit or review its questions.</p>
           </div>
         </div>
       </div>
@@ -300,7 +311,10 @@ export default function Categories() {
                   <CardMenu category={c} onEdit={() => setEditing({ category: c })} onDelete={() => setDeleting(c)} />
                 </div>
 
-                <h2 className="ad-cat-name">{c.name}</h2>
+                <h2 className="ad-cat-name">
+                  {/* Stretched link: the whole card opens the category */}
+                  <Link className="ad-cat-link" to={`/admin/questions/${c._id}`}>{c.name}</Link>
+                </h2>
 
                 <div className="ad-cat-tags">
                   {total > 0
@@ -310,10 +324,10 @@ export default function Categories() {
                 </div>
 
                 <div className="ad-cat-foot">
-                  <Link className="ad-btn ad-btn-xs" to={`/admin/questions?category=${c._id}`}>View questions</Link>
+                  <Link className="ad-btn ad-btn-xs" to={`/admin/questions/${c._id}`}>Open questions</Link>
                   <Link
                     className="ad-btn ad-btn-primary ad-btn-square"
-                    to={`/admin/questions?category=${c._id}&new=1`}
+                    to={`/admin/questions/${c._id}?new=1`}
                     aria-label={`Add a question to ${c.name}`}
                     title="Add question"
                   >
@@ -333,7 +347,7 @@ export default function Categories() {
             : { name: '', icon: '', description: '' }}
           isEdit={!!editing.category}
           onSave={save}
-          onClose={() => setEditing(null)}
+          onClose={closeForm}
         />
       )}
 

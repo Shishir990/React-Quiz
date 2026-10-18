@@ -14,8 +14,8 @@ import ResultDetail from './Pages/ResultDetail';
 import Leaderboard from './Pages/Leaderboard';
 import AdminLayout from './Admin/AdminLayout';
 import AdminOverview from './Admin/Overview';
-import AdminQuestions from './Admin/Questions';
-import AdminCategories from './Admin/Categories';
+import AdminQuestionBank from './Admin/QuestionBank';
+import AdminCategoryQuestions from './Admin/CategoryQuestions';
 import AdminUsers from './Admin/Users';
 import { ErrorScreen } from './Screens/ErrorScreen'
 import { StartScreen } from './Screens/StartScreen'
@@ -99,8 +99,10 @@ function App() {
             }
           >
             <Route index element={<AdminOverview />} />
-            <Route path="questions" element={<AdminQuestions />} />
-            <Route path="categories" element={<AdminCategories />} />
+            <Route path="questions" element={<AdminQuestionBank />} />
+            <Route path="questions/:categoryId" element={<AdminCategoryQuestions />} />
+            {/* Categories now live on the Questions page */}
+            <Route path="categories" element={<Navigate to="/admin/questions" replace />} />
             <Route path="users" element={<AdminUsers />} />
           </Route>
 

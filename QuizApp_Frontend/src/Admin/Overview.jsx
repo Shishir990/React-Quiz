@@ -87,7 +87,7 @@ export default function Overview() {
       text: s.content.emptyCategories.length
         ? s.content.emptyCategories.map((c) => c.name).join(', ')
         : 'Players can start any topic.',
-      to: s.content.emptyCategories[0] && `/admin/questions?category=${s.content.emptyCategories[0]._id}&new=1`,
+      to: s.content.emptyCategories[0] && `/admin/questions/${s.content.emptyCategories[0]._id}?new=1`,
       action: 'Add questions',
     },
     {
@@ -121,8 +121,8 @@ export default function Overview() {
           </div>
         </div>
         <div className="ad-head-actions">
-          <Link className="ad-btn ad-btn-glass" to="/admin/categories"><Icon name="folder" size={15} /> New category</Link>
-          <Link className="ad-btn ad-btn-primary ad-btn-glow" to="/admin/questions?new=1"><Icon name="plus" size={15} /> Add question</Link>
+          <Link className="ad-btn ad-btn-glass" to="/admin/questions?newCategory=1"><Icon name="folder" size={15} /> New category</Link>
+          <Link className="ad-btn ad-btn-primary ad-btn-glow" to="/admin/questions"><Icon name="plus" size={15} /> Add questions</Link>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export default function Overview() {
               <h2>Popular categories</h2>
               <p className="ad-muted">By number of attempts</p>
             </div>
-            <Link className="ad-link" to="/admin/categories">All <Icon name="arrow" size={13} /></Link>
+            <Link className="ad-link" to="/admin/questions">All <Icon name="arrow" size={13} /></Link>
           </div>
           {!s ? (
             <SkeletonRows rows={4} />

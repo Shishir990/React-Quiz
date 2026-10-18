@@ -31,7 +31,7 @@ export const updateCategoryApi = (id, data) => adminFetch(`/categories/${id}`, {
 export const deleteCategoryApi = (id) => adminFetch(`/categories/${id}`, { method: 'DELETE' });
 
 // Questions (includes correct answers, admin only)
-export const getQuestionsApi = () => adminFetch('/questions');
+export const getQuestionsApi = (category) => adminFetch(category ? `/questions?category=${category}` : '/questions');
 export const createQuestionApi = (data) => adminFetch('/questions', { method: 'POST', body: data });
 export const updateQuestionApi = (id, data) => adminFetch(`/questions/${id}`, { method: 'PUT', body: data });
 export const deleteQuestionApi = (id) => adminFetch(`/questions/${id}`, { method: 'DELETE' });
