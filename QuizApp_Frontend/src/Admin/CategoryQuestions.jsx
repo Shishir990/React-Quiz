@@ -234,9 +234,8 @@ export default function CategoryQuestions() {
                   question.explanation ? (
                     <p className="ad-qv-explain"><strong>Explanation:</strong> {question.explanation}</p>
                   ) : (
-                    <p className="ad-qv-explain is-missing">
-                   
-          
+                    <p >
+
                     </p>
                   )
                 )}
