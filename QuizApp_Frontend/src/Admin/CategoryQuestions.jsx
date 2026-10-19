@@ -235,7 +235,7 @@ export default function CategoryQuestions() {
                     <p className="ad-qv-explain"><strong>Explanation:</strong> {question.explanation}</p>
                   ) : (
                     <p className="ad-qv-explain is-missing">
-                      No explanation yet.{' '}
+                   ""
                       <button className="ad-qv-link" onClick={() => setEditing({ question })}>Add one</button>
                     </p>
                   )
