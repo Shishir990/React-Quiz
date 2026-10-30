@@ -709,6 +709,9 @@ select.ad-input { cursor: pointer; }
 .ad-cat:has(.ad-cat-link:focus-visible) { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
 /* Menu and footer buttons sit above the stretched link */
 .ad-cat .ad-menu, .ad-cat-foot { position: relative; z-index: 2; }
+/* The open "⋮" menu must cover its own footer and the cards below it */
+.ad-cat .ad-menu { z-index: 3; }
+.ad-cat:has(.ad-menu-list) { z-index: 10; }
 
 /* ── Category questions page ── */
 
