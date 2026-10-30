@@ -123,7 +123,16 @@ export default function CategoryQuestions() {
     toast(res.errors?.length
       ? `${res.created} questions imported, ${res.errors.length} rejected by the server`
       : `${res.created} ${res.created === 1 ? 'question' : 'questions'} imported`);
-    load();
+    if (!Array.isArray(res.questions)) {
+      load();
+      return;
+    }
+    // Rows can name other categories; only this category's questions belong on this page
+    const added = res.questions.filter((q) => String(q.category?._id || q.category) === categoryId);
+    if (added.length) {
+      setQuestions((list) => [...(list || []), ...added].sort(byCreated));
+      setIndex(total); // jump to the first imported question
+    }
   };
 
   if (notFound) {

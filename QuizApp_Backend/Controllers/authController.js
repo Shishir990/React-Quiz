@@ -40,3 +40,26 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   res.json(req.user);
 };
+
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword)
+    return res.status(400).json({ message: 'Current and new password are required' });
+  if (newPassword.length < 6)
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  if (newPassword === currentPassword)
+    return res.status(400).json({ message: 'New password must be different from the current one' });
+
+  try {
+    // protect() strips the hash, so load it again to verify the current password
+    const user = await User.findById(req.user._id);
+    if (!(await user.matchPassword(currentPassword)))
+      return res.status(400).json({ message: 'Current password is incorrect' });
+
+    user.password = newPassword; // hashed by the pre('save') hook
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

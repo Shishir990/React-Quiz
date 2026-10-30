@@ -71,7 +71,7 @@ const NAV_ITEMS = [
   { label: 'Results', icon: 'results', to: '/results' },
   { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
   { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
-  { label: 'Settings', icon: 'settings', separate: true },
+  { label: 'Settings', icon: 'settings', to: '/settings', separate: true },
 ];
 
 function NavItem({ item }) {

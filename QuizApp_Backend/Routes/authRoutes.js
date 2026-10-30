@@ -1,10 +1,11 @@
 const router = require('express').Router();
-const { register, login, getMe } = require('../Controllers/authController');
+const { register, login, getMe, changePassword } = require('../Controllers/authController');
 const { protect } = require('../Middleware/authMiddleware');
 console.log('protect:', protect); // should print [Function: protect]
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
+router.put('/password', protect, changePassword);
 
 console.log('register:', register);
 console.log('login:', login);

@@ -44,3 +44,15 @@ export const getMeApi = async () => {
     throw new Error(err.message || 'Failed to fetch user');
   }
 };
+
+export const changePasswordApi = async (currentPassword, newPassword) => {
+  try {
+    const data = await authFetch('/auth/password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    return data;
+  } catch (err) {
+    throw new Error(err.message || 'Failed to change password');
+  }
+};

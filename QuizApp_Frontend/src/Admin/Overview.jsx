@@ -111,7 +111,7 @@ export default function Overview() {
   ] : [];
 
   return (
-    <>
+    <div className="ad-ov">
       <div className="ad-hero">
         <div className="ad-hero-title">
           <span className="ad-hero-icon"><Icon name="dashboard" size={22} /></span>
@@ -249,6 +249,6 @@ export default function Overview() {
           )}
         </section>
       </div>
-    </>
+    </div>
   );
 }

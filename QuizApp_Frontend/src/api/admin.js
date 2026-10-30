@@ -4,6 +4,8 @@ const BASE = '/api';
 // so admin forms can show exactly what went wrong
 const adminFetch = async (url, { body, ...options } = {}) => {
   const response = await fetch(`${BASE}${url}`, {
+    // Admin data changes constantly; never answer a GET from the browser cache
+    cache: 'no-store',
     ...options,
     headers: {
       'Content-Type': 'application/json',

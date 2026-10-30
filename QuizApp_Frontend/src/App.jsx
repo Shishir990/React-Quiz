@@ -12,6 +12,7 @@ import Register from './Pages/Register';
 import Results from './Pages/Results';
 import ResultDetail from './Pages/ResultDetail';
 import Leaderboard from './Pages/Leaderboard';
+import Settings from './Pages/Settings';
 import AdminLayout from './Admin/AdminLayout';
 import AdminOverview from './Admin/Overview';
 import AdminQuestionBank from './Admin/QuestionBank';
@@ -53,6 +54,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ResultDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

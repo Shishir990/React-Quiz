@@ -239,12 +239,17 @@
 .ad-btn.ad-btn-glow { border-radius: 12px; box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7); }
 .ad-head-actions .ad-btn { border-radius: 12px; }
 
+/* Overview fills the scroll area; the panel grid takes the leftover height */
+.ad-ov { display: flex; flex-direction: column; min-height: 100%; }
 .ad-ov-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
+.ad-ov-activity { display: flex; flex-direction: column; }
+.ad-ov-activity .ad-chart { flex: 1; min-height: 220px; }
 
 .ad-panel {
   padding: 18px 20px;

@@ -77,8 +77,11 @@ exports.bulkCreate = async (req, res) => {
       else valid.push({ ...data, createdBy: req.user._id });
     }
     const created = valid.length ? await Question.insertMany(valid) : [];
+    // Send the saved questions back so the admin screen can show them without refetching
+    const questions = created.length ? await Question.populate(created, { path: 'category', select: 'name icon' }) : [];
     res.status(created.length ? 201 : 400).json({
       created: created.length,
+      questions,
       errors,
       message: created.length ? `${created.length} questions imported` : 'No questions were valid',
     });
@@ -128,7 +131,9 @@ exports.getQuizQuestions = async (req, res) => {
     const sampled = await Question.aggregate([
       { $match: match },
       { $sample: { size: Math.max(limit, 1) } },
-      { $project: { correctAnswer: 0, createdBy: 0 } }, // hide answer from frontend
+      // Hide the answer, and the explanation too since it usually gives the answer away;
+      // players see explanations afterwards via /api/results/:id
+      { $project: { correctAnswer: 0, explanation: 0, createdBy: 0, createdAt: 0, updatedAt: 0, __v: 0 } },
     ]);
     const questions = await Question.populate(sampled, { path: 'category', select: 'name icon' });
 
