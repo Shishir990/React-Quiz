@@ -101,8 +101,16 @@ export function checkRows(rows, { categories, defaultCategory, existing }) {
   const missingColumns = ['question', 'option_a', 'option_b', 'correct'].filter((c) => col(c) === -1);
   if (missingColumns.length) return { items: [], missingColumns };
 
-  const byName = new Map(categories.map((c) => [norm(c.name), c]));
   const byId = new Map(categories.map((c) => [c._id, c]));
+  // Names are matched case-insensitively, but the server allows "JEE-Maths" and
+  // "JEE-maths" side by side. Prefer the category being imported into, then an
+  // exact-case match, so rows never silently land in a look-alike category.
+  const findByName = (cell) => {
+    const matches = categories.filter((c) => norm(c.name) === norm(cell));
+    return matches.find((c) => c._id === defaultCategory)
+      || matches.find((c) => c.name.trim() === cell.trim())
+      || matches[0];
+  };
   const known = new Set(existing.map((q) => `${q.category?._id || q.category}|${norm(q.text)}`));
   const seenInFile = new Set();
 
@@ -120,7 +128,7 @@ export function checkRows(rows, { categories, defaultCategory, existing }) {
       : options.find((o) => norm(o) === norm(correctRaw)) || '';
     const difficulty = norm(get('difficulty')) || 'medium';
     const categoryCell = get('category');
-    const category = categoryCell ? byName.get(norm(categoryCell)) : byId.get(defaultCategory);
+    const category = categoryCell ? findByName(categoryCell) : byId.get(defaultCategory);
 
     let error = null;
     if (!text) error = 'Question is empty';

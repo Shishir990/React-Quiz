@@ -16,6 +16,9 @@
   --ad-danger: #DC2626;
   --ad-radius: 10px;
 
+  /* Positioned so absolutely placed children (e.g. .ad-sr-only) stay inside
+     the clipped shell instead of stretching the whole browser page */
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -149,7 +152,7 @@
 .ad-dropdown-item.is-danger:hover { background: #FEF2F2; }
 
 /* ── Content ── */
-.ad-content { flex: 1; overflow-y: auto; padding: 28px; }
+.ad-content { position: relative; flex: 1; overflow-y: auto; padding: 28px; }
 .ad-content > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
 
 .ad-page-head {

@@ -120,15 +120,19 @@ export default function CategoryQuestions() {
 
   const finishImport = (res) => {
     setImporting(false);
-    toast(res.errors?.length
-      ? `${res.created} questions imported, ${res.errors.length} rejected by the server`
-      : `${res.created} ${res.created === 1 ? 'question' : 'questions'} imported`);
     if (!Array.isArray(res.questions)) {
+      toast(`${res.created} ${res.created === 1 ? 'question' : 'questions'} imported`);
       load();
       return;
     }
     // Rows can name other categories; only this category's questions belong on this page
     const added = res.questions.filter((q) => String(q.category?._id || q.category) === categoryId);
+    const elsewhere = res.questions.length - added.length;
+    toast([
+      `${added.length} ${added.length === 1 ? 'question' : 'questions'} imported here`,
+      elsewhere && `${elsewhere} into other categories (from the CSV's category column)`,
+      res.errors?.length && `${res.errors.length} rejected by the server`,
+    ].filter(Boolean).join(', '));
     if (added.length) {
       setQuestions((list) => [...(list || []), ...added].sort(byCreated));
       setIndex(total); // jump to the first imported question
