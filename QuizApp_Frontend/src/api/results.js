@@ -10,6 +10,16 @@ export const getMyResultsApi = async () => {
   }
 };
 
+// Every attempt, oldest first, with answer counts and accuracy by difficulty
+export const getMyAnalyticsApi = async () => {
+  try {
+    const data = await authFetch('/results/analytics');
+    return data;
+  } catch (err) {
+    throw new Error(err.message || 'Failed to fetch analytics');
+  }
+};
+
 // One of the user's attempts, with every question and the chosen answer
 export const getResultApi = async (id) => {
   try {

@@ -50,6 +50,7 @@ exports.submit = async (req, res) => {
       quiz: categoryId,
       answers: evaluated,
       score,
+      total,
       percentage,
       passed,
       timeTaken
@@ -90,6 +91,51 @@ exports.myHistory = async (req, res) => {
       timeTaken: r.timeTaken,
       createdAt: r.createdAt,
     })));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET /api/results/analytics — every attempt of the logged-in user, oldest first,
+// reduced to what the analytics charts need: answer counts and accuracy by difficulty.
+// The page filters and groups these itself, so one request covers every chart.
+exports.analytics = async (req, res) => {
+  try {
+    const results = await Result.find({ user: req.user._id })
+      .sort({ createdAt: 1 })
+      .limit(1000)
+      .populate({ path: 'quiz', model: 'Category', select: 'name icon' })
+      .populate({ path: 'answers.question', select: 'difficulty' })
+      .lean();
+
+    res.json(results.map((r) => {
+      const answered = r.answers.length;
+      // Older results don't store how many questions were served; work it back from the score
+      const estimated = r.percentage > 0 ? Math.round((r.score * 100) / r.percentage) : answered;
+      const total = Math.max(r.total ?? estimated, answered);
+
+      const difficulty = { easy: { correct: 0, answered: 0 }, medium: { correct: 0, answered: 0 }, hard: { correct: 0, answered: 0 } };
+      r.answers.forEach((a) => {
+        const level = difficulty[a.question?.difficulty]; // undefined when the question was deleted
+        if (!level) return;
+        level.answered++;
+        if (a.isCorrect) level.correct++;
+      });
+
+      return {
+        _id: r._id,
+        category: r.quiz ? { _id: r.quiz._id, name: r.quiz.name, icon: r.quiz.icon } : null,
+        percentage: r.percentage,
+        passed: r.passed,
+        timeTaken: r.timeTaken,
+        createdAt: r.createdAt,
+        total,
+        correct: r.score,
+        wrong: answered - r.score,
+        skipped: total - answered,
+        difficulty,
+      };
+    }));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

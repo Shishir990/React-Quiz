@@ -11,6 +11,7 @@ const resultSchema = new mongoose.Schema({
   quiz:           { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
   answers:        [answerSchema],
   score:          { type: Number, required: true },       // raw score
+  total:          { type: Number },                       // questions served (older results lack it)
   percentage:     { type: Number, required: true },
   passed:         { type: Boolean, required: true },
   timeTaken:      { type: Number },                       // in seconds

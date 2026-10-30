@@ -12,6 +12,7 @@ import Register from './Pages/Register';
 import Results from './Pages/Results';
 import ResultDetail from './Pages/ResultDetail';
 import Leaderboard from './Pages/Leaderboard';
+import Analytics from './Pages/Analytics';
 import Settings from './Pages/Settings';
 import AdminLayout from './Admin/AdminLayout';
 import AdminOverview from './Admin/Overview';
@@ -46,6 +47,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Results />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             }
           />
