@@ -1,4 +1,4 @@
-import { queryClient } from './queries';
+import { queryClient } from './queryClient';
 
 const BASE = '/api';
 
@@ -6,7 +6,8 @@ const BASE = '/api';
 // so admin forms can show exactly what went wrong
 const adminFetch = async (url, { body, ...options } = {}) => {
   const response = await fetch(`${BASE}${url}`, {
-    // Admin data changes constantly; never answer a GET from the browser cache
+    // Admin data changes constantly; never answer a GET from the browser's
+    // HTTP cache (TanStack Query decides when to reuse data instead)
     cache: 'no-store',
     ...options,
     headers: {
@@ -17,8 +18,8 @@ const adminFetch = async (url, { body, ...options } = {}) => {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`);
-  // Any admin change (categories, questions, users) can affect what players
-  // see, so mark all cached player data as stale. Admin edits are rare.
+  // Any admin change (categories, questions, users) can affect other pages,
+  // so mark all cached data stale; pages on screen refetch right away.
   if (options.method && options.method !== 'GET') queryClient.invalidateQueries();
   return data;
 };

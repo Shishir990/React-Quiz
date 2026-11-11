@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAdminStatsApi, getAdminCategoriesApi } from '../api/admin';
+import { useAdminStats, useAdminCategories } from '../api/queries';
 import { useQuiz } from '../Context/Context';
 import { Icon } from '../Components/AppShell';
 import { timeAgo } from '../utils/format';
@@ -52,14 +51,10 @@ function ActivityChart({ days }) {
 
 export default function Overview() {
   const { user } = useQuiz();
-  const [stats, setStats] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    getAdminStatsApi().then(setStats).catch((err) => setError(err.message));
-    getAdminCategoriesApi().then(setCategories).catch(() => {});
-  }, []);
+  const statsQuery = useAdminStats();
+  const stats = statsQuery.data ?? null;
+  const error = statsQuery.isError ? statsQuery.error.message : '';
+  const categories = useAdminCategories().data ?? [];
 
   const tintOf = categoryTints(categories);
   const s = stats;

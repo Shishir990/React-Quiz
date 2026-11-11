@@ -1,17 +1,10 @@
-import { QueryClient, useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { queryClient } from './queryClient';
 import { getCategoriesApi } from './categories';
 import { getMyResultsApi, getMyAnalyticsApi, getResultApi, getLeaderboardApi } from './results';
+import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi } from './admin';
 
-// Cached data shows instantly when you come back to a page; anything older
-// than staleTime is quietly refetched in the background.
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      retry: 1,
-    },
-  },
-});
+export { queryClient };
 
 // One place for cache keys, so invalidation can't drift out of sync.
 // Prefixes matter: invalidating ['results'] covers every key below it.
@@ -65,6 +58,37 @@ export const useLeaderboard = ({ period = 'week', category } = {}) =>
         expect((d) => Array.isArray(d?.players), 'Could not load the leaderboard.')
       ),
     placeholderData: keepPreviousData,
+  });
+
+// ── Admin ──
+// staleTime 0: a revisited admin page shows its cached data instantly but
+// always refetches, since admins need the current state before acting on it.
+// adminFetch throws on errors itself, so no shape checks are needed here.
+export const adminKeys = {
+  stats: ['admin', 'stats'],
+  users: ['admin', 'users'],
+  categories: ['admin', 'categories'],
+  questions: (categoryId) => ['admin', 'questions', categoryId || 'all'],
+};
+
+export const useAdminStats = () =>
+  useQuery({ queryKey: adminKeys.stats, queryFn: getAdminStatsApi, staleTime: 0 });
+
+export const useAdminUsers = () =>
+  useQuery({ queryKey: adminKeys.users, queryFn: getUsersApi, staleTime: 0 });
+
+export const useAdminCategories = () =>
+  useQuery({ queryKey: adminKeys.categories, queryFn: getAdminCategoriesApi, staleTime: 0 });
+
+const byCreated = (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+
+// Sorted oldest first in `select`, so cache updates can just append
+export const useAdminQuestions = (categoryId) =>
+  useQuery({
+    queryKey: adminKeys.questions(categoryId),
+    queryFn: () => getQuestionsApi(categoryId),
+    select: (questions) => [...questions].sort(byCreated),
+    staleTime: 0,
   });
 
 // After a quiz is submitted: history, analytics and rankings are out of date

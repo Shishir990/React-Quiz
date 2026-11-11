@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
-import { getAdminCategoriesApi, createCategoryApi, updateCategoryApi, deleteCategoryApi } from '../api/admin';
+import { createCategoryApi, updateCategoryApi, deleteCategoryApi } from '../api/admin';
+import { queryClient, adminKeys, useAdminCategories } from '../api/queries';
 import { Icon } from '../Components/AppShell';
 import { Modal, ConfirmDialog, EmptyState } from './ui';
 import { categoryTints } from './tints';
@@ -144,8 +145,9 @@ function CardMenu({ category, onEdit, onDelete }) {
 
 export default function Categories() {
   const { toast } = useOutletContext();
-  const [categories, setCategories] = useState(null);
-  const [error, setError] = useState('');
+  const categoriesQuery = useAdminCategories();
+  const categories = categoriesQuery.data ?? null;
+  const error = categoriesQuery.isError ? categoriesQuery.error.message : '';
   const [params, setParams] = useSearchParams();
   // { category } or {} for new; ?newCategory=1 (from Overview) opens the form right away
   const [editing, setEditing] = useState(() => (params.get('newCategory') ? {} : null));
@@ -164,12 +166,8 @@ export default function Categories() {
   const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('name');
 
-  const load = () => getAdminCategoriesApi().then(setCategories).catch((err) => setError(err.message));
-
-  useEffect(() => {
-    load();
-  }, []);
-
+  // No reload needed after saving: every admin change marks the cache stale
+  // (see adminFetch), so fresh question counts are refetched automatically
   const save = async (data) => {
     if (editing.category) {
       await updateCategoryApi(editing.category._id, data);
@@ -179,15 +177,13 @@ export default function Categories() {
       toast(`${data.name} created. Add some questions so players can start it.`);
     }
     closeForm();
-    // Reload to get fresh question counts
-    load();
   };
 
   const confirmDelete = async () => {
     setDeleteBusy(true);
     try {
       const res = await deleteCategoryApi(deleting._id);
-      setCategories((list) => list.filter((c) => c._id !== deleting._id));
+      queryClient.setQueryData(adminKeys.categories, (list) => list?.filter((c) => c._id !== deleting._id));
       toast(`${deleting.name} deleted${res.questionsDeleted ? ` with ${res.questionsDeleted} questions` : ''}`);
       setDeleting(null);
     } catch (err) {

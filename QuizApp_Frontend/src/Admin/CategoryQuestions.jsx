@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import {
-  getQuestionsApi, getAdminCategoriesApi,
-  createQuestionApi, updateQuestionApi, deleteQuestionApi,
-} from '../api/admin';
+import { createQuestionApi, updateQuestionApi, deleteQuestionApi } from '../api/admin';
+import { queryClient, adminKeys, useAdminQuestions, useAdminCategories } from '../api/queries';
 import { Icon } from '../Components/AppShell';
 import { ConfirmDialog, EmptyState } from './ui';
 import { categoryTints } from './tints';
@@ -13,8 +11,6 @@ import '../Styles/Quiz.css';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-const byCreated = (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-
 // One category's questions, laid out like the player's quiz screen:
 // one question at a time with a numbered palette, or the whole paper at once
 export default function CategoryQuestions() {
@@ -23,9 +19,14 @@ export default function CategoryQuestions() {
   const [params, setParams] = useSearchParams();
   const categoryId = params.get('id') || '';
 
-  const [questions, setQuestions] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [error, setError] = useState('');
+  const questionsQuery = useAdminQuestions(categoryId);
+  const categoriesQuery = useAdminCategories();
+  const questions = questionsQuery.data ?? null;
+  const categories = categoriesQuery.data ?? [];
+  const error = (questionsQuery.error || categoriesQuery.error)?.message || '';
+  // Edit this category's cached list in place; useAdminQuestions keeps it sorted
+  const updateQuestions = (fn) =>
+    queryClient.setQueryData(adminKeys.questions(categoryId), (list) => list && fn(list));
 
   const [index, setIndex] = useState(0);
   const [paperView, setPaperView] = useState(false);
@@ -36,18 +37,6 @@ export default function CategoryQuestions() {
   const [importing, setImporting] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-
-  const load = () => Promise.all([getQuestionsApi(categoryId), getAdminCategoriesApi()])
-    .then(([qs, cats]) => {
-      setQuestions([...qs].sort(byCreated));
-      setCategories(cats);
-    })
-    .catch((err) => setError(err.message));
-
-  // Reload only when switching category; `load` itself is recreated every render
-  useEffect(() => {
-    load();
-  }, [categoryId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const all = questions || [];
   const total = all.length;
@@ -88,7 +77,7 @@ export default function CategoryQuestions() {
     if (editing?.question) {
       const updated = await updateQuestionApi(editing.question._id, data);
       // Moving a question to another category removes it from this page
-      setQuestions((list) => (inThisCategory
+      updateQuestions((list) => (inThisCategory
         ? list.map((q) => (q._id === updated._id ? updated : q))
         : list.filter((q) => q._id !== updated._id)));
       toast(inThisCategory ? 'Question updated' : `Question moved to ${categories.find((c) => c._id === String(data.category))?.name || 'another category'}`);
@@ -96,7 +85,7 @@ export default function CategoryQuestions() {
     } else {
       const created = await createQuestionApi(data);
       if (inThisCategory) {
-        setQuestions((list) => [...list, created]);
+        updateQuestions((list) => [...list, created]);
         setIndex(total); // show the new question
       }
       toast(addAnother ? 'Question added. Ready for the next one.' : 'Question added');
@@ -108,7 +97,7 @@ export default function CategoryQuestions() {
     setDeleteBusy(true);
     try {
       await deleteQuestionApi(deleting._id);
-      setQuestions((list) => list.filter((q) => q._id !== deleting._id));
+      updateQuestions((list) => list.filter((q) => q._id !== deleting._id));
       toast('Question deleted');
       setDeleting(null);
     } catch (err) {
@@ -121,8 +110,8 @@ export default function CategoryQuestions() {
   const finishImport = (res) => {
     setImporting(false);
     if (!Array.isArray(res.questions)) {
+      // The import marked the cache stale, so this page refetches by itself
       toast(`${res.created} ${res.created === 1 ? 'question' : 'questions'} imported`);
-      load();
       return;
     }
     // Rows can name other categories; only this category's questions belong on this page
@@ -134,7 +123,7 @@ export default function CategoryQuestions() {
       res.errors?.length && `${res.errors.length} rejected by the server`,
     ].filter(Boolean).join(', '));
     if (added.length) {
-      setQuestions((list) => [...(list || []), ...added].sort(byCreated));
+      updateQuestions((list) => [...list, ...added]);
       setIndex(total); // jump to the first imported question
     }
   };

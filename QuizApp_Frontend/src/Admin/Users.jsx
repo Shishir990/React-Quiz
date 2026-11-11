@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useQuiz } from '../Context/Context';
-import { getUsersApi, setUserRoleApi, setUserStatusApi } from '../api/admin';
+import { setUserRoleApi, setUserStatusApi } from '../api/admin';
+import { queryClient, adminKeys, useAdminUsers } from '../api/queries';
 import { Icon } from '../Components/AppShell';
 import { initialsOf, timeAgo } from '../utils/format';
 import { ConfirmDialog, EmptyState, SkeletonRows } from './ui';
@@ -54,23 +55,21 @@ export default function Users() {
   const { user: me } = useQuiz();
   const myId = me?._id || me?.id;
 
-  const [users, setUsers] = useState(null);
-  const [error, setError] = useState('');
+  const usersQuery = useAdminUsers();
+  const users = usersQuery.data ?? null;
+  const error = usersQuery.isError ? usersQuery.error.message : '';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
   const [pending, setPending] = useState(null); // { action, user }
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    getUsersApi().then(setUsers).catch((err) => setError(err.message));
-  }, []);
 
   const runPending = async () => {
     const { action, user } = pending;
     setBusy(true);
     try {
       const updated = await ACTIONS[action].run(user);
-      setUsers((list) => list.map((u) => (u._id === updated._id ? { ...u, ...updated } : u)));
+      queryClient.setQueryData(adminKeys.users, (list) =>
+        list?.map((u) => (u._id === updated._id ? { ...u, ...updated } : u)));
       toast(ACTIONS[action].done(user));
       setPending(null);
     } catch (err) {
