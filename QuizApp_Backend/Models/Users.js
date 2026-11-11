@@ -8,6 +8,10 @@ const userSchema = new mongoose.Schema({
   role:     { type: String, enum: ['admin', 'player'], default: 'player' },
   avatar:   { type: String, default: '' },
   isActive: { type: Boolean, default: true },
+  // Forgot-password: only a SHA-256 hash of the emailed token is stored.
+  // select: false keeps both out of every normal query.
+  resetPasswordToken:   { type: String, select: false },
+  resetPasswordExpires: { type: Date, select: false },
 }, { timestamps: true });
 
 // ✅ async without next

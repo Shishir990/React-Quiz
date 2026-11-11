@@ -1,33 +1,37 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { loginApi } from '../api/auth';
 import { useQuiz } from '../Context/Context';
+import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
 
 export default function Login() {
   const navigate = useNavigate();
+  const notice = useLocation().state?.notice;
   const { login } = useQuiz()
 
   const [form, setForm] = useState({ email: '', password: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
   };
 
   const validate = () => {
-    if (!form.email || !form.password) return 'Please fill in all fields.';
-    if (!/\S+@\S+\.\S+/.test(form.email)) return 'Enter a valid email.';
-    return null;
+    const errors = {};
+    if (!form.email) errors.email = 'Email is required.';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Enter a valid email address.';
+    if (!form.password) errors.password = 'Password is required.';
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
 
     setError('');
     setLoading(true);
@@ -49,56 +53,45 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
+    <AuthLayout title="Welcome back" subtitle="Sign in to continue your learning streak.">
+      {!error && <AuthAlert tone="success">{notice}</AuthAlert>}
+      <AuthAlert>{error}</AuthAlert>
 
-        <div className="brand">
-          <div className="brand-icon">Q/</div>
-          <span className="brand-name">QuizApp</span>
-        </div>
+      <form onSubmit={handleSubmit} noValidate>
+        <AuthField
+          id="email"
+          label="Email address"
+          icon="mail"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          autoFocus
+          error={fieldErrors.email}
+        />
 
-        <h1 className="auth-heading">Welcome back</h1>
-        <p className="auth-sub">Sign in to continue your learning streak</p>
+        <AuthField
+          id="password"
+          label="Password"
+          labelAside={<Link to="/forgot-password" className="au-label-link">Forgot password?</Link>}
+          icon="lock"
+          type="password"
+          name="password"
+          placeholder="Enter your password"
+          value={form.password}
+          onChange={handleChange}
+          autoComplete="current-password"
+          error={fieldErrors.password}
+        />
 
-        {error && <div className="auth-error">{error}</div>}
+        <AuthSubmit loading={loading} loadingText="Signing in…">Sign in</AuthSubmit>
+      </form>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="field">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              onChange={handleChange}
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="field">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="••••••••"
-              onChange={handleChange}
-              autoComplete="current-password"
-            />
-          </div>
-
-          <div className="forgot">
-            <Link to="/forgot-password">Forgot password?</Link>
-          </div>
-
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-
-        <p className="switch-text">
-          Don't have an account? <Link to="/register">Create one</Link>
-        </p>
-
-      </div>
-    </div>
+      <p className="au-switch">
+        Don't have an account? <Link to="/register">Create one</Link>
+      </p>
+    </AuthLayout>
   );
 }

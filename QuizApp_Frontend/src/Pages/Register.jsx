@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerApi } from '../api/auth';
 import { useQuiz } from '../Context/Context';
+import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
 
 const getStrength = (password) => {
   let score = 0;
@@ -12,8 +13,8 @@ const getStrength = (password) => {
   return score;
 };
 
-const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-const strengthColor = ['', '#E24B4A', '#EF9F27', '#1D9E75', '#0F6E56'];
+const strengthLabel = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
+const strengthColor = ['#DC2626', '#DC2626', '#F59E0B', '#10B981', '#047857'];
 
 export default function Register() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Register() {
     password: '',
     confirmPassword: '',
   });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -33,32 +35,34 @@ export default function Register() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
   };
 
   const validate = () => {
-    if (!form.firstName || !form.lastName) return 'Please enter your full name.';
-    if (!form.email) return 'Email is required.';
-    if (!/\S+@\S+\.\S+/.test(form.email)) return 'Enter a valid email.';
-    if (form.password.length < 6) return 'Password must be at least 6 characters.';
-    if (form.password !== form.confirmPassword) return 'Passwords do not match.';
-    return null;
+    const errors = {};
+    if (!form.firstName.trim()) errors.firstName = 'Required.';
+    if (!form.lastName.trim()) errors.lastName = 'Required.';
+    if (!form.email) errors.email = 'Email is required.';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Enter a valid email address.';
+    if (form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
+    if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.';
+    else if (form.password !== form.confirmPassword) errors.confirmPassword = 'Passwords do not match.';
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    const errors = validate();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
 
     setError('');
     setLoading(true);
 
     try {
       const data = await registerApi({
-        name: `${form.firstName} ${form.lastName}`,
+        name: `${form.firstName.trim()} ${form.lastName.trim()}`,
         email: form.email,
         password: form.password,
       });
@@ -77,108 +81,97 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
+    <AuthLayout title="Create your account" subtitle="Start practicing and track your progress.">
+      <AuthAlert>{error}</AuthAlert>
 
-        <div className="brand">
-          <div className="brand-icon">Q/</div>
-          <span className="brand-name">QuizApp</span>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="au-row">
+          <AuthField
+            id="firstName"
+            label="First name"
+            name="firstName"
+            placeholder="Arjun"
+            value={form.firstName}
+            onChange={handleChange}
+            autoComplete="given-name"
+            autoFocus
+            error={fieldErrors.firstName}
+          />
+          <AuthField
+            id="lastName"
+            label="Last name"
+            name="lastName"
+            placeholder="Sharma"
+            value={form.lastName}
+            onChange={handleChange}
+            autoComplete="family-name"
+            error={fieldErrors.lastName}
+          />
         </div>
 
-        <h1 className="auth-heading">Create account</h1>
-        <p className="auth-sub">Join thousands of learners today</p>
+        <AuthField
+          id="email"
+          label="Email address"
+          icon="mail"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          error={fieldErrors.email}
+        />
 
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
-
-          <div className="field-row">
-            <div className="field">
-              <label>First name</label>
-              <input
-                type="text"
-                name="firstName"
-                placeholder="Arjun"
-                value={form.firstName}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="field">
-              <label>Last name</label>
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Sharma"
-                value={form.lastName}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="field">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="field">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-            />
-            {form.password && (
-              <div className="strength-row">
-                <div className="strength-bar">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="strength-seg"
-                      style={{
-                        background: i <= strength ? strengthColor[strength] : undefined,
-                      }}
-                    />
-                  ))}
-                </div>
-                <span
-                  className="strength-label"
-                  style={{ color: strengthColor[strength] }}
-                >
-                  {strengthLabel[strength]}
-                </span>
+        <div>
+          <AuthField
+            id="password"
+            label="Password"
+            icon="lock"
+            type="password"
+            name="password"
+            placeholder="At least 6 characters"
+            value={form.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+            error={fieldErrors.password}
+          />
+          {form.password && !fieldErrors.password && (
+            <div className="au-strength">
+              <div className="au-strength-bar">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="au-strength-seg"
+                    style={{ background: i <= strength ? strengthColor[strength] : undefined }}
+                  />
+                ))}
               </div>
-            )}
-          </div>
+              <span className="au-strength-label" style={{ color: strengthColor[strength] }}>
+                {strengthLabel[strength]}
+              </span>
+            </div>
+          )}
+        </div>
 
-          <div className="field">
-            <label>Confirm password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="••••••••"
-              value={form.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
+        <AuthField
+          id="confirmPassword"
+          label="Confirm password"
+          icon="lock"
+          type="password"
+          name="confirmPassword"
+          placeholder="Re-enter your password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          autoComplete="new-password"
+          error={fieldErrors.confirmPassword}
+        />
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
+        <AuthSubmit loading={loading} loadingText="Creating account…">Create account</AuthSubmit>
+      </form>
 
-        <p className="switch-text">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-
-      </div>
-    </div>
+      <p className="au-switch">
+        Already have an account? <Link to="/login">Sign in</Link>
+      </p>
+    </AuthLayout>
   );
 }
