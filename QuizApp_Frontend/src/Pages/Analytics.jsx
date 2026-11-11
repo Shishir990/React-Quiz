@@ -1,6 +1,6 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyAnalyticsApi } from '../api/results';
+import { useMyAnalytics } from '../api/queries';
 import AppShell, { Icon } from '../Components/AppShell';
 import { formatDuration } from '../utils/format';
 import '../Styles/Results.css';
@@ -337,21 +337,12 @@ function BarRows({ rows, empty }) {
 
 export default function Analytics() {
   const navigate = useNavigate();
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const analyticsQuery = useMyAnalytics();
+  const results = analyticsQuery.data ?? [];
+  const loading = analyticsQuery.isPending;
+  const error = analyticsQuery.isError ? analyticsQuery.error.message : '';
   const [period, setPeriod] = useState('30');
   const [category, setCategory] = useState('all');
-
-  useEffect(() => {
-    getMyAnalyticsApi()
-      .then((data) => {
-        if (Array.isArray(data)) setResults(data);
-        else setError(data?.message || 'Could not load your analytics.');
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
 
   // Colors follow the category, ranked over all time, so filtering never repaints them
   const allCategories = groupByCategory(results).sort((a, b) => b.attempts - a.attempts || a.name.localeCompare(b.name));

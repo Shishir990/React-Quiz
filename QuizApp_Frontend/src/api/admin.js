@@ -1,3 +1,5 @@
+import { queryClient } from './queries';
+
 const BASE = '/api';
 
 // Like authFetch, but throws the server's message when the request fails,
@@ -15,6 +17,9 @@ const adminFetch = async (url, { body, ...options } = {}) => {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`);
+  // Any admin change (categories, questions, users) can affect what players
+  // see, so mark all cached player data as stale. Admin edits are rare.
+  if (options.method && options.method !== 'GET') queryClient.invalidateQueries();
   return data;
 };
 

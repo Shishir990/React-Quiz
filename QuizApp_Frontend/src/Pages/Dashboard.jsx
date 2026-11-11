@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuiz } from '../Context/Context';
-import { getCategoriesApi } from '../api/categories';
-import { getMyResultsApi, getLeaderboardApi } from '../api/results';
+import { useCategories, useMyResults, useLeaderboard } from '../api/queries';
 import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
 import { initialsOf, timeAgo } from '../utils/format';
 import '../Styles/Dashboard.css';
@@ -160,59 +159,29 @@ export default function Dashboard() {
   const { user, highestScore } = useQuiz();
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([]);
-  const [catLoading, setCatLoading] = useState(true);
-  const [catError, setCatError] = useState('');
   const [activeCategory, setActiveCategory] = useState(null);
   const [playerQuery, setPlayerQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [resultsLoading, setResultsLoading] = useState(true);
-  const [leaders, setLeaders] = useState([]);
-  const [leadersLoading, setLeadersLoading] = useState(true);
 
-  useEffect(() => {
-    getMyResultsApi()
-      .then((data) => setResults(Array.isArray(data) ? data : []))
-      .catch(() => setResults([]))
-      .finally(() => setResultsLoading(false));
-  }, []);
+  const resultsQuery = useMyResults();
+  const results = resultsQuery.data ?? [];
+  const resultsLoading = resultsQuery.isPending;
 
-  useEffect(() => {
-    getLeaderboardApi({ period: 'week' })
-      .then((data) => setLeaders(Array.isArray(data?.players) ? data.players : []))
-      .catch(() => setLeaders([]))
-      .finally(() => setLeadersLoading(false));
-  }, []);
+  const leadersQuery = useLeaderboard({ period: 'week' });
+  const leaders = leadersQuery.data?.players ?? [];
+  const leadersLoading = leadersQuery.isPending;
 
   const filteredPlayers = leaders
     .slice(0, 5)
     .filter((p) => p.name.toLowerCase().includes(playerQuery.trim().toLowerCase()));
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setCatLoading(true);
-      setCatError('');
-      try {
-        const data = await getCategoriesApi();
-        if (Array.isArray(data)) {
-          // Attach a color from the palette by index
-          const colored = data.map((cat, i) => ({
-            ...cat,
-            ...COLOR_PALETTE[i % COLOR_PALETTE.length],
-          }));
-          setCategories(colored);
-        } else {
-          setCatError('Failed to load categories.');
-        }
-      } catch (err) {
-        setCatError(err.message || 'Something went wrong.');
-      } finally {
-        setCatLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const categoriesQuery = useCategories();
+  const catLoading = categoriesQuery.isPending;
+  const catError = categoriesQuery.isError ? categoriesQuery.error.message : '';
+  // Attach a color from the palette by index
+  const categories = (categoriesQuery.data ?? []).map((cat, i) => ({
+    ...cat,
+    ...COLOR_PALETTE[i % COLOR_PALETTE.length],
+  }));
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 

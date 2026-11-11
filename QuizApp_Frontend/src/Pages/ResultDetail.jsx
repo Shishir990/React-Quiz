@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getResultApi } from '../api/results';
+import { useResult } from '../api/queries';
 import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
 import { formatDuration } from '../utils/format';
 import '../Styles/Results.css';
@@ -14,18 +14,10 @@ const FILTERS = [
 export default function ResultDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
+  const resultQuery = useResult(id);
+  const result = resultQuery.data ?? null;
+  const error = resultQuery.isError ? resultQuery.error.message : '';
   const [filter, setFilter] = useState('all');
-
-  useEffect(() => {
-    getResultApi(id)
-      .then((data) => {
-        if (data?._id) setResult(data);
-        else setError(data?.message || 'Could not load this result.');
-      })
-      .catch((err) => setError(err.message));
-  }, [id]);
 
   const answers = (result?.answers || []).map((a, i) => ({ ...a, number: i + 1 }));
   const shown = answers.filter((a) => filter === 'all' || (filter === 'right' ? a.isCorrect : !a.isCorrect));

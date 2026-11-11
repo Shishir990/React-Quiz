@@ -1,5 +1,6 @@
 import { createContext, useEffect, useReducer, useState, useContext } from "react";
 import { getMeApi, authFetch } from '../api/auth';
+import { queryClient, invalidateAfterSubmit } from '../api/queries';
 
 const Context = createContext();
 
@@ -147,12 +148,16 @@ export function ContextProvider({ children }) {
     restoreUser();
   }, []);
 
+  // Cached data belongs to whoever was signed in, so wipe it on every
+  // account change; otherwise the next user briefly sees the last one's data
   const login = (token, userData) => {
+    queryClient.clear();
     localStorage.setItem('token', token);
     setUser(userData);
   };
 
   const logout = () => {
+    queryClient.clear();
     localStorage.removeItem('token');
     setUser(null);
   };
@@ -168,6 +173,7 @@ export function ContextProvider({ children }) {
         body: JSON.stringify({ categoryId, answers, timeTaken, questionIds: Questions.map((q) => q._id) }),
       });
       setResult(data);
+      invalidateAfterSubmit();
       dispatch({ type: "Finish" });
     } catch (err) {
       console.error('Submit error:', err.message);

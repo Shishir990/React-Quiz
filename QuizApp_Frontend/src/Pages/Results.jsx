@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getMyResultsApi } from '../api/results';
+import { useMyResults } from '../api/queries';
 import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
 import { timeAgo, formatDuration } from '../utils/format';
 import '../Styles/Results.css';
@@ -43,24 +43,15 @@ function byCategory(results) {
 
 export default function Results() {
   const navigate = useNavigate();
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const resultsQuery = useMyResults();
+  const results = resultsQuery.data ?? [];
+  const loading = resultsQuery.isPending;
+  const error = resultsQuery.isError ? resultsQuery.error.message : '';
 
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('newest');
   const [visible, setVisible] = useState(PAGE_SIZE);
-
-  useEffect(() => {
-    getMyResultsApi()
-      .then((data) => {
-        if (Array.isArray(data)) setResults(data);
-        else setError(data?.message || 'Could not load your results.');
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
 
   // Changing a filter starts again from the first page
   const withReset = (setter) => (value) => {

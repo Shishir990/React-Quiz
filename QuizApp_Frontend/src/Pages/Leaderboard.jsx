@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuiz } from '../Context/Context';
-import { getLeaderboardApi } from '../api/results';
-import { getCategoriesApi } from '../api/categories';
+import { useCategories, useLeaderboard } from '../api/queries';
 import AppShell, { Icon } from '../Components/AppShell';
 import { initialsOf, formatDuration } from '../utils/format';
 import '../Styles/Leaderboard.css';
@@ -28,37 +27,13 @@ export default function Leaderboard() {
   const [period, setPeriod] = useState('week');
   const [category, setCategory] = useState('');
   const [query, setQuery] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [board, setBoard] = useState(null);
-  // Which period + category the board/error on screen belongs to
-  const [loadedKey, setLoadedKey] = useState(null);
-  const [error, setError] = useState('');
+  const categories = useCategories().data ?? [];
 
-  const key = `${period}|${category}`;
-  const loading = loadedKey !== key;
-
-  useEffect(() => {
-    getCategoriesApi()
-      .then((data) => Array.isArray(data) && setCategories(data))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    getLeaderboardApi({ period, category })
-      .then((data) => {
-        if (cancelled) return;
-        if (Array.isArray(data?.players)) {
-          setBoard(data);
-          setError('');
-        } else {
-          setError(data?.message || 'Could not load the leaderboard.');
-        }
-      })
-      .catch((err) => !cancelled && setError(err.message))
-      .finally(() => !cancelled && setLoadedKey(`${period}|${category}`));
-    return () => { cancelled = true; };
-  }, [period, category]);
+  // While a new period/category loads, the previous board stays up (dimmed)
+  const boardQuery = useLeaderboard({ period, category });
+  const board = boardQuery.data ?? null;
+  const loading = boardQuery.isPending || boardQuery.isPlaceholderData;
+  const error = boardQuery.isError ? boardQuery.error.message : '';
 
   const players = board?.players || [];
   const me = board?.me;
