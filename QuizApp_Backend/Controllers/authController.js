@@ -130,6 +130,38 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+const findByResetToken = (token) =>
+  User.findOne({
+    resetPasswordToken: hashToken(token),
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+// "shishirsaklani928@gmail.com" -> "shi•••928@gmail.com": enough to tell
+// your own accounts apart without showing the full address
+const maskEmail = (email) => {
+  const [local, domain] = email.split('@');
+  const shown = local.length > 6 ? `${local.slice(0, 3)}•••${local.slice(-3)}` : `${local[0]}•••`;
+  return `${shown}@${domain}`;
+};
+
+// Lets the reset page say which account the link is for (and catch dead
+// links) before the user types a new password
+exports.checkResetToken = async (req, res) => {
+  const { token } = req.body;
+  if (!token || typeof token !== 'string')
+    return res.status(400).json({ message: 'Reset link is invalid' });
+
+  try {
+    const user = await findByResetToken(token);
+    if (!user || user.isActive === false)
+      return res.status(400).json({ message: 'This reset link is invalid or has expired. Request a new one.' });
+
+    res.json({ valid: true, email: maskEmail(user.email), name: user.name.split(' ')[0] });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 exports.resetPassword = async (req, res) => {
   const { token, password } = req.body;
   if (!token || typeof token !== 'string')
@@ -138,10 +170,7 @@ exports.resetPassword = async (req, res) => {
     return res.status(400).json({ message: 'Password must be at least 6 characters' });
 
   try {
-    const user = await User.findOne({
-      resetPasswordToken: hashToken(token),
-      resetPasswordExpires: { $gt: new Date() },
-    });
+    const user = await findByResetToken(token);
     if (!user || user.isActive === false)
       return res.status(400).json({ message: 'This reset link is invalid or has expired. Request a new one.' });
 

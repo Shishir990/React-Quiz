@@ -1,12 +1,26 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { resetPasswordApi } from '../api/auth';
-import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
+import { useQuery } from '@tanstack/react-query';
+import { checkResetTokenApi, resetPasswordApi } from '../api/auth';
+import AuthLayout, { AuthAlert, AuthField, AuthIcon, AuthSubmit } from '../Components/AuthLayout';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const token = params.get('token');
+
+  // Which account is this link for? Also catches expired links up front
+  const check = useQuery({
+    queryKey: ['reset-token', token],
+    queryFn: () => checkResetTokenApi(token).then((data) => {
+      if (data?.valid) return data;
+      throw new Error(data?.message || 'This reset link is invalid or has expired.');
+    }),
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+    gcTime: 0,
+  });
 
   const [form, setForm] = useState({ password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState({});
@@ -49,9 +63,14 @@ export default function ResetPassword() {
     }
   };
 
-  if (!token) {
+  if (!token || check.isError) {
     return (
-      <AuthLayout title="Invalid reset link" subtitle="This link is missing its reset code. Request a new one below.">
+      <AuthLayout
+        title="Link expired or invalid"
+        subtitle={token
+          ? 'This reset link has expired or was already used. Reset links work once and last 15 minutes.'
+          : 'This link is missing its reset code.'}
+      >
         <Link to="/forgot-password" className="au-btn">Request a new link</Link>
         <p className="au-switch">
           <Link to="/login">Back to sign in</Link>
@@ -60,8 +79,26 @@ export default function ResetPassword() {
     );
   }
 
+  if (check.isPending) {
+    return (
+      <AuthLayout title="Set a new password" subtitle="Checking your reset link…">
+        <div className="au-account is-loading" aria-hidden="true" />
+      </AuthLayout>
+    );
+  }
+
+  const { name, email } = check.data;
+
   return (
-    <AuthLayout title="Set a new password" subtitle="Choose a strong password you haven't used before.">
+    <AuthLayout title="Set a new password" subtitle={`Hi ${name}, choose a new password for this account.`}>
+      <div className="au-account">
+        <span className="au-account-icon"><AuthIcon name="user" size={16} /></span>
+        <div>
+          <p className="au-account-label">Resetting password for</p>
+          <p className="au-account-email">{email}</p>
+        </div>
+      </div>
+
       <AuthAlert>{error}</AuthAlert>
       {error && /expired|invalid/i.test(error) && (
         <p className="au-subtitle"><Link to="/forgot-password" className="au-label-link">Request a new reset link</Link></p>
@@ -99,7 +136,7 @@ export default function ResetPassword() {
       </form>
 
       <p className="au-switch">
-        <Link to="/login">Back to sign in</Link>
+        Not your account? <Link to="/login">Back to sign in</Link>
       </p>
     </AuthLayout>
   );

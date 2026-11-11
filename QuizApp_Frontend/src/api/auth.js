@@ -80,3 +80,15 @@ export const resetPasswordApi = async (token, password) => {
     throw new Error(err.message || 'Failed to reset password');
   }
 };
+
+export const checkResetTokenApi = async (token) => {
+  try {
+    const data = await authFetch('/auth/reset-password/check', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+    return data;
+  } catch (err) {
+    throw new Error(err.message || 'Failed to check reset link');
+  }
+};

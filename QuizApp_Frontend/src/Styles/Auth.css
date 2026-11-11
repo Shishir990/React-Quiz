@@ -126,6 +126,29 @@
 .au-alert svg { flex-shrink: 0; margin-top: 1px; }
 .au-alert.is-success { background: #ECFDF5; border-color: #A7F3D0; color: #047857; }
 
+/* ── Account being reset ── */
+.au-account {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #F8FAFC;
+}
+.au-account.is-loading { animation: au-pulse 1.2s ease-in-out infinite; }
+@keyframes au-pulse { 50% { opacity: 0.5; } }
+.au-account-icon {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #D1FAE5;
+  color: var(--brand-dark);
+}
+.au-account-label { font-size: 12px; color: var(--muted); }
+.au-account-email { font-size: 15px; font-weight: 600; color: var(--ink); word-break: break-all; }
+
 /* ── Fields ── */
 .au-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
