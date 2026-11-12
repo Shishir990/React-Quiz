@@ -8,7 +8,8 @@ const Arrow = ({ flip }) => (
 );
 
 export function Next({ isLast, onFinish }) {
-  const { answer, index, dispatch } = useQuiz();
+  const { answer, index, marked, dispatch } = useQuiz();
+  const isMarked = !!marked[index];
 
   return (
     <>
@@ -20,6 +21,19 @@ export function Next({ isLast, onFinish }) {
         <Arrow flip /> Previous
       </button>
 
+      <button
+        className={`qz-mark ${isMarked ? "is-marked" : ""}`}
+        aria-pressed={isMarked}
+        onClick={() => dispatch({ type: "ToggleMark" })}
+        title="Mark this question to come back to it (M)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill={isMarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M5 21V4h11l-1.5 4L16 12H5" />
+        </svg>
+        <span className="qz-mark-full">{isMarked ? "Marked for review" : "Mark for review"}</span>
+        <span className="qz-mark-short">{isMarked ? "Marked" : "Review"}</span>
+      </button>
+
       {isLast ? (
         <button className="qz-next" onClick={onFinish}>
           Finish quiz <Arrow />
@@ -29,7 +43,7 @@ export function Next({ isLast, onFinish }) {
           className={`qz-next ${answer === null ? "is-skip" : ""}`}
           onClick={() => dispatch({ type: "Next" })}
         >
-          {answer === null ? "Skip" : "Next question"} <Arrow />
+          {answer === null ? "Skip" : <>Next<span className="qz-next-word"> question</span></>} <Arrow />
         </button>
       )}
     </>

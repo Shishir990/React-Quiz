@@ -20,7 +20,7 @@ const estimate = (questions) => {
   return `~${mins} min`;
 };
 
-function CategoryCard({ cat, progress, isToday, onStart, index }) {
+function CategoryCard({ cat, progress, isToday, inProgress, onStart, index }) {
   const playable = cat.questionCount > 0;
   const level = difficultyLabel(cat.difficulty);
   const best = progress?.best;
@@ -55,7 +55,7 @@ function CategoryCard({ cat, progress, isToday, onStart, index }) {
       )}
 
       <button className="mq-start" disabled={!playable} onClick={() => onStart(cat._id)}>
-        {!playable ? 'Unavailable' : progress ? 'Play again' : 'Start quiz'}
+        {!playable ? 'Unavailable' : inProgress ? 'Resume quiz' : progress ? 'Play again' : 'Start quiz'}
         {playable && <Icon name="arrow" size={15} />}
       </button>
     </article>
@@ -63,7 +63,7 @@ function CategoryCard({ cat, progress, isToday, onStart, index }) {
 }
 
 // Category cards with the player's own progress on each
-export default function CategoryGrid({ categories, progress = {}, loading, error, todayId, onStart, emptyText }) {
+export default function CategoryGrid({ categories, progress = {}, resumable, loading, error, todayId, onStart, emptyText }) {
   if (loading) {
     return (
       <div className="mq-grid">
@@ -93,6 +93,7 @@ export default function CategoryGrid({ categories, progress = {}, loading, error
           index={i}
           progress={progress[cat._id]}
           isToday={todayId === cat._id}
+          inProgress={resumable?.has(cat._id)}
           onStart={onStart}
         />
       ))}

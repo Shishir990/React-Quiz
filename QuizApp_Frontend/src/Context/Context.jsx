@@ -1,6 +1,8 @@
-import { createContext, useEffect, useReducer, useState, useContext } from "react";
+import { createContext, useEffect, useReducer, useState, useContext, useRef } from "react";
 import { getMeApi, authFetch } from '../api/auth';
-import { queryClient, invalidateAfterSubmit } from '../api/queries';
+import { queryClient, queryKeys, invalidateAfterSubmit } from '../api/queries';
+import { getProgressApi, saveProgressApi, deleteProgressApi } from '../api/progress';
+import { saveProgress, loadProgress, clearProgress } from '../utils/quizProgress';
 
 const Context = createContext();
 
@@ -12,6 +14,7 @@ const initialState = {
   answer: null,
   answers: {},          // { [questionIndex]: optionIndex }
   visited: { 0: true }, // questions the user has opened
+  marked: {},           // questions flagged "mark for review"
   answersLog: [],
   questionsAttempted: 0,
   questionsCorrect: 0,
@@ -19,6 +22,18 @@ const initialState = {
    totalTime: 0,
   secondsRemaining: 0
 };
+
+// What gets sent to the server: the chosen option text for each answered question
+function buildAnswersLog(Questions, answers) {
+  return Object.keys(answers)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((i) => Questions[i])
+    .map((i) => ({
+      question: Questions[i]._id,
+      selectedOption: Questions[i].options[answers[i]],
+    }));
+}
 
 function reducer(state, action) {
   switch (action.type) {
@@ -32,9 +47,34 @@ function reducer(state, action) {
         answer: null,
         answers: {},
         visited: { 0: true },
+        marked: {},
         answersLog: [],
         questionsAttempted: 0,
       };
+
+    // Pick up a quiz the player left part-way through
+    case "Restore": {
+      const { Questions, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, totalTime } = action.payload;
+      const answersLog = buildAnswersLog(Questions, answers);
+      const at = Math.min(Math.max(index, 0), Questions.length - 1);
+      return {
+        ...state,
+        Questions,
+        status: "start",
+        index: at,
+        answer: answers[at] ?? null,
+        answers,
+        visited: { ...visited, [at]: true },
+        marked,
+        answersLog,
+        questionsAttempted: answersLog.length,
+        secondsRemaining,
+        totalTime,
+      };
+    }
+
+    case "Loading":
+      return { ...state, status: "loading" };
 
     case "Error":
       return { ...state, status: "Error" };
@@ -47,13 +87,7 @@ function reducer(state, action) {
     case "AnswerClicked": {
       // Answers can be changed when revisiting a question via the palette
       const answers = { ...state.answers, [state.index]: action.payload };
-      const answersLog = Object.keys(answers)
-        .map(Number)
-        .sort((a, b) => a - b)
-        .map((i) => ({
-          question: state.Questions[i]._id,
-          selectedOption: state.Questions[i].options[answers[i]], // ✅ store string e.g. "Paris"
-        }));
+      const answersLog = buildAnswersLog(state.Questions, answers);
       return {
         ...state,
         answer: action.payload,
@@ -76,6 +110,13 @@ function reducer(state, action) {
         answer: state.answers[target] ?? null,
         visited: { ...state.visited, [target]: true },
       };
+    }
+
+    case "ToggleMark": {
+      const marked = { ...state.marked };
+      if (marked[state.index]) delete marked[state.index];
+      else marked[state.index] = true;
+      return { ...state, marked };
     }
 
     case "tick":
@@ -113,7 +154,7 @@ function reducer(state, action) {
 export function ContextProvider({ children }) {
 
   const [
-    { Questions, status, score, index, answer, answers, visited, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
+    { Questions, status, score, index, answer, answers, visited, marked, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
     dispatch
   ] = useReducer(reducer, initialState);
 
@@ -121,6 +162,7 @@ export function ContextProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState(null);
   const [resloading, setResLoading] = useState(false);
+  const [resumed, setResumed] = useState(false);
   const numQuestions = Questions?.length;
 
 
@@ -164,6 +206,106 @@ export function ContextProvider({ children }) {
 
   const categoryId = Questions[0]?.category?._id || Questions[0]?.category;
 
+  // ── Saving an in-progress quiz ──
+  // Every second it's written to this browser (instant restore after a refresh),
+  // and synced to the server shortly after each change, every 15s of play, and
+  // when the player leaves, so it can be resumed on another device too.
+  const latest = useRef({});
+  latest.current = { status, userId: user?._id, categoryId, Questions, answers, visited, marked, index, secondsRemaining, totalTime };
+  const syncedToServer = useRef(false);  // has the server got a copy of the current quiz?
+  const lastServerSync = useRef(0);
+  const syncTimer = useRef(null);
+  const discarded = useRef(null);        // category just restarted: ignore stray saves for it
+
+  const syncToServer = ({ keepalive = false } = {}) => {
+    clearTimeout(syncTimer.current);
+    const s = latest.current;
+    if (s.status !== "start" || !s.userId || !s.categoryId || !s.Questions.length) return Promise.resolve();
+    if (discarded.current === s.categoryId) return Promise.resolve();
+    lastServerSync.current = Date.now();
+    return saveProgressApi(s.categoryId, {
+      questionIds: s.Questions.map((q) => q._id),
+      answers: s.answers,
+      visited: s.visited,
+      marked: s.marked,
+      index: s.index,
+      secondsRemaining: s.secondsRemaining,
+      savedAt: Date.now(),
+    }, { keepalive })
+      .then(() => {
+        syncedToServer.current = true;
+        queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress });
+      })
+      .catch((err) => console.warn('Could not save quiz progress:', err.message));
+  };
+
+  // Local copy, every tick
+  useEffect(() => {
+    if (status !== "start" || !user?._id || !categoryId) return;
+    if (discarded.current === categoryId) return;
+    saveProgress(user._id, categoryId, {
+      Questions, answers, visited, marked, index, secondsRemaining, totalTime, synced: syncedToServer.current,
+    });
+  }, [status, user?._id, categoryId, Questions, answers, visited, marked, index, secondsRemaining, totalTime]);
+
+  // Server copy: soon after an answer or a move
+  useEffect(() => {
+    if (status !== "start") return;
+    clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => syncToServer(), 1000);
+    return () => clearTimeout(syncTimer.current);
+  }, [status, Questions, answers, visited, marked, index]);
+
+  // ...and every 15 seconds while the clock runs
+  useEffect(() => {
+    if (status === "start" && Date.now() - lastServerSync.current > 15000) syncToServer();
+  }, [secondsRemaining]);
+
+  // ...and when the tab is closed or hidden
+  useEffect(() => {
+    const onHide = () => syncToServer({ keepalive: true });
+    window.addEventListener("pagehide", onHide);
+    const onVisibility = () => document.visibilityState === "hidden" && onHide();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  // Called when the player leaves the quiz screen (Save & exit, back button)
+  const flushProgress = () => syncToServer({ keepalive: true });
+
+  // Throw away the saved copy, e.g. "Exit & restart", "Start over" or after submitting
+  const discardProgress = (catId = categoryId) => {
+    clearTimeout(syncTimer.current);
+    discarded.current = catId;
+    clearProgress(user?._id, catId);
+    setResumed(false);
+    return deleteProgressApi(catId)
+      .catch((err) => console.warn('Could not clear saved quiz:', err.message))
+      .finally(() => queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress }));
+  };
+
+  // Server copy vs. this browser's copy: use whichever was saved last.
+  // "Nothing on the server" wins over an old local copy that had been synced,
+  // since that means the quiz was finished or restarted somewhere else.
+  const findSavedQuiz = async (catId) => {
+    const local = loadProgress(user?._id, catId);
+    let server;
+    try {
+      server = await getProgressApi(catId);
+    } catch {
+      return local ? { ...local, fromServer: false } : null; // offline: local is all we have
+    }
+    if (!server) {
+      if (local?.synced) { clearProgress(user?._id, catId); return null; }
+      return local ? { ...local, fromServer: false } : null;
+    }
+    if (local && (local.savedAt || 0) > (server.savedAt || 0)) return { ...local, fromServer: false };
+    return { ...server, fromServer: true };
+  };
+
   const submitQuiz = async (categoryId, answers, timeTaken) => {
     setResLoading(true);
     try {
@@ -173,6 +315,7 @@ export function ContextProvider({ children }) {
         body: JSON.stringify({ categoryId, answers, timeTaken, questionIds: Questions.map((q) => q._id) }),
       });
       setResult(data);
+      discardProgress(categoryId);
       invalidateAfterSubmit();
       dispatch({ type: "Finish" });
     } catch (err) {
@@ -183,8 +326,19 @@ export function ContextProvider({ children }) {
   };
 
   // Without a limit the server sends every question in the category
-  const fetchQues = async (categoryId, limit) => {
-    console.log('1. fetchQues called, categoryId:', categoryId);
+  const fetchQues = async (categoryId, limit, { fresh = false } = {}) => {
+    dispatch({ type: "Loading" });
+    discarded.current = null;
+    const saved = !fresh && await findSavedQuiz(categoryId);
+    if (saved) {
+      syncedToServer.current = saved.fromServer || !!saved.synced;
+      lastServerSync.current = Date.now();
+      dispatch({ type: "Restore", payload: saved });
+      setResumed(true);
+      return;
+    }
+    setResumed(false);
+    syncedToServer.current = false;
     try {
       const data = await authFetch(`/questions/quiz/${categoryId}${limit ? `?limit=${limit}` : ''}`);
       if (data.questions) {
@@ -207,6 +361,7 @@ export function ContextProvider({ children }) {
         answer,
         answers,
         visited,
+        marked,
         score,
         numQuestions,
         secondsRemaining,
@@ -225,6 +380,9 @@ export function ContextProvider({ children }) {
         totalTime,
         isAdmin: user?.role === 'admin',
         fetchQues,
+        resumed,
+        discardProgress,
+        flushProgress,
         dispatch
       }}
     >

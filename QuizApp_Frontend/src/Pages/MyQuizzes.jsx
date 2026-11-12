@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCategories, useMyResults } from '../api/queries';
+import { useCategories, useMyResults, useSavedProgress } from '../api/queries';
 import AppShell, { Icon } from '../Components/AppShell';
 import CategoryGrid from '../Components/CategoryGrid';
 import { pickDailyChallenge } from '../utils/daily';
+import { savedCategoryIds } from '../utils/quizProgress';
+import { useQuiz } from '../Context/Context';
 import '../Styles/Dashboard.css';
 
 const FILTERS = [
@@ -43,6 +45,12 @@ export default function MyQuizzes() {
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
   const progress = progressByCategory(useMyResults().data ?? []);
+  const { user } = useQuiz();
+  // Saved on the server (any device); this browser's copy if the server can't be reached
+  const savedQuery = useSavedProgress();
+  const resumable = savedQuery.isSuccess
+    ? new Set(savedQuery.data.map((p) => String(p.category)))
+    : savedCategoryIds(user?._id);
   const playable = categories.filter((c) => c.questionCount > 0);
   const challenge = pickDailyChallenge(categories);
   const playedCount = categories.filter((c) => progress[c._id]).length;
@@ -117,6 +125,7 @@ export default function MyQuizzes() {
         loading={categoriesQuery.isPending}
         error={categoriesQuery.isError ? categoriesQuery.error.message : ''}
         todayId={challenge?._id}
+        resumable={resumable}
         onStart={startQuiz}
         emptyText={categories.length ? 'Try a different search or filter.' : undefined}
       />

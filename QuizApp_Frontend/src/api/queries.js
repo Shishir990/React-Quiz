@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
 import { getCategoriesApi } from './categories';
+import { listProgressApi } from './progress';
 import { getMyResultsApi, getMyAnalyticsApi, getResultApi, getLeaderboardApi } from './results';
 import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi } from './admin';
 
@@ -14,6 +15,7 @@ export const queryKeys = {
   analytics: ['results', 'analytics'],
   result: (id) => ['results', 'detail', id],
   leaderboard: (period, category) => ['leaderboard', period, category || 'all'],
+  savedProgress: ['progress'],
 };
 
 // authFetch resolves with the server's error body instead of throwing,
@@ -28,6 +30,14 @@ export const useCategories = () =>
     queryKey: queryKeys.categories,
     queryFn: () => getCategoriesApi().then(expect(Array.isArray, 'Failed to load categories.')),
     staleTime: 5 * 60 * 1000,
+  });
+
+// Quizzes the player left part-way through (any device)
+export const useSavedProgress = () =>
+  useQuery({
+    queryKey: queryKeys.savedProgress,
+    queryFn: () => listProgressApi().then(expect(Array.isArray, 'Could not load saved quizzes.')),
+    staleTime: 0,
   });
 
 export const useMyResults = () =>

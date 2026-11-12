@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Result = require('../Models/Result');
 const Question = require('../Models/Question');
 const Quiz = require('../Models/Quiz');
+const QuizProgress = require('../Models/QuizProgress');
 
 exports.submit = async (req, res) => {
   const { categoryId, answers = [], timeTaken, questionIds } = req.body;
@@ -55,6 +56,9 @@ exports.submit = async (req, res) => {
       passed,
       timeTaken
     });
+
+    // The quiz is done, so there's nothing left to resume
+    await QuizProgress.deleteOne({ user: req.user._id, category: categoryId }).catch(() => {});
 
     // Send back evaluated answers so frontend can show correct/wrong
     res.status(201).json({
