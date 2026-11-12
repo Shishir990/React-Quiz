@@ -5,6 +5,7 @@ import AppShell, { Icon } from '../Components/AppShell';
 import CategoryGrid from '../Components/CategoryGrid';
 import { pickDailyChallenge } from '../utils/daily';
 import { savedCategoryIds } from '../utils/quizProgress';
+import { pendingSaves, pendingDeletes } from '../api/progress';
 import { useQuiz } from '../Context/Context';
 import '../Styles/Dashboard.css';
 
@@ -48,9 +49,12 @@ export default function MyQuizzes() {
   const { user } = useQuiz();
   // Saved on the server (any device); this browser's copy if the server can't be reached
   const savedQuery = useSavedProgress();
+  // plus saves/deletes still in flight, so "Save & exit" shows "Resume" immediately
   const resumable = savedQuery.isSuccess
     ? new Set(savedQuery.data.map((p) => String(p.category)))
     : savedCategoryIds(user?._id);
+  pendingSaves.forEach((id) => resumable.add(String(id)));
+  pendingDeletes.forEach((id) => resumable.delete(String(id)));
   const playable = categories.filter((c) => c.questionCount > 0);
   const challenge = pickDailyChallenge(categories);
   const playedCount = categories.filter((c) => progress[c._id]).length;

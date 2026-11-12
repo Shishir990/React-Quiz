@@ -326,10 +326,19 @@ export function ContextProvider({ children }) {
   };
 
   // Without a limit the server sends every question in the category
+  // Only the latest load may update the quiz. Without this, two overlapping loads
+  // (React StrictMode runs effects twice in dev; switching quizzes quickly) each
+  // fetch a different random question set, and the later one wipes the answers
+  // already given on the first, so the wrong quiz gets saved.
+  const loadId = useRef(0);
+
   const fetchQues = async (categoryId, limit, { fresh = false } = {}) => {
+    const myLoad = ++loadId.current;
+    const stale = () => myLoad !== loadId.current;
     dispatch({ type: "Loading" });
     discarded.current = null;
     const saved = !fresh && await findSavedQuiz(categoryId);
+    if (stale()) return;
     if (saved) {
       syncedToServer.current = saved.fromServer || !!saved.synced;
       lastServerSync.current = Date.now();
@@ -341,6 +350,7 @@ export function ContextProvider({ children }) {
     syncedToServer.current = false;
     try {
       const data = await authFetch(`/questions/quiz/${categoryId}${limit ? `?limit=${limit}` : ''}`);
+      if (stale()) return;
       if (data.questions) {
         dispatch({ type: "dataReceived", payload: data.questions });
         dispatch({ type: "Start", payload: data.questions.length * 10 })
@@ -348,7 +358,7 @@ export function ContextProvider({ children }) {
         dispatch({ type: "Error" });
       }
     } catch (err) {
-      dispatch({ type: "Error" });
+      if (!stale()) dispatch({ type: "Error" });
     }
   };
 

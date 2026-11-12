@@ -26,6 +26,7 @@ import { ErrorScreen } from './Screens/ErrorScreen'
 import { StartScreen } from './Screens/StartScreen'
 import { QuestionScreen } from './Screens/QuestionScreen'
 import { Finish } from './Screens/FinishScreen'
+import { RouteErrorBoundary } from './Components/ErrorBoundary'
 function App() {
 
   const { user } = useQuiz();
@@ -33,6 +34,7 @@ function App() {
   return (
     <>
     <BrowserRouter>
+      <RouteErrorBoundary>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -140,6 +142,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+      </RouteErrorBoundary>
     </BrowserRouter>
     
     </>

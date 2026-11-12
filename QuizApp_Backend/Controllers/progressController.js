@@ -7,7 +7,9 @@ const MAX_QUESTIONS = 500;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // abandoned quizzes expire after a week
 
 const isId = (id) => mongoose.isValidObjectId(id);
-const notFound = (res) => res.status(404).json({ message: 'No saved progress' });
+// "Nothing saved" is a normal answer, not an error: 204 keeps the browser
+// console clean (a 404 is logged in red on every quiz start)
+const notFound = (res) => res.status(204).end();
 
 // GET /api/progress: which categories have a quiz in progress (for "Resume" buttons)
 exports.listMine = async (req, res) => {

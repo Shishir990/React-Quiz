@@ -1,0 +1,42 @@
+.eb-page {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px;
+  background: var(--th-bg, #F7F9FB);
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+.eb-card {
+  width: 100%; max-width: 440px;
+  padding: 32px 28px;
+  border-radius: 18px;
+  border: 1px solid var(--th-card-edge, #E2E8F0);
+  background: var(--th-card, #fff);
+  text-align: center;
+}
+.eb-icon {
+  width: 52px; height: 52px; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #F87171; font-size: 24px; font-weight: 700;
+}
+.eb-page .eb-title { margin: 0 0 8px; font-size: 22px; font-weight: 700; color: var(--th-on-dark, #0F172A); }
+.eb-text { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--th-on-dark-muted, #64748B); }
+.eb-detail {
+  margin: 0 0 20px; padding: 10px 12px;
+  max-height: 120px; overflow: auto;
+  border-radius: 10px;
+  background: var(--th-card-sunk, #F1F5F9);
+  font-size: 12px; text-align: left; white-space: pre-wrap; color: #FCA5A5;
+}
+.eb-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.eb-btn {
+  height: 42px; padding: 0 18px;
+  border-radius: 12px;
+  border: 1px solid var(--th-card-edge, #CBD5E1);
+  background: transparent;
+  font-family: inherit; font-size: 14px; font-weight: 600; color: var(--th-on-dark, #0F172A);
+  cursor: pointer;
+}
+.eb-btn.is-primary { background: var(--acc, #059669); border-color: var(--acc, #059669); color: var(--acc-ink, #fff); }
