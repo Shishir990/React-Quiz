@@ -19,7 +19,7 @@ body {
   color: #111;
   /* App-wide soft mint → sky → lavender gradient (same as the dashboard) */
   background:
-    radial-gradient(1100px 650px at 0% 0%, rgba(16, 185, 129, 0.08), transparent 60%),
+    radial-gradient(1100px 650px at 0% 0%, rgba(var(--acc-rgb, 16, 185, 129), 0.08), transparent 60%),
     radial-gradient(900px 600px at 100% 10%, rgba(56, 189, 248, 0.07), transparent 60%),
     radial-gradient(1000px 700px at 85% 100%, rgba(99, 102, 241, 0.06), transparent 60%),
     radial-gradient(800px 600px at 10% 100%, rgba(20, 184, 166, 0.05), transparent 60%),
@@ -86,7 +86,7 @@ input, textarea, select {
 
 .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
 .brand-icon {
-  width: 36px; height: 36px; background: #1D9E75;
+  width: 36px; height: 36px; background: var(--acc, #1D9E75);
   border-radius: 10px; display: flex; align-items: center;
   justify-content: center; font-family: 'JetBrains Mono', monospace;
   font-size: 15px; font-weight: 500; color: #fff;
@@ -114,7 +114,7 @@ input, textarea, select {
   background: #fafafa; font-family: 'Sora', sans-serif;
   font-size: 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
 }
-.field input:focus { border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.field input:focus { border-color: var(--acc, #1D9E75); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
 
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -125,7 +125,7 @@ input, textarea, select {
   font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 500;
   color: #888; cursor: pointer; transition: all 0.15s;
 }
-.role-btn.active { border-color: #1D9E75; background: #E1F5EE; color: #0F6E56; }
+.role-btn.active { border-color: var(--acc, #1D9E75); background: #E1F5EE; color: var(--acc-strong, #0F6E56); }
 
 .strength-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .strength-bar { display: flex; gap: 4px; flex: 1; }
@@ -133,20 +133,20 @@ input, textarea, select {
 .strength-label { font-size: 11px; font-weight: 500; min-width: 36px; }
 
 .forgot { text-align: right; margin-top: -6px; margin-bottom: 1rem; }
-.forgot a { font-size: 12px; color: #1D9E75; font-weight: 500; text-decoration: none; }
+.forgot a { font-size: 12px; color: var(--acc, #1D9E75); font-weight: 500; text-decoration: none; }
 
 .auth-btn {
-  width: 100%; padding: 12px; background: #1D9E75;
+  width: 100%; padding: 12px; background: var(--acc, #1D9E75);
   border: none; border-radius: 8px; font-family: 'Sora', sans-serif;
   font-size: 14px; font-weight: 500; color: #fff; cursor: pointer;
   margin-top: 0.5rem; transition: background 0.15s, transform 0.1s;
 }
-.auth-btn:hover { background: #0F6E56; }
+.auth-btn:hover { background: var(--acc-strong, #0F6E56); }
 .auth-btn:active { transform: scale(0.98); }
 .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .switch-text { text-align: center; font-size: 13px; color: #242121; margin-top: 1.25rem; }
-.switch-text a { color: #1D9E75; font-weight: 500; text-decoration: none; }
+.switch-text a { color: var(--acc, #1D9E75); font-weight: 500; text-decoration: none; }
 
 .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #888; }
 /* ════ Clearer boundaries (matches dashboard) ════ */
@@ -158,5 +158,5 @@ input, textarea, select {
 }
 .field input,
 .role-btn { border: 1px solid #D3DCE6; }
-.field input:focus { border-color: #1D9E75; }
-.role-btn.active { border-color: #1D9E75; }
+.field input:focus { border-color: var(--acc, #1D9E75); }
+.role-btn.active { border-color: var(--acc, #1D9E75); }

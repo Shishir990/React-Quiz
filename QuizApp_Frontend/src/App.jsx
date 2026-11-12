@@ -7,6 +7,7 @@ import { ContextProvider, useQuiz } from './Context/Context'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './Components/ProtectedRoute';
 import Dashboard from './Pages/Dashboard';
+import MyQuizzes from './Pages/MyQuizzes';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
 import ForgotPassword from './Pages/ForgotPassword';
@@ -43,6 +44,14 @@ function App() {
             element={
               <ProtectedRoute>
                     <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quizzes"
+            element={
+              <ProtectedRoute>
+                <MyQuizzes />
               </ProtectedRoute>
             }
           />

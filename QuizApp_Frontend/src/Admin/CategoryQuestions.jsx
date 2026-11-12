@@ -213,9 +213,11 @@ export default function CategoryQuestions() {
           {!paperView && question && (
             <>
               <section className="qz-question" aria-labelledby="ad-qv-text">
-                <p className="qz-eyebrow">Question {String(current + 1).padStart(2, '0')}</p>
-                <h1 id="ad-qv-text" className="qz-question-text">{question.text}</h1>
-                {!showAnswers && <p className="qz-hint">{question.options.length} options</p>}
+                <div className="qz-question-box">
+                  <p className="qz-eyebrow">Question {String(current + 1).padStart(2, '0')}</p>
+                  <h1 id="ad-qv-text" className="qz-question-text">{question.text}</h1>
+                  {!showAnswers && <p className="qz-hint">{question.options.length} options</p>}
+                </div>
 
                 <div className="qz-options" aria-label="Options">
                   {question.options.map((opt, i) => {

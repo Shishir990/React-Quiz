@@ -58,7 +58,7 @@
 }
 
 .btn:hover:not(:disabled) {
-  border-color: #1D9E75;
+  border-color: var(--acc, #1D9E75);
   background: #f0faf6;
 }
 
@@ -68,16 +68,16 @@
 }
 
 .btn-selected {
-  border-color: #1D9E75 !important;
+  border-color: var(--acc, #1D9E75) !important;
   background: #E1F5EE !important;
-  color: #0F6E56 !important;
+  color: var(--acc-strong, #0F6E56) !important;
   opacity: 1 !important;
 }
 
 .btn-correct {
-  border-color: #1D9E75 !important;
+  border-color: var(--acc, #1D9E75) !important;
   background: #E1F5EE !important;
-  color: #0F6E56 !important;
+  color: var(--acc-strong, #0F6E56) !important;
 }
 
 .btn-wrong {
@@ -104,7 +104,7 @@
   transition: background 0.15s, transform 0.1s;
 }
 
-.next-finish-btn:hover { background: #0F6E56; }
+.next-finish-btn:hover { background: var(--acc-strong, #0F6E56); }
 .next-finish-btn:active { transform: scale(0.98); }
 .next-finish-btn:disabled {
   opacity: 0.5;
@@ -176,7 +176,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e2e2e2;
-  border-top-color: #1D9E75;
+  border-top-color: var(--acc, #1D9E75);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -219,7 +219,7 @@ table {
 }
 
 thead tr {
-  background: #1D9E75;
+  background: var(--acc, #1D9E75);
   color: #fff;
 }
 

@@ -4,22 +4,8 @@ import { useQuiz } from '../Context/Context';
 import { useCategories, useMyResults, useLeaderboard } from '../api/queries';
 import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
 import { initialsOf, timeAgo } from '../utils/format';
+import { dayKey, pickDailyChallenge } from '../utils/daily';
 import '../Styles/Dashboard.css';
-
-// Color palette to assign to categories dynamically
-const COLOR_PALETTE = [
-  { color: '#10B981', bg: '#D1FAE5', text: '#047857' },
-  { color: '#3B82F6', bg: '#DBEAFE', text: '#1D4ED8' },
-  { color: '#F97316', bg: '#FFEDD5', text: '#C2410C' },
-  { color: '#84CC16', bg: '#ECFCCB', text: '#4D7C0F' },
-  { color: '#8B5CF6', bg: '#EDE9FE', text: '#6D28D9' },
-  { color: '#EC4899', bg: '#FCE7F3', text: '#BE185D' },
-  { color: '#F59E0B', bg: '#FEF3C7', text: '#B45309' },
-  { color: '#EF4444', bg: '#FEE2E2', text: '#B91C1C' },
-  { color: '#06B6D4', bg: '#CFFAFE', text: '#0E7490' },
-  { color: '#14B8A6', bg: '#CCFBF1', text: '#0F766E' },
-];
-
 
 function greeting() {
   const h = new Date().getHours();
@@ -29,12 +15,6 @@ function greeting() {
 }
 
 const DAILY_GOAL = 3;
-
-// Local-date key, e.g. "2026-10-11"
-function dayKey(date) {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 function addDays(date, n) {
   const d = new Date(date);
@@ -65,28 +45,6 @@ function computeStreaks(results) {
   return { current, best };
 }
 
-// The same category for everyone on a given day, rotating daily
-function pickDailyChallenge(categories) {
-  const playable = categories.filter((c) => c.questionCount > 0).sort((a, b) => a._id.localeCompare(b._id));
-  if (!playable.length) return null;
-  const key = dayKey(new Date());
-  let hash = 0;
-  for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return playable[hash % playable.length];
-}
-
-// "Easy" / "Medium" / "Hard" when one level clearly dominates, else "Mixed"
-function difficultyLabel(difficulty) {
-  if (!difficulty) return null;
-  const entries = Object.entries(difficulty).filter(([, n]) => n > 0);
-  const total = entries.reduce((sum, [, n]) => sum + n, 0);
-  if (!total) return null;
-  const [level, count] = entries.sort((a, b) => b[1] - a[1])[0];
-  if (count / total < 0.6) return 'mixed';
-  return level;
-}
-
-const DIFFICULTY_TEXT = { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' };
 
 function ActivityChart({ days }) {
   const max = Math.max(1, ...days.map((d) => d.count));
@@ -159,7 +117,6 @@ export default function Dashboard() {
   const { user, highestScore } = useQuiz();
   const navigate = useNavigate();
 
-  const [activeCategory, setActiveCategory] = useState(null);
   const [playerQuery, setPlayerQuery] = useState('');
 
   const resultsQuery = useMyResults();
@@ -174,14 +131,8 @@ export default function Dashboard() {
     .slice(0, 5)
     .filter((p) => p.name.toLowerCase().includes(playerQuery.trim().toLowerCase()));
 
-  const categoriesQuery = useCategories();
-  const catLoading = categoriesQuery.isPending;
-  const catError = categoriesQuery.isError ? categoriesQuery.error.message : '';
-  // Attach a color from the palette by index
-  const categories = (categoriesQuery.data ?? []).map((cat, i) => ({
-    ...cat,
-    ...COLOR_PALETTE[i % COLOR_PALETTE.length],
-  }));
+  // The full category grid lives on My Quizzes; here they only feed Quick play and the daily challenge
+  const categories = useCategories().data ?? [];
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -251,13 +202,13 @@ export default function Dashboard() {
             <span className="db-hero-badge">✨ Level up today</span>
             <h1 className="db-hero-title">{greeting()}, {firstName}!</h1>
             <p className="db-hero-sub">
-              Pick a category below or jump into a random quiz to sharpen your mind.
+              Jump into a random quiz, or browse every category in My Quizzes.
             </p>
             <div className="db-hero-actions">
               <button className="db-btn-light" onClick={randomCategory} disabled={!categories.length}>
                 <Icon name="play" size={14} /> Quick play
               </button>
-              <a className="db-btn-ghost" href="#categories">Browse categories</a>
+              <Link className="db-btn-ghost" to="/quizzes">Browse all quizzes</Link>
             </div>
           </div>
         </section>
@@ -324,86 +275,6 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
-
-        {/* Categories */}
-        <section className="db-section" id="categories">
-          <div className="db-section-header">
-            <div>
-              <h2 className="db-section-title">Explore categories</h2>
-              <p className="db-section-sub">Hover a card and press Start, or tap to select</p>
-            </div>
-            <span className="db-pill">{categories.length} {categories.length === 1 ? 'category' : 'categories'}</span>
-          </div>
-
-          {catLoading && (
-            <div className="db-categories">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="db-cat-skeleton" />
-              ))}
-            </div>
-          )}
-
-          {catError && (
-            <div className="db-error-msg">{catError}</div>
-          )}
-
-          {!catLoading && !catError && categories.length === 0 && (
-            <div className="db-panel db-empty">
-              <span className="db-empty-icon" aria-hidden="true">📚</span>
-              <p className="db-empty-title">No categories yet</p>
-              <p className="db-empty-text">Once an admin adds categories and questions, they'll appear here.</p>
-            </div>
-          )}
-
-          {!catLoading && !catError && categories.length > 0 && (
-            <div className="db-categories">
-              {categories.map((cat, i) => {
-                const isActive = activeCategory === cat._id;
-                const playable = cat.questionCount > 0;
-                const level = difficultyLabel(cat.difficulty);
-                return (
-                  <div
-                    key={cat._id}
-                    className={`db-cat-card ${isActive ? 'db-cat-active' : ''} ${playable ? '' : 'is-empty'}`}
-                    style={{ animationDelay: `${i * 40}ms`, '--cat': cat.color, '--cat-bg': cat.bg }}
-                    onClick={() => playable && setActiveCategory(isActive ? null : cat._id)}
-                  >
-                    {challenge?._id === cat._id && <span className="db-cat-flag">Today</span>}
-                    <span className="db-cat-blob" aria-hidden="true" />
-                    <span className="db-cat-bar" aria-hidden="true" />
-
-                    <div className="db-cat-icon-wrap">
-                      <span className="db-cat-icon">{cat.icon}</span>
-                    </div>
-                    <p className="db-cat-name">{cat.name}</p>
-                    <div className="db-cat-meta">
-                      {playable ? (
-                        <>
-                          <span className="db-cat-count">
-                            {cat.questionCount} {cat.questionCount === 1 ? 'question' : 'questions'}
-                          </span>
-                          {level && <span className={`db-diff db-diff-${level}`}>{DIFFICULTY_TEXT[level]}</span>}
-                        </>
-                      ) : (
-                        <span className="db-cat-count db-cat-soon">Coming soon</span>
-                      )}
-                    </div>
-                    <button
-                      className="db-cat-start"
-                      disabled={!playable}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startQuiz(cat._id);
-                      }}
-                    >
-                      {playable ? <>Start quiz <Icon name="arrow" size={15} /></> : 'No questions yet'}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
 
         {/* Bottom grid */}
         <div className="db-bottom">

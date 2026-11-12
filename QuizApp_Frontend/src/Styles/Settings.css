@@ -10,7 +10,7 @@
 .st-role {
   display: inline-block; margin-top: 6px;
   padding: 2px 10px; border-radius: 999px;
-  background: #E1F5EE; color: #0F6E56;
+  background: #E1F5EE; color: var(--acc-strong, #0F6E56);
   font-size: 11px; font-weight: 600; text-transform: capitalize;
 }
 
@@ -18,14 +18,14 @@
 .st-card-icon {
   display: grid; place-items: center; flex-shrink: 0;
   width: 36px; height: 36px; border-radius: 10px;
-  background: #E1F5EE; color: #0F6E56;
+  background: #E1F5EE; color: var(--acc-strong, #0F6E56);
 }
 .st-card-title { font-size: 15px; font-weight: 700; color: var(--ink); }
 
 .st-success {
   display: flex; align-items: center; gap: 8px;
   background: #E1F5EE; border: 1px solid #9FE1CB;
-  color: #0F6E56; border-radius: 8px;
+  color: var(--acc-strong, #0F6E56); border-radius: 8px;
   padding: 10px 12px; font-size: 13px; margin-bottom: 1rem;
 }
 
@@ -33,7 +33,7 @@
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 13px; color: var(--ink-2); cursor: pointer;
 }
-.st-toggle input { accent-color: #1D9E75; }
+.st-toggle input { accent-color: var(--acc, #1D9E75); }
 
 .st-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
 

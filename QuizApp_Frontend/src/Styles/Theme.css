@@ -1,0 +1,529 @@
+/* ════════════════════════════════════════════════════════════════
+   Theme: pure black with neon green accents. The canvas is black,
+   cards sit one step lighter, and controls inside cards one step
+   lighter again; green is kept for accents only. Loaded after every
+   other stylesheet (see main.jsx), so it only recolours; layout and
+   spacing stay in the page stylesheets.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  --th-bg: #000000;            /* main background: pure black */
+  --th-surface: #0A0A0A;       /* sidebar, navbar */
+  --th-surface-hover: #1C1C1C;
+  --th-edge: #1A1A1A;          /* lines on the background and chrome */
+  --th-card: #121212;          /* cards, panels */
+  --th-card-hover: #1C1C1C;    /* hover, elevated */
+  --th-card-2: #1C1C1C;        /* inputs, rows and icon boxes inside cards */
+  --th-card-2-hover: #242424;
+  --th-card-sunk: #080808;     /* tracks and chip groups inside cards */
+  --th-card-edge: #262626;     /* borders */
+  --th-border-strong: #363636;
+  --th-on-dark: #FFFFFF;       /* main text */
+  --th-on-dark-2: #C8C8C8;     /* secondary text */
+  --th-on-dark-muted: #8A8A8A; /* hints, labels */
+  --th-faint: #6B6B6B;
+  --th-pill: var(--acc);       /* the selected menu item */
+  --th-pill-text: var(--acc-ink);
+  --th-deep: #0F3D22;          /* dark green pills */
+  --th-lime: var(--acc-soft);  /* small highlights */
+  --th-glow: var(--acc-rgb);
+
+  /* Accent: every page stylesheet reads these (with its old colour as fallback) */
+  --acc: #39FF14;              /* neon green */
+  --acc-strong: #2FE00C;       /* hover / pressed */
+  --acc-soft: #A6FF8F;         /* pale neon for text and highlights */
+  --acc-rgb: 57, 255, 20;      /* for rgba() tints and glows */
+  --acc-ink: #041A00;          /* text on top of neon */
+  --acc-glow: 0 0 10px rgba(57, 255, 20, 0.55), 0 0 28px rgba(57, 255, 20, 0.25);
+}
+
+/* ── 1. Flip each area's text colour variables to light ── */
+.db-wrapper,
+.au-wrapper {
+  --ink: var(--th-on-dark);
+  --ink-2: var(--th-on-dark-2);
+  --muted: var(--th-on-dark-muted);
+  --faint: var(--th-faint);
+  --line: var(--th-card-edge);
+  --edge: var(--th-card-edge);
+  --edge-strong: var(--th-border-strong);
+  --card: var(--th-card);
+  --canvas: var(--th-bg);
+  --tone-bg: rgba(var(--acc-rgb), 0.16);
+}
+.ad-wrapper {
+  --ad-ink: var(--th-on-dark);
+  --ad-ink-2: var(--th-on-dark-2);
+  --ad-muted: var(--th-on-dark-muted);
+  --ad-line: var(--th-card-edge);
+  --ad-line-strong: var(--th-border-strong);
+  --ad-card: var(--th-card);
+  --ad-accent-soft: rgba(var(--acc-rgb), 0.18);
+}
+.qz-page {
+  --qz-ink: var(--th-on-dark);
+  --qz-ink-2: var(--th-on-dark-2);
+  --qz-muted: var(--th-on-dark-muted);
+  --qz-line: var(--th-card-edge);
+  --qz-edge: var(--th-card-edge);
+}
+
+/* ── 2. Canvas ── */
+body,
+.db-wrapper,
+.ad-wrapper,
+.qz-page,
+.qz-page.ad-qv,
+.quiz-wrapper {
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(var(--th-glow), 0.10), transparent 70%),
+    radial-gradient(700px 500px at 100% 100%, rgba(var(--th-glow), 0.04), transparent 70%),
+    var(--th-bg);
+  background-attachment: fixed;
+  background-color: var(--th-bg);
+}
+
+/* ── 3. Chrome: sidebar and top bars ── */
+.db-sidebar,
+.db-navbar,
+.ad-navbar,
+.qz-header,
+.ad-qv .qz-header {
+  background: var(--th-surface);
+  border-color: var(--th-edge);
+  box-shadow: none;
+}
+.db-sidebar { border: 1px solid var(--th-edge); }
+.db-navbar { border: 1px solid var(--th-edge); }
+.ad-navbar, .qz-header { border-bottom: 1px solid var(--th-edge); }
+
+.db-logo-name,
+.ad-brand-name,
+.qz-brand-name,
+.db-navbar-heading,
+.db-wrapper .db-navbar-heading { color: var(--th-on-dark); }
+.qz-brand-sub,
+.qz-progress-meta { color: var(--th-on-dark-muted); }
+.ad-brand-tag { background: var(--th-deep); color: var(--th-lime); border-color: transparent; }
+
+/* Player sidebar navigation */
+.db-nav-item,
+.db-sidebar-name { color: var(--th-on-dark-2); }
+.db-sidebar-role { color: var(--th-on-dark-muted); }
+.db-nav-item:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+.db-nav-item.active,
+.db-nav-item.active:hover { background: var(--th-pill); color: var(--th-pill-text); box-shadow: none; }
+.db-nav-item svg { color: var(--th-on-dark-muted); }
+.db-nav-item:hover svg { color: var(--th-on-dark); }
+.db-nav-item.active svg { color: var(--th-pill-text); }
+.db-nav-secondary,
+.db-sidebar-user { border-color: var(--th-edge); }
+.db-logo-icon { box-shadow: 0 0 0 4px rgba(var(--acc-rgb), 0.18); }
+
+/* Admin top navigation */
+.ad-nav-item { color: var(--th-on-dark-2); }
+.ad-nav-item:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+.ad-nav-item.active { background: var(--th-pill); color: var(--th-pill-text); box-shadow: none; }
+
+/* Buttons and controls on the chrome */
+.db-navbar .db-search,
+.db-navbar .db-clock,
+.db-navbar-user,
+.db-icon-btn,
+.db-clock,
+.db-logout-btn,
+.ad-user-btn,
+.ad-btn.ad-btn-glass,
+.ad-navbar .ad-btn,
+.ad-qv .qz-header .ad-btn:not(.ad-btn-primary),
+.ad-qv-tool,
+.qz-timer,
+.qz-close {
+  background: var(--th-surface-hover);
+  border-color: var(--th-edge);
+  color: var(--th-on-dark);
+}
+.db-navbar .db-search input { color: var(--th-on-dark); }
+.db-navbar .db-search input::placeholder { color: var(--th-on-dark-muted); }
+.db-navbar .db-search svg,
+.db-clock svg { color: var(--th-on-dark-muted); }
+.db-clock-time,
+.db-navbar-name { color: var(--th-on-dark); }
+.db-clock-date,
+.db-navbar-role { color: var(--th-on-dark-muted); }
+.db-search:focus-within,
+.db-navbar .db-search:focus-within { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+.ad-user-btn:hover, .ad-user-btn.is-open,
+.ad-btn.ad-btn-glass:hover:not(:disabled),
+.db-icon-btn:hover,
+.qz-close:hover { background: var(--th-card-2-hover); border-color: var(--th-border-strong); color: var(--th-on-dark); }
+.db-logout-btn:hover { background: #3A1D1D; border-color: #5B2A2A; color: #FCA5A5; }
+.qz-timer-value { color: var(--th-on-dark); }
+.qz-progress { background: var(--th-edge); }
+
+/* ── 4. Cards ── */
+.db-stat-card,
+.db-cat-card,
+.db-panel,
+.db-challenge,
+.db-goal,
+.db-dropdown,
+.lb-me,
+.lb-me.is-empty,
+.st-card,
+.ad-card,
+.ad-wrapper .ad-card,
+.ad-panel,
+.ad-kpi,
+.ad-cat,
+.ad-modal,
+.ad-dropdown,
+.ad-filterbar,
+.ad-qv-paper,
+.ad-qv-empty,
+.qz-option,
+.qz-palette,
+.questionContainer {
+  background: var(--th-card);
+  border-color: var(--th-card-edge);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 12px 28px -18px rgba(0, 0, 0, 0.7);
+}
+.ad-filterbar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.db-cat-card:hover,
+.ad-cat:hover,
+.ad-cat:focus-within,
+.qz-option:hover:not(:disabled) { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+.db-cat-active, .db-cat-active:hover { background: var(--th-card-hover); }
+
+/* Things inside cards */
+.db-cat-icon-wrap,
+.db-challenge-icon,
+.db-recent-icon,
+.db-recent-item,
+.db-stat-icon,
+.st-card-icon,
+.ad-kpi-icon,
+.ad-cat-icon,
+.ad-drop-icon,
+.qz-option-letter,
+.qz-palette-btn,
+.pg-select,
+.ad-input,
+.ad-search,
+.ad-option,
+.ad-icon-pick,
+.ad-chip,
+.ad-health li,
+.ad-qv-btn,
+.qz-prev,
+.qz-next.is-skip,
+.db-panel .db-search,
+.db-btn-ghost:hover,
+.rs-cat.is-active,
+.rs-cat:hover,
+.db-recent-item:hover,
+.pg-chip.is-active,
+.ad-tab.is-active,
+.ad-seg.is-active,
+.ad-table th {
+  background: var(--th-card-2);
+  border-color: var(--th-card-edge);
+  color: inherit;
+}
+.db-cat-count,
+.db-diff, .db-diff-easy, .db-diff-medium, .db-diff-hard, .db-diff-mixed,
+.pg-chips,
+.ad-tabs,
+.ad-seg { background: var(--th-card-sunk); border-color: var(--th-card-edge); }
+
+.ad-table,
+.ad-toolbar { background: transparent; border-color: var(--th-card-edge); }
+.ad-table td { border-color: var(--th-card-edge); }
+.ad-table tbody tr:hover td,
+.lb-table tbody tr:hover td { background: var(--th-card-2); }
+.ad-filterbar .ad-label, .ad-filterbar label { color: var(--th-on-dark-muted); }
+
+/* Podium steps fade into the canvas */
+.lb-step .lb-step-block {
+  background: linear-gradient(180deg, var(--th-card-2) 0%, rgba(18, 18, 18, 0.4) 100%);
+  border-color: var(--th-card-edge);
+}
+.db-goal-track { stroke: var(--th-card-sunk); }
+.qz-palette-btn.is-current { background: var(--th-card-2); border-color: var(--th-on-dark); }
+
+/* ── 5. Text on the canvas ── */
+.db-wrapper .db-hero-title,
+.db-wrapper .db-section-title,
+.db-wrapper .pg-title,
+.ad-wrapper .ad-title,
+.qz-page .qz-question-text,
+.lb-step-name,
+.lb-step-pts { color: var(--th-on-dark); }
+.db-hero-sub,
+.db-section-sub,
+.pg-head p,
+.lb-step-meta,
+.lb-step-pts span,
+.lb-rules,
+.ad-subtitle,
+.qz-hint,
+.qz-eyebrow { color: var(--th-on-dark-muted); }
+
+.db-hero-badge,
+.db-section-header .db-pill {
+  background: var(--th-deep);
+  border-color: transparent;
+  color: var(--th-lime);
+}
+.db-hero .db-btn-ghost,
+.pg-head .db-btn-ghost,
+.ad-page-head .ad-btn:not(.ad-btn-primary),
+.qz-footer .qz-prev,
+.qz-footer .qz-next.is-skip {
+  background: transparent;
+  border-color: var(--th-border-strong);
+  color: var(--th-on-dark);
+}
+.db-hero .db-btn-ghost:hover,
+.pg-head .db-btn-ghost:hover,
+.ad-page-head .ad-btn:not(.ad-btn-primary):hover:not(:disabled),
+.qz-footer .qz-prev:hover:not(:disabled),
+.qz-footer .qz-next.is-skip:hover { background: var(--th-surface-hover); }
+.qz-footer { border-color: var(--th-edge); }
+.ad-hero-icon { background: var(--th-surface-hover); border-color: var(--th-edge); color: var(--th-lime); }
+
+.rs-back { color: var(--th-on-dark-2); }
+.rs-back:hover { color: var(--th-on-dark); }
+.db-error-msg { background: #3A1D1D; border-color: #5B2A2A; color: #FECACA; }
+
+/* ── 6. Login and sign-up ── */
+.au-panel {
+  background:
+    radial-gradient(600px 400px at 0% 0%, rgba(var(--th-glow), 0.22), transparent 60%),
+    var(--th-surface);
+}
+.au-main { background: var(--th-bg); }
+.au-card {
+  background: var(--th-card);
+  border: 1px solid var(--th-card-edge);
+  border-radius: 20px;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+}
+.au-input input,
+.au-account { background: var(--th-card-2); border-color: var(--th-card-edge); color: var(--th-on-dark); }
+.au-input input:hover { border-color: var(--th-border-strong); }
+.au-eye:hover { background: var(--th-card-hover); color: var(--th-on-dark); }
+.au-account-icon { background: rgba(var(--acc-rgb), 0.16); }
+
+/* ── 7. Status colours: pastel chips become translucent tints with light text ── */
+.db-tag-pass, .ad-tag.is-live, .ad-tab-count.is-ready { background: rgba(var(--acc-rgb), 0.16); color: var(--acc-soft); }
+.db-tag-fail, .ad-pill-off, .ad-tab-count.is-error { background: rgba(239, 68, 68, 0.16); color: #FCA5A5; }
+.ad-tag.is-draft, .ad-tab-count.is-duplicate { background: rgba(245, 158, 11, 0.16); color: #FCD34D; }
+.ad-score.is-pass, .rs-q-verdict.is-right { color: var(--acc-soft); }
+.ad-score.is-fail, .rs-q-verdict.is-wrong { color: #F87171; }
+.rs-option.is-answer { background: rgba(var(--acc-rgb), 0.14); border-color: rgba(var(--acc-rgb), 0.5); color: var(--acc-soft); }
+.rs-option.is-picked-wrong { background: rgba(239, 68, 68, 0.14); border-color: rgba(248, 113, 113, 0.5); color: #FECACA; }
+
+/* Neutral pills, counts and avatars */
+.ad-tag,
+.ad-pill,
+.ad-you,
+.ad-tab-count,
+.ad-avatar,
+.lb-avatar,
+.db-avatar-sm { background: var(--th-card-2); color: var(--th-on-dark-2); }
+.ad-avatar.is-admin { background: var(--ad-accent); color: #fff; }
+.lb-avatar-lg { background: var(--acc); color: #fff; }
+.db-cat-flag { background: var(--th-lime); color: var(--th-deep); }
+
+/* Admin blue accents: lighter so they read on dark */
+.ad-pill-admin,
+.ad-btn-primary-soft,
+.ad-tab.is-active .ad-tab-count { background: rgba(var(--acc-rgb), 0.2); border-color: rgba(var(--acc-rgb), 0.35); color: var(--acc-soft); }
+.ad-btn-primary-soft:hover:not(:disabled) { background: rgba(var(--acc-rgb), 0.3); border-color: rgba(var(--acc-rgb), 0.5); }
+.ad-kpi-label { color: var(--th-on-dark-muted); }
+.ad-filterbar .ad-labeled-select span { color: var(--th-on-dark-muted); }
+.ad-qv .qz-progress-pct,
+.ad-qv .qz-palette-count { color: var(--acc-soft); }
+
+/* Headings: index.css hard-codes h1–h6 to #111 */
+.ad-wrapper h1, .ad-wrapper h2, .ad-wrapper h3 { color: var(--ad-ink); }
+
+/* Keep the active state visible on cards that the generic rules above recolour */
+.rs-cat { background: var(--th-card-2); border-color: var(--th-card-edge); }
+.rs-cat.is-active { border-color: var(--acc); }
+
+/* Quiz answers, palette and buttons */
+.qz-option.is-selected { background: rgba(var(--acc-rgb), 0.14); border-color: var(--acc); }
+.qz-palette-btn.is-skipped,
+.qz-legend-dot.is-skipped { background: rgba(245, 158, 11, 0.16); border-color: rgba(253, 186, 116, 0.6); color: #FCD34D; }
+.qz-legend-dot.is-current,
+.qz-legend-dot.is-unvisited { background: var(--th-card-2); }
+.qz-legend-dot.is-current { border-color: var(--th-on-dark); }
+.qz-palette-submit { background: transparent; }
+.qz-palette-submit:hover { background: rgba(var(--acc-rgb), 0.12); }
+
+/* Tables: Pages.css styles every <table> (white background, green header) */
+.lb-table { background: transparent; }
+.lb-table th { background: transparent; color: var(--th-on-dark-muted); }
+.lb-table tr.is-me td { background: rgba(var(--acc-rgb), 0.12); }
+.lb-table tr.is-me:hover td { background: rgba(var(--acc-rgb), 0.18); }
+
+/* Settings form uses the old shared .field styles from index.css */
+.st-form .field label { color: var(--th-on-dark-2); }
+.st-form .field input { background: var(--th-card-2); border-color: var(--th-card-edge); color: var(--th-on-dark); }
+.st-form .field input:focus { border-color: var(--acc); }
+.st-form .strength-seg { background: var(--th-card-sunk); }
+.lb-table thead tr { background: transparent; color: inherit; }
+
+/* Gold first place (dashboard Top players, leaderboard row): a warm tint */
+.db-lb-1 { background: linear-gradient(90deg, rgba(245, 158, 11, 0.16), rgba(245, 158, 11, 0.05)); border-color: rgba(253, 230, 138, 0.25); }
+.db-lb-item:hover { background: var(--th-card-2); }
+
+/* Result review */
+.rs-option,
+.rs-explain { background: var(--th-card-2); border-color: var(--th-card-edge); color: var(--th-on-dark-2); }
+
+/* Admin question view: blue text on dark */
+.ad-qv-correct,
+.ad-qv .qz-palette-submit { color: var(--acc-soft); }
+.ad-qv .qz-palette-submit { border-color: rgba(var(--acc-rgb), 0.45); }
+
+/* Chart hover tooltips */
+.db-chart-tip { background: var(--th-card-2-hover); border-color: var(--th-border-strong); color: var(--th-on-dark); box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.7); }
+
+/* ── 8. Lines, gridlines and tracks: dim them so they don't glow ── */
+.ad-rank-bar,
+.an-bar-track,
+.rs-bar { background: var(--th-card-sunk); }
+.db-chart-bar.is-empty,
+.ad-chart-bar.is-empty { background: var(--th-card-edge); }
+.an-col-bar.is-empty { background: var(--th-card-edge) !important; } /* Analytics.css uses !important here */
+.ad-switch-track { background: var(--th-border-strong); }
+.db-ring-track { stroke: var(--th-card-sunk); }
+.an-grid { stroke: var(--th-card-edge); }
+.an-cols-grid span,
+.ad-chart-grid span { border-color: var(--th-card-edge); }
+.ad-chart-grid span:last-child { border-color: var(--th-border-strong); }
+.db-chart-track { border-color: var(--th-card-edge); }
+.ad-chart-col:hover, .ad-chart-col:focus-visible { background: rgba(255, 255, 255, 0.03); }
+.ad-feed li { border-color: var(--th-card-edge); }
+.ad-filterbar .ad-search,
+.ad-filterbar .ad-input-sm { border-color: var(--th-card-edge); }
+.ad-btn:not(.ad-btn-primary):not(.ad-btn-danger) { background: var(--th-card-2); border-color: var(--th-card-edge); color: var(--th-on-dark); }
+.ad-btn:not(.ad-btn-primary):not(.ad-btn-danger):hover:not(:disabled) { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+.lb-table,
+.lb-table td { border-color: var(--th-card-edge); box-shadow: none; }
+.db-panel table:not(.lb-table) td { border-color: var(--th-card-edge); }
+
+/* Hover inside cards: one step brighter than the elevated colour */
+.rs-cat:hover,
+.db-recent-item:hover,
+.db-lb-item:hover,
+.db-panel .db-btn-ghost:hover,
+.ad-table tbody tr:hover td,
+.lb-table tbody tr:hover td,
+.qz-palette-btn:not(.is-answered):not(.is-skipped):hover { background: var(--th-card-2-hover); }
+
+/* Emerald links and labels: the dark brand green is too dim on dark cards */
+.au-label-link,
+.au-switch a,
+.db-link,
+.qz-palette-count,
+.qz-page:not(.ad-qv) .qz-palette-submit { color: var(--acc-soft); }
+.qz-page:not(.ad-qv) .qz-palette-submit { border-color: rgba(var(--acc-rgb), 0.5); }
+.db-cat-icon-wrap { box-shadow: inset 0 0 0 1px var(--th-card-edge); }
+
+/* Admin menu icons follow the menu text */
+.ad-nav-item svg { color: var(--th-on-dark-muted); }
+.ad-nav-item:hover svg { color: var(--th-on-dark); }
+.ad-nav-item.active svg { color: var(--th-pill-text); }
+
+/* ════ 9. Neon ════ */
+/* Dark text on anything filled with neon (it's far too bright for white text) */
+.au-btn,
+.au-logo-icon,
+.db-logo-icon,
+.db-btn-light,
+.db-avatar-brand,
+.lb-avatar-lg,
+.lb-avatar-xl,
+.ad-brand-mark,
+.ad-avatar.is-admin,
+.ad-btn-primary,
+.ad-chip.is-active,
+.qz-next:not(.is-skip),
+.qz-option.is-selected .qz-option-letter,
+.qz-palette-btn.is-answered { color: var(--acc-ink); }
+.au-btn svg, .db-btn-light svg, .ad-btn-primary svg, .qz-next:not(.is-skip) svg { color: var(--acc-ink); }
+.au-btn:hover:not(:disabled),
+.db-btn-light:hover,
+.ad-btn-primary:hover:not(:disabled),
+.qz-next:not(.is-skip):hover { background: var(--acc-strong); border-color: var(--acc-strong); color: var(--acc-ink); }
+
+/* Neon labels that sat on pastel chips */
+.lb-you,
+.st-role { background: rgba(var(--acc-rgb), 0.12); color: var(--acc); }
+thead tr { background: transparent; color: inherit; }
+
+/* Glow: buttons, logo and the selected menu item */
+.au-btn,
+.db-btn-light,
+.ad-btn-primary,
+.qz-next:not(.is-skip),
+.db-nav-item.active,
+.ad-nav-item.active { box-shadow: var(--acc-glow); }
+.au-btn:hover:not(:disabled),
+.db-btn-light:hover,
+.ad-btn-primary:hover:not(:disabled),
+.qz-next:not(.is-skip):hover {
+  box-shadow: 0 0 14px rgba(var(--acc-rgb), 0.7), 0 0 36px rgba(var(--acc-rgb), 0.35);
+}
+.db-logo-icon,
+.au-logo-icon,
+.ad-brand-mark { box-shadow: 0 0 0 3px rgba(var(--acc-rgb), 0.15), 0 0 16px rgba(var(--acc-rgb), 0.45); }
+
+/* Glow: progress, bars and rings */
+.qz-progress-bar,
+.db-chart-bar:not(.is-empty),
+.ad-chart-bar:not(.is-empty),
+.ad-rank-bar span,
+.rs-bar-avg { box-shadow: 0 0 8px rgba(var(--acc-rgb), 0.6); }
+.db-ring-bar,
+.db-goal-bar { filter: drop-shadow(0 0 4px rgba(var(--acc-rgb), 0.7)); }
+.ad-rank-bar span { background: var(--acc); }
+
+/* Glow: chosen answers and the current question */
+.qz-option.is-selected { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc), 0 0 18px rgba(var(--acc-rgb), 0.25); }
+.qz-palette-btn.is-answered { box-shadow: 0 0 8px rgba(var(--acc-rgb), 0.45); }
+
+/* Glow: focused fields and hovered cards */
+.au-input input:focus,
+.st-form .field input:focus,
+.ad-input:focus,
+.ad-search:focus-within,
+.db-search:focus-within,
+.db-navbar .db-search:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(var(--acc-rgb), 0.15), 0 0 14px rgba(var(--acc-rgb), 0.2); }
+.db-cat-card:hover,
+.db-stat-card:hover,
+.ad-cat:hover,
+.qz-option:hover:not(:disabled):not(.is-selected) { border-color: rgba(var(--acc-rgb), 0.45); box-shadow: 0 0 20px -6px rgba(var(--acc-rgb), 0.35); }
+.lb-podium .lb-avatar-xl,
+.lb-podium .lb-avatar-lg,
+.ad-qv-btn.is-primary,
+.ad-qv-btn.is-primary span,
+.ad-qv-btn.is-primary svg { color: var(--acc-ink); }
+.ad-qv-btn.is-primary { box-shadow: var(--acc-glow); }
+.lb-step.is-me .lb-avatar { color: var(--acc-ink); }
+.lb-step .lb-avatar { box-shadow: 0 0 0 3px var(--th-bg), 0 0 0 5px var(--th-card-edge); }
+.lb-step-1 .lb-avatar { box-shadow: 0 0 0 3px var(--th-bg), 0 0 0 5px #F5C451; }
+.lb-step.is-me .lb-avatar { box-shadow: 0 0 0 3px var(--th-bg), 0 0 0 5px var(--acc), 0 0 18px rgba(var(--acc-rgb), 0.5); }
+
+/* Dropdowns: restore the arrow (the background shorthand above removed it), drawn light */
+.pg-select {
+  background: var(--th-card-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23C8C8C8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  color: var(--th-on-dark);
+}
+.pg-select option { background: var(--th-card); color: var(--th-on-dark); }
+.ad-qv .qz-progress { background: var(--th-edge); }

@@ -68,7 +68,7 @@ export function ScoreRing({ score }) {
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: 'dashboard', to: '/dashboard' },
-  { label: 'My Quizzes', icon: 'quizzes' },
+  { label: 'My Quizzes', icon: 'quizzes', to: '/quizzes' },
   { label: 'Results', icon: 'results', to: '/results' },
   { label: 'Analytics', icon: 'pie', to: '/analytics' },
   { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },

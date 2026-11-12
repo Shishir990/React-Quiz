@@ -3,7 +3,7 @@
 .lb-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .lb-avatar { background: #E2E8F0; color: var(--ink-2); font-weight: 600; }
-.lb-avatar-lg { width: 48px; height: 48px; font-size: 15px; background: #059669; color: #fff; }
+.lb-avatar-lg { width: 48px; height: 48px; font-size: 15px; background: var(--acc, #059669); color: #fff; }
 .lb-avatar-xl { width: 56px; height: 56px; font-size: 17px; }
 
 /* While a new period/category loads, dim the old board instead of blanking it */
@@ -31,7 +31,7 @@
 
 .lb-me-gap {
   flex-basis: 100%;
-  font-size: 12px; font-weight: 500; color: #047857;
+  font-size: 12px; font-weight: 500; color: var(--acc-strong, #047857);
 }
 
 /* ── Podium ── */
@@ -55,7 +55,7 @@
 .lb-medal { font-size: 26px; line-height: 1; margin-bottom: 8px; }
 .lb-step .lb-avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #E2E8F0; }
 .lb-step-1 .lb-avatar { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #F5C451; }
-.lb-step.is-me .lb-avatar { background: #059669; color: #fff; }
+.lb-step.is-me .lb-avatar { background: var(--acc, #059669); color: #fff; }
 
 .lb-step-name {
   max-width: 100%;

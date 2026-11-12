@@ -2,8 +2,8 @@
 
 /* ── Quiz screen ── */
 .qz-page {
-  --qz-brand: #059669;
-  --qz-brand-dark: #047857;
+  --qz-brand: var(--acc, #059669);
+  --qz-brand-dark: var(--acc-strong, #047857);
   --qz-ink: #0F172A;
   --qz-ink-2: #334155;
   --qz-muted: #64748B;
@@ -99,7 +99,7 @@
 .qz-progress-bar {
   height: 100%;
   border-radius: inherit;
-  background: #10B981;
+  background: var(--acc, #10B981);
   transition: width 0.4s ease;
 }
 .qz-progress-meta {
@@ -132,6 +132,32 @@
 }
 .qz-hint { margin: 8px 0 20px; font-size: 13px; color: var(--qz-muted); }
 
+/* The question sits in its own card above the options */
+.qz-question-box {
+  position: relative;
+  margin-bottom: 20px;
+  padding: 22px 24px 20px;
+  border: 1px solid var(--th-card-edge, var(--qz-edge));
+  border-radius: 16px;
+  background: var(--th-card, #fff);
+  overflow: hidden;
+}
+/* Accent strip down the left edge */
+.qz-question-box::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--acc, var(--qz-brand));
+  box-shadow: 0 0 12px rgba(var(--acc-rgb, 5, 150, 105), 0.7);
+}
+.qz-question-box .qz-eyebrow { color: var(--acc, var(--qz-brand)); }
+.qz-question-box .qz-hint { margin-bottom: 0; }
+.qz-question-box .qz-hint:empty { display: none; }
+
+@media (max-width: 640px) {
+  .qz-question-box { padding: 18px 18px 16px; }
+}
+
 /* Options */
 .qz-options { display: flex; flex-direction: column; gap: 12px; }
 
@@ -155,7 +181,7 @@
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 .qz-option:hover:not(:disabled) {
-  border-color: #10B981;
+  border-color: var(--acc, #10B981);
   background: #FAFFFD;
   transform: translateY(-1px);
 }
@@ -173,12 +199,12 @@
 .qz-option-text { flex: 1; line-height: 1.4; }
 
 .qz-option.is-selected {
-  border-color: #10B981;
+  border-color: var(--acc, #10B981);
   background: #ECFDF5;
   font-weight: 600;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--acc-rgb, 16, 185, 129), 0.12);
 }
-.qz-option.is-selected .qz-option-letter { background: #10B981; color: #fff; }
+.qz-option.is-selected .qz-option-letter { background: var(--acc, #10B981); color: #fff; }
 .qz-option-check { flex-shrink: 0; color: var(--qz-brand); }
 
 /* Footer */
@@ -295,8 +321,8 @@
 .qz-palette-btn:hover { border-color: #94A3B8; }
 .qz-palette-btn:active { transform: scale(0.95); }
 
-.qz-palette-btn.is-answered { background: #10B981; border-color: #10B981; color: #fff; }
-.qz-palette-btn.is-answered:hover { background: #059669; }
+.qz-palette-btn.is-answered { background: var(--acc, #10B981); border-color: var(--acc, #10B981); color: #fff; }
+.qz-palette-btn.is-answered:hover { background: var(--acc, #059669); }
 .qz-palette-btn.is-skipped { background: #FFF7ED; border-color: #FDBA74; color: #C2410C; }
 .qz-palette-btn.is-current {
   background: #fff;
@@ -318,7 +344,7 @@
 }
 .qz-legend li { display: flex; align-items: center; gap: 6px; }
 .qz-legend-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--qz-edge); }
-.qz-legend-dot.is-answered { background: #10B981; border-color: #10B981; }
+.qz-legend-dot.is-answered { background: var(--acc, #10B981); border-color: var(--acc, #10B981); }
 .qz-legend-dot.is-skipped { background: #FFF7ED; border-color: #FDBA74; }
 .qz-legend-dot.is-current { background: #fff; border: 2px solid var(--qz-ink); }
 .qz-legend-dot.is-unvisited { background: #fff; }
@@ -378,7 +404,7 @@
 /* ── Same light gradient as the rest of the app ── */
 .qz-page {
   background:
-    radial-gradient(1100px 650px at 0% 0%, rgba(16, 185, 129, 0.08), transparent 60%),
+    radial-gradient(1100px 650px at 0% 0%, rgba(var(--acc-rgb, 16, 185, 129), 0.08), transparent 60%),
     radial-gradient(900px 600px at 100% 10%, rgba(56, 189, 248, 0.07), transparent 60%),
     radial-gradient(1000px 700px at 85% 100%, rgba(99, 102, 241, 0.06), transparent 60%),
     radial-gradient(800px 600px at 10% 100%, rgba(20, 184, 166, 0.05), transparent 60%),
@@ -387,7 +413,7 @@
 }
 .qz-header {
   background:
-    radial-gradient(320px 120px at 0% 0%, rgba(16, 185, 129, 0.09), transparent 70%),
+    radial-gradient(320px 120px at 0% 0%, rgba(var(--acc-rgb, 16, 185, 129), 0.09), transparent 70%),
     radial-gradient(360px 120px at 55% 100%, rgba(56, 189, 248, 0.06), transparent 70%),
     radial-gradient(320px 120px at 100% 0%, rgba(99, 102, 241, 0.07), transparent 70%),
     linear-gradient(90deg, #F9FEFC 0%, #FAFCFE 50%, #FAFAFF 100%);

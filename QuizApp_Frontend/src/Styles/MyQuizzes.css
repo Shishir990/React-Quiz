@@ -1,0 +1,166 @@
+/* ── My Quizzes: toolbar and category cards ──
+   Colours come from the theme variables in Theme.css. */
+
+/* Toolbar */
+.mq-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+}
+.mq-search {
+  flex: 1 1 260px;
+  display: flex; align-items: center; gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--th-card-edge);
+  border-radius: 12px;
+  background: var(--th-card);
+  color: var(--th-on-dark-muted);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.mq-search:focus-within {
+  border-color: var(--acc);
+  box-shadow: 0 0 0 3px rgba(var(--acc-rgb), 0.15), 0 0 14px rgba(var(--acc-rgb), 0.2);
+}
+.mq-search input {
+  flex: 1; min-width: 0;
+  border: none; outline: none; background: transparent;
+  font: inherit; font-size: 14px; color: var(--th-on-dark);
+}
+.mq-search input::placeholder { color: var(--th-on-dark-muted); }
+.mq-toolbar .pg-select { height: 40px; }
+
+/* Grid */
+.mq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* Card */
+.mq-card {
+  position: relative;
+  display: flex; flex-direction: column; gap: 14px;
+  min-height: 256px; /* same size as before, even with less inside */
+  padding: 20px;
+  border: 1px solid var(--th-card-edge);
+  border-radius: 16px;
+  background: var(--th-card);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  animation: mq-in 0.35s ease both;
+}
+.mq-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--acc-rgb), 0.45);
+  box-shadow: 0 0 24px -8px rgba(var(--acc-rgb), 0.35), 0 16px 32px -20px rgba(0, 0, 0, 0.8);
+}
+@keyframes mq-in { from { opacity: 0; transform: translateY(6px); } }
+
+.mq-card.is-today {
+  border-color: rgba(var(--acc-rgb), 0.6);
+  background:
+    radial-gradient(300px 140px at 100% 0%, rgba(var(--acc-rgb), 0.1), transparent 70%),
+    var(--th-card);
+  box-shadow: 0 0 22px -10px rgba(var(--acc-rgb), 0.5);
+}
+.mq-today {
+  position: absolute; top: -10px; left: 18px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  box-shadow: 0 0 12px rgba(var(--acc-rgb), 0.55);
+}
+
+.mq-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mq-icon {
+  flex-shrink: 0;
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--th-card-edge);
+  background: var(--th-card-2);
+  font-size: 26px; font-weight: 700;
+  color: var(--th-on-dark-2);
+}
+.mq-title { min-width: 0; margin-top: 4px; }
+.mq-name {
+  font-family: inherit;
+  margin: 0;
+  font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3;
+  color: var(--th-on-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mq-meta { margin: 4px 0 0; font-size: 13px; color: var(--th-on-dark-muted); }
+
+.mq-diff {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+  border: 1px solid transparent;
+}
+.mq-diff.is-easy { background: rgba(var(--acc-rgb), 0.12); color: var(--acc); }
+.mq-diff.is-medium { background: rgba(245, 158, 11, 0.14); color: #FCD34D; }
+.mq-diff.is-hard { background: rgba(239, 68, 68, 0.14); color: #FCA5A5; }
+.mq-diff.is-mixed { background: var(--th-card-2); color: var(--th-on-dark-2); border-color: var(--th-card-edge); }
+
+/* Best score: one slim row, only on categories you've played */
+.mq-best {
+  margin-top: auto;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--th-on-dark-muted);
+}
+.mq-best strong { min-width: 34px; text-align: right; font-size: 13px; color: var(--th-on-dark); }
+.mq-track { flex: 1; height: 4px; border-radius: 999px; background: var(--th-card-2); overflow: hidden; }
+.mq-track span {
+  display: block; height: 100%;
+  border-radius: inherit;
+  background: var(--acc);
+  box-shadow: 0 0 8px rgba(var(--acc-rgb), 0.6);
+}
+
+/* Start button: outlined, fills with neon on hover */
+.mq-start {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px;
+  border: 1px solid rgba(var(--acc-rgb), 0.5);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--acc);
+  font: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.mq-start:hover:not(:disabled),
+.mq-card.is-today .mq-start {
+  background: var(--acc);
+  color: var(--acc-ink);
+  box-shadow: 0 0 14px rgba(var(--acc-rgb), 0.5);
+}
+.mq-start:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.mq-start:disabled {
+  border-color: var(--th-card-edge);
+  color: var(--th-on-dark-muted);
+  cursor: not-allowed;
+}
+
+.mq-card.is-empty { opacity: 0.6; }
+.mq-card.is-empty:hover { transform: none; border-color: var(--th-card-edge); box-shadow: none; }
+
+/* Loading */
+.mq-skeleton {
+
+  animation: mq-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mq-pulse { 50% { opacity: 0.5; } }
+
+@media (max-width: 640px) {
+  .mq-toolbar .pg-chips { order: 2; }
+  .mq-toolbar .pg-select { order: 3; flex: 1; }
+}
+
+/* When a best-score row is present it takes the push-down, so the button sits right under it */
+.mq-best + .mq-start { margin-top: 0; }
