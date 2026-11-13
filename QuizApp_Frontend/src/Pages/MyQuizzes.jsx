@@ -53,8 +53,8 @@ export default function MyQuizzes() {
   const resumable = savedQuery.isSuccess
     ? new Set(savedQuery.data.map((p) => String(p.category)))
     : savedCategoryIds(user?._id);
-  pendingSaves.forEach((id) => resumable.add(String(id)));
-  pendingDeletes.forEach((id) => resumable.delete(String(id)));
+  for (const id of pendingSaves.keys()) resumable.add(String(id));
+  for (const id of pendingDeletes.keys()) resumable.delete(String(id));
   const playable = categories.filter((c) => c.questionCount > 0);
   const challenge = pickDailyChallenge(categories);
   const playedCount = categories.filter((c) => progress[c._id]).length;

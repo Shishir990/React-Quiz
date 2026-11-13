@@ -22,18 +22,27 @@ async function request(url, options = {}) {
 // Categories with a quiz in progress: [{ category, answered, total, secondsRemaining }]
 export const listProgressApi = () => request('');
 
-// The saved quiz for one category, or null when there isn't one
-export const getProgressApi = (categoryId) => request(`/${categoryId}`);
+// Saves/deletes still on their way to the server (category id -> request).
+// "Save & exit" lands on the quiz list straight away, and on a slow connection
+// the next request can reach the server before the save does. The list uses
+// these to show the right button; opening a quiz waits for them (below).
+export const pendingSaves = new Map();
+export const pendingDeletes = new Map();
 
-// Saves/deletes still on their way to the server. "Save & exit" lands on the
-// quiz list straight away, and on a slow connection the list can be fetched
-// before the save arrives; these let the list show the right button anyway.
-export const pendingSaves = new Set();
-export const pendingDeletes = new Set();
+const track = (map, id, promise) => {
+  map.set(id, promise);
+  return promise.finally(() => {
+    if (map.get(id) === promise) map.delete(id); // a newer request may have replaced it
+  });
+};
 
-const track = (set, id, promise) => {
-  set.add(id);
-  return promise.finally(() => set.delete(id));
+// The saved quiz for one category, or null when there isn't one.
+// Waits for a save/delete of that quiz still in flight, so it never reads
+// a copy older than the one this browser just sent.
+export const getProgressApi = async (categoryId) => {
+  const inFlight = pendingSaves.get(categoryId) || pendingDeletes.get(categoryId);
+  if (inFlight) await inFlight.catch(() => {});
+  return request(`/${categoryId}`);
 };
 
 // keepalive lets the save finish even when the page is being closed
