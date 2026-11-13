@@ -1,0 +1,24 @@
+import { useEffect } from "react";
+import { useQuiz } from "../../context/QuizContext";
+import "../../styles/Pages.css"
+export function Timer(){
+    const {secondsRemaining,dispatch}=useQuiz()
+    const minutes=Math.floor(secondsRemaining / 60)
+      const seconds = secondsRemaining % 60;
+
+    useEffect(
+        ()=>{
+            const interval=setInterval((
+
+            )=>{dispatch({type:"tick"})},1000
+
+            )
+            return ()=>clearInterval(interval)
+        },[]
+    )
+    return(
+        <span className="qz-timer-value">
+            {`${minutes<10?0:""}${minutes}:${seconds<10?0:""}${seconds}`}
+        </span>
+    )
+}

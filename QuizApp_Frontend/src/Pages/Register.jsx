@@ -1,17 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerApi } from '../api/auth';
-import { useQuiz } from '../Context/Context';
-import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
-
-const getStrength = (password) => {
-  let score = 0;
-  if (password.length >= 6) score++;
-  if (password.length >= 10) score++;
-  if (/[A-Z]/.test(password) && /[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  return score;
-};
+import { useQuiz } from '../context/QuizContext';
+import AuthLayout from '../components/layout/AuthLayout';
+import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
+import { getStrength } from '../utils/password';
 
 const strengthLabel = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
 const strengthColor = ['#DC2626', '#DC2626', '#F59E0B', '#10B981', '#047857'];

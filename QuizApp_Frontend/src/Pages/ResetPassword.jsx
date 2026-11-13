@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { checkResetTokenApi, resetPasswordApi } from '../api/auth';
-import AuthLayout, { AuthAlert, AuthField, AuthIcon, AuthSubmit } from '../Components/AuthLayout';
+import AuthLayout from '../components/layout/AuthLayout';
+import { AuthAlert, AuthField, AuthIcon, AuthSubmit } from '../components/auth';
 
 export default function ResetPassword() {
   const navigate = useNavigate();

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMyResults } from '../api/queries';
-import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
+import AppShell from '../components/layout/AppShell';
 import { timeAgo, formatDuration } from '../utils/format';
-import '../Styles/Results.css';
+import { averageScore, groupByCategory } from '../utils/results';
+import '../styles/Results.css';
+import { Icon, ScoreRing } from '../components/ui';
 
 const PAGE_SIZE = 15;
 
@@ -19,27 +21,6 @@ const STATUS = [
   { value: 'passed', label: 'Passed' },
   { value: 'failed', label: 'Not passed' },
 ];
-
-const average = (list) => (list.length ? Math.round(list.reduce((s, r) => s + r.percentage, 0) / list.length) : 0);
-
-// One entry per category played: attempts, best and average score
-function byCategory(results) {
-  const groups = new Map();
-  results.forEach((r) => {
-    const key = r.category?._id || 'unknown';
-    if (!groups.has(key)) groups.set(key, { id: key, name: r.category?.name || 'Deleted category', icon: r.category?.icon || '📝', items: [] });
-    groups.get(key).items.push(r);
-  });
-  return [...groups.values()]
-    .map((g) => ({
-      ...g,
-      attempts: g.items.length,
-      best: Math.max(...g.items.map((r) => r.percentage)),
-      avg: average(g.items),
-      last: g.items[0].createdAt, // results arrive newest first
-    }))
-    .sort((a, b) => b.attempts - a.attempts || b.best - a.best);
-}
 
 export default function Results() {
   const navigate = useNavigate();
@@ -62,7 +43,7 @@ export default function Results() {
   const changeStatus = withReset(setStatus);
   const changeSort = withReset(setSort);
 
-  const categories = byCategory(results);
+  const categories = groupByCategory(results).sort((a, b) => b.attempts - a.attempts || b.best - a.best);
   const filtered = results
     .filter((r) => category === 'all' || (r.category?._id || 'unknown') === category)
     .filter((r) => status === 'all' || (status === 'passed' ? r.passed : !r.passed))
@@ -72,7 +53,7 @@ export default function Results() {
   const totalTime = results.reduce((s, r) => s + (r.timeTaken || 0), 0);
   const stats = [
     { label: 'Quizzes taken', value: results.length, icon: 'check', tone: 'emerald' },
-    { label: 'Average score', value: results.length ? `${average(results)}%` : '—', icon: 'target', tone: 'blue' },
+    { label: 'Average score', value: results.length ? `${averageScore(results)}%` : '—', icon: 'target', tone: 'blue' },
     { label: 'Pass rate', value: results.length ? `${Math.round((passed / results.length) * 100)}%` : '—', icon: 'star', tone: 'violet', trend: results.length ? `${passed} of ${results.length} passed` : null },
     { label: 'Time spent', value: formatDuration(totalTime), icon: 'clock', tone: 'orange' },
   ];

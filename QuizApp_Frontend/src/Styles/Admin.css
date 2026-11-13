@@ -223,9 +223,6 @@
 .ad-card-flush { padding: 0; overflow: hidden; }
 .ad-pad { padding: 16px 20px; }
 
-
-
-
 .ad-alert {
   margin-bottom: 16px;
   padding: 10px 14px;
@@ -433,7 +430,6 @@ select.ad-input { cursor: pointer; }
 .ad-row-actions > * + * { margin-left: 6px; }
 .ad-row-actions .ad-btn, .ad-row-actions .ad-icon-btn { vertical-align: middle; }
 
-
 .ad-pill {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px;
@@ -449,7 +445,6 @@ select.ad-input { cursor: pointer; }
 .ad-diff-easy   { background: #ECFDF5; color: var(--acc-strong, #047857); }
 .ad-diff-medium { background: #FFFBEB; color: #B45309; }
 .ad-diff-hard   { background: #FEF2F2; color: #B91C1C; }
-
 
 /* ── Users ── */
 .ad-user { display: flex; align-items: center; gap: 10px; min-width: 200px; }
@@ -624,7 +619,6 @@ select.ad-input { cursor: pointer; }
 .ad-menu-trigger { width: 28px; height: 28px; margin: -4px -6px 0 0; }
 .ad-dropdown.ad-menu-list { top: calc(100% + 4px); width: 180px; z-index: 5; }
 
-
 /* ── Question import ── */
 
 .ad-modal.is-wide:has(.ad-import) { width: min(880px, 100%); }
@@ -715,7 +709,6 @@ select.ad-input { cursor: pointer; }
 
 /* ── Category questions page ── */
 
-
 /* Toggle switch */
 .ad-switch { position: relative; display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ad-ink-2); cursor: pointer; user-select: none; }
 .ad-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -729,7 +722,6 @@ select.ad-input { cursor: pointer; }
 .ad-switch input:checked + .ad-switch-track { background: var(--ad-accent); }
 .ad-switch input:checked + .ad-switch-track::after { transform: translateX(16px); }
 .ad-switch input:focus-visible + .ad-switch-track { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
-
 
 /* Question paper */
 

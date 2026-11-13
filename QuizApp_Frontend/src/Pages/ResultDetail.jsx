@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useResult } from '../api/queries';
-import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
+import AppShell from '../components/layout/AppShell';
 import { formatDuration } from '../utils/format';
-import '../Styles/Results.css';
+import '../styles/Results.css';
+import { Icon, ScoreRing } from '../components/ui';
 
 const FILTERS = [
   { value: 'all', label: 'All' },

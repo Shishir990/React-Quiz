@@ -1,0 +1,86 @@
+import { useQuiz } from "../context/QuizContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import '../styles/Finish.css';
+
+export function Finish() {
+  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz, retryQuiz } = useQuiz();
+  const navigate = useNavigate();
+
+  const categoryId = Questions[0]?.category?._id || Questions[0]?.category;
+
+  const handleSubmit = () => {
+    submitQuiz(categoryId, answersLog, totalTime - secondsRemaining);
+  };
+
+  function handleReset(){
+    retryQuiz()
+  }
+  const formatTime = (seconds) => {
+  if (!seconds || seconds === 0) return '00:00';
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+};
+
+ useEffect(() => {
+    if (result) {
+      dispatch({ type: "ResultReceived", payload: result.score });
+    }
+  }, [result]);
+
+  console.log(result)
+  if (result) {
+    return (
+      <div className="result-screen">
+        <div className="result-icon">{result.passed ? '🎉' : '😔'}</div>
+        <h2>{result.passed ? 'Well done!' : 'Better luck next time!'}</h2>
+        <p className="result-score">{result.percentage}%</p>
+        <p className="result-sub">{result.score} out of {result.total} correct</p>
+        <p className="result-sub">Time taken: {formatTime(result.timeTaken)}</p>
+        <p className="result-sub">HighestScore:{highestScore}</p>
+        <div className="answer-review">
+          {result.answers?.map((a, i) => (
+            <div key={i} className={`review-item ${a.isCorrect ? 'correct' : 'wrong'}`}>
+              <span>{i + 1}. {a.selectedOption || 'Not answered'}</span>
+              <span>{a.isCorrect ? '✓' : '✗'}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="result-actions">
+          <button onClick={handleReset}>Try Again</button>
+          <button onClick={() => {
+            dispatch({type:"HardReset"})
+            setResult(null)
+            navigate("/dashboard")
+          }}>Dashboard</button>
+          {result._id && (
+            <button onClick={() => {
+              const id = result._id
+              dispatch({type:"HardReset"})
+              setResult(null)
+              navigate(`/results/${id}`)
+            }}>Review answers</button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Submit screen
+  return (
+    <div className="finish-screen">
+      <h2>
+        {answersLog?.length === Questions.length
+          ? `You've answered all ${Questions.length} questions!`
+          : 'Ready to submit your quiz?'}
+      </h2>
+      <p>Answered: {answersLog?.length} / {Questions.length}</p>
+      <button onClick={handleSubmit} disabled={resloading}>
+        {resloading ? 'Submitting...' : 'Submit Quiz ✓'}
+      </button>
+      <button onClick={() => navigate('/dashboard')}>Exit</button>
+    </div>
+  );
+}

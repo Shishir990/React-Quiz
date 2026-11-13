@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCategories, useMyResults, useSavedProgress } from '../api/queries';
-import AppShell, { Icon } from '../Components/AppShell';
-import CategoryGrid from '../Components/CategoryGrid';
+import AppShell from '../components/layout/AppShell';
+import CategoryGrid from '../components/quiz/CategoryGrid';
 import { pickDailyChallenge } from '../utils/daily';
+import { progressByCategory } from '../utils/results';
 import { savedCategoryIds } from '../utils/quizProgress';
 import { pendingSaves, pendingDeletes } from '../api/progress';
-import { useQuiz } from '../Context/Context';
-import '../Styles/Dashboard.css';
+import { useQuiz } from '../context/QuizContext';
+import '../styles/Dashboard.css';
+import { Icon } from '../components/ui';
 
 const FILTERS = [
   { value: 'all', label: 'All' },
@@ -21,20 +23,6 @@ const SORTS = {
   questions: { label: 'Most questions', fn: (a, b) => b.questionCount - a.questionCount },
   recent: { label: 'Recently played' },
 };
-
-// Best score, attempt count and last play per category, from the player's history
-function progressByCategory(results) {
-  const map = {};
-  for (const r of results) {
-    const id = r.category?._id;
-    if (!id) continue;
-    const p = map[id] || (map[id] = { best: 0, attempts: 0, last: r.createdAt });
-    p.best = Math.max(p.best, r.percentage);
-    p.attempts += 1;
-    if (new Date(r.createdAt) > new Date(p.last)) p.last = r.createdAt;
-  }
-  return map;
-}
 
 // Every quiz category, ready to start
 export default function MyQuizzes() {

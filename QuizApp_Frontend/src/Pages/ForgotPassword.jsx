@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPasswordApi } from '../api/auth';
-import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
+import AuthLayout from '../components/layout/AuthLayout';
+import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');

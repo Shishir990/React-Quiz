@@ -25,3 +25,17 @@ export function formatDuration(seconds) {
   if (!m) return `${s}s`;
   return s % 60 ? `${m}m ${s % 60}s` : `${m}m`;
 }
+
+// 3, "quiz" → "3 quizzes"-style counts (adds a plain "s")
+export const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+// "13 Nov"
+export const shortDate = (d) => new Date(d).toLocaleDateString([], { day: 'numeric', month: 'short' });
+
+// "Good morning" / "Good afternoon" / "Good evening" for the current local time
+export function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { loginApi } from '../api/auth';
-import { useQuiz } from '../Context/Context';
-import AuthLayout, { AuthAlert, AuthField, AuthSubmit } from '../Components/AuthLayout';
+import { useQuiz } from '../context/QuizContext';
+import AuthLayout from '../components/layout/AuthLayout';
+import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
 
 export default function Login() {
   const navigate = useNavigate();

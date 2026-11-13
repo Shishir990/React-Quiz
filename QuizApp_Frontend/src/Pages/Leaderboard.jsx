@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuiz } from '../Context/Context';
+import { useQuiz } from '../context/QuizContext';
 import { useCategories, useLeaderboard } from '../api/queries';
-import AppShell, { Icon } from '../Components/AppShell';
-import { initialsOf, formatDuration } from '../utils/format';
-import '../Styles/Leaderboard.css';
+import AppShell from '../components/layout/AppShell';
+import { formatDuration } from '../utils/format';
+import { PlayerAvatar } from '../components/leaderboard/PlayerAvatar';
+import { Icon } from '../components/ui';
+import '../styles/Leaderboard.css';
 
 const PERIODS = [
   { value: 'week', label: 'This week' },
@@ -14,10 +16,6 @@ const PERIODS = [
 
 // Podium order: 2nd, 1st, 3rd
 const PODIUM_ORDER = [1, 0, 2];
-
-function PlayerAvatar({ name, size = '' }) {
-  return <div className={`db-avatar lb-avatar ${size}`}>{initialsOf(name)}</div>;
-}
 
 export default function Leaderboard() {
   const { user } = useQuiz();

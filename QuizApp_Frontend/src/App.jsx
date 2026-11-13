@@ -1,36 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-import { ContextProvider, useQuiz } from './Context/Context'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute } from './Components/ProtectedRoute';
-import Dashboard from './Pages/Dashboard';
-import MyQuizzes from './Pages/MyQuizzes';
-import Login from './Pages/Login';
-import Register from './Pages/Register';
-import ForgotPassword from './Pages/ForgotPassword';
-import ResetPassword from './Pages/ResetPassword';
-import Results from './Pages/Results';
-import ResultDetail from './Pages/ResultDetail';
-import Leaderboard from './Pages/Leaderboard';
-import Analytics from './Pages/Analytics';
-import Settings from './Pages/Settings';
-import AdminLayout from './Admin/AdminLayout';
-import AdminOverview from './Admin/Overview';
-import AdminQuestionBank from './Admin/QuestionBank';
-import AdminCategoryQuestions from './Admin/CategoryQuestions';
-import AdminUsers from './Admin/Users';
-import { ErrorScreen } from './Screens/ErrorScreen'
-import { StartScreen } from './Screens/StartScreen'
-import { QuestionScreen } from './Screens/QuestionScreen'
-import { Finish } from './Screens/FinishScreen'
-import { RouteErrorBoundary } from './Components/ErrorBoundary'
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import Dashboard from './pages/Dashboard';
+import MyQuizzes from './pages/MyQuizzes';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Results from './pages/Results';
+import ResultDetail from './pages/ResultDetail';
+import Leaderboard from './pages/Leaderboard';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminOverview from './pages/admin/Overview';
+import AdminQuestionBank from './pages/admin/QuestionBank';
+import AdminCategoryQuestions from './pages/admin/CategoryQuestions';
+import AdminUsers from './pages/admin/Users';
+import { ErrorScreen } from './pages/ErrorScreen'
+import { QuestionScreen } from './pages/QuestionScreen'
+import { Finish } from './pages/FinishScreen'
+import { RouteErrorBoundary } from './components/layout/ErrorBoundary'
 function App() {
-
-  const { user } = useQuiz();
-
   return (
     <>
     <BrowserRouter>

@@ -1,117 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuiz } from '../Context/Context';
+import { useQuiz } from '../context/QuizContext';
 import { useCategories, useMyResults, useLeaderboard } from '../api/queries';
-import AppShell, { Icon, ScoreRing } from '../Components/AppShell';
-import { initialsOf, timeAgo } from '../utils/format';
-import { dayKey, pickDailyChallenge } from '../utils/daily';
-import '../Styles/Dashboard.css';
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
+import AppShell from '../components/layout/AppShell';
+import { greeting, initialsOf, timeAgo } from '../utils/format';
+import { addDays, dayKey } from '../utils/date';
+import { pickDailyChallenge } from '../utils/daily';
+import { computeStreaks } from '../utils/results';
+import { ActivityChart } from '../components/dashboard/ActivityChart';
+import { GoalRing } from '../components/dashboard/GoalRing';
+import { Icon, ScoreRing } from '../components/ui';
+import '../styles/Dashboard.css';
 
 const DAILY_GOAL = 3;
-
-function addDays(date, n) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
-
-// Streaks are counted in consecutive calendar days with at least one quiz
-function computeStreaks(results) {
-  const days = new Set(results.map((r) => dayKey(r.createdAt)));
-  let current = 0;
-  // A streak is still alive if today has no quiz yet but yesterday did
-  let cursor = days.has(dayKey(new Date())) ? new Date() : addDays(new Date(), -1);
-  while (days.has(dayKey(cursor))) {
-    current++;
-    cursor = addDays(cursor, -1);
-  }
-
-  let best = 0;
-  let run = 0;
-  let prev = null;
-  [...days].sort().forEach((k) => {
-    run = prev && dayKey(addDays(new Date(`${prev}T00:00`), 1)) === k ? run + 1 : 1;
-    best = Math.max(best, run);
-    prev = k;
-  });
-  return { current, best };
-}
-
-
-function ActivityChart({ days }) {
-  const max = Math.max(1, ...days.map((d) => d.count));
-  const total = days.reduce((sum, d) => sum + d.count, 0);
-  const peak = days.reduce((best, d) => (d.count > best.count ? d : best), days[0]);
-
-  return (
-    <div className="db-chart">
-      <div className="db-chart-plot" role="img" aria-label={`Quizzes completed over the last 7 days: ${total} in total`}>
-        {days.map((d) => {
-          const showLabel = d.count > 0 && (d.isToday || d === peak);
-          return (
-            <div key={d.key} className={`db-chart-col ${d.isToday ? 'is-today' : ''}`} tabIndex={0}>
-              <div className="db-chart-track">
-                {showLabel && (
-                  <span className="db-chart-value" style={{ bottom: `calc(${(d.count / max) * 100}% + 6px)` }}>
-                    {d.count}
-                  </span>
-                )}
-                <div
-                  className={`db-chart-bar ${d.count === 0 ? 'is-empty' : ''}`}
-                  style={{ height: d.count ? `${(d.count / max) * 100}%` : undefined }}
-                />
-              </div>
-              <span className="db-chart-label">{d.label}</span>
-              <div className="db-chart-tip" role="tooltip">
-                <strong>{d.fullLabel}</strong>
-                <span>{d.count} {d.count === 1 ? 'quiz' : 'quizzes'}</span>
-                {d.count > 0 && <span>Avg. score {d.avg}%</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Same data for screen readers */}
-      <table className="db-sr-only">
-        <caption>Quizzes completed per day</caption>
-        <thead><tr><th>Day</th><th>Quizzes</th><th>Average score</th></tr></thead>
-        <tbody>
-          {days.map((d) => (
-            <tr key={d.key}><td>{d.fullLabel}</td><td>{d.count}</td><td>{d.count ? `${d.avg}%` : '—'}</td></tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function GoalRing({ done, goal }) {
-  const r = 34;
-  const c = 2 * Math.PI * r;
-  const pct = Math.min(done / goal, 1);
-  return (
-    <div className="db-goal-ring">
-      <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
-        <circle cx="42" cy="42" r={r} className="db-goal-track" />
-        <circle
-          cx="42" cy="42" r={r}
-          className="db-goal-bar"
-          style={{ strokeDasharray: c, strokeDashoffset: c * (1 - pct) }}
-        />
-      </svg>
-      <span className="db-goal-num">{Math.min(done, goal)}<small>/{goal}</small></span>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const { user, highestScore } = useQuiz();
