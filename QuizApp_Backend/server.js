@@ -56,6 +56,7 @@ app.use('/api', async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
+    console.error(`[db] 503 ${req.method} ${req.originalUrl}: ${err.message}`);
     res.status(503).json({ message: 'Database unavailable, please try again shortly.' });
   }
 });

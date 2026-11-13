@@ -11,6 +11,20 @@ const isId = (id) => mongoose.isValidObjectId(id);
 // console clean (a 404 is logged in red on every quiz start)
 const notFound = (res) => res.status(204).end();
 
+// One line per refused save / deleted save, so a quiz that can't be resumed can be
+// traced in the server (Vercel) logs. Ids only: no tokens or personal details.
+const logEvent = (req, event, details = {}) => {
+  console.warn(`[progress] ${event}`, JSON.stringify({
+    user: String(req.user?._id || ''),
+    category: req.params?.categoryId,
+    ...details,
+  }));
+};
+const reject = (req, res, status, message, details) => {
+  logEvent(req, `save refused (${status}): ${message}`, details);
+  return res.status(status).json({ message });
+};
+
 // GET /api/progress: which categories have a quiz in progress (for "Resume" buttons)
 exports.listMine = async (req, res) => {
   try {
@@ -40,6 +54,7 @@ exports.getOne = async (req, res) => {
     if (!progress) return notFound(res);
 
     if (progress.secondsRemaining <= 0 || Date.now() - new Date(progress.updatedAt) > MAX_AGE_MS) {
+      logEvent(req, 'deleted on read: expired', { secondsRemaining: progress.secondsRemaining, updatedAt: progress.updatedAt });
       await QuizProgress.deleteOne({ _id: progress._id });
       return notFound(res);
     }
@@ -73,6 +88,7 @@ exports.getOne = async (req, res) => {
     });
 
     if (!questions.length) {
+      logEvent(req, 'deleted on read: none of its questions exist any more', { saved: progress.questions.length });
       await QuizProgress.deleteOne({ _id: progress._id });
       return notFound(res);
     }
@@ -89,6 +105,7 @@ exports.getOne = async (req, res) => {
       savedAt: progress.clientSavedAt || new Date(progress.updatedAt).getTime(),
     });
   } catch (err) {
+    logEvent(req, 'read failed (500)', { error: err.message });
     res.status(500).json({ message: err.message });
   }
 };
@@ -98,16 +115,20 @@ exports.save = async (req, res) => {
   try {
     const { categoryId } = req.params;
     const { questionIds, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, savedAt } = req.body || {};
-    if (!isId(categoryId)) return res.status(400).json({ message: 'Invalid category' });
+    if (!isId(categoryId)) return reject(req, res, 400, 'Invalid category');
 
     if (!Array.isArray(questionIds) || !questionIds.length || questionIds.length > MAX_QUESTIONS
         || !questionIds.every(isId) || new Set(questionIds.map(String)).size !== questionIds.length) {
-      return res.status(400).json({ message: 'Invalid question list' });
+      return reject(req, res, 400, 'Invalid question list', {
+        type: Array.isArray(questionIds) ? 'array' : typeof questionIds,
+        count: Array.isArray(questionIds) ? questionIds.length : undefined,
+      });
     }
     const filter = { user: req.user._id, category: categoryId };
 
     // Time ran out: nothing left to resume
     if (!(Number(secondsRemaining) > 0)) {
+      logEvent(req, 'deleted on save: no time left', { secondsRemaining });
       await QuizProgress.deleteOne(filter);
       return res.json({ saved: false });
     }
@@ -118,7 +139,9 @@ exports.save = async (req, res) => {
     // A new set of questions must all belong to this category
     if (!sameQuiz) {
       const count = await Question.countDocuments({ _id: { $in: questionIds }, category: categoryId });
-      if (count !== questionIds.length) return res.status(400).json({ message: 'Questions do not match this category' });
+      if (count !== questionIds.length) {
+        return reject(req, res, 400, 'Questions do not match this category', { sent: questionIds.length, inCategory: count });
+      }
     }
 
     const n = questionIds.length;
@@ -155,7 +178,7 @@ exports.save = async (req, res) => {
     );
     res.json({ saved: true, secondsRemaining: seconds });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    reject(req, res, 500, err.message);
   }
 };
 
@@ -163,9 +186,13 @@ exports.save = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    if (isId(categoryId)) await QuizProgress.deleteOne({ user: req.user._id, category: categoryId });
+    if (isId(categoryId)) {
+      const { deletedCount } = await QuizProgress.deleteOne({ user: req.user._id, category: categoryId });
+      if (deletedCount) logEvent(req, 'deleted by player (Exit & restart / Start over / submit)');
+    }
     res.json({ deleted: true });
   } catch (err) {
+    logEvent(req, 'delete failed (500)', { error: err.message });
     res.status(500).json({ message: err.message });
   }
 };

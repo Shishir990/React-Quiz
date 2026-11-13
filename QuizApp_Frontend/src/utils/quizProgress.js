@@ -33,8 +33,9 @@ export function clearProgress(userId, categoryId) {
   try { localStorage.removeItem(keyFor(userId, categoryId)); } catch { /* ignore */ }
 }
 
-// Category ids this player has an unfinished quiz in
-export function savedCategoryIds(userId) {
+// Category ids this player has an unfinished quiz in.
+// unsyncedOnly: just the ones whose save never reached the server
+export function savedCategoryIds(userId, { unsyncedOnly = false } = {}) {
   const ids = new Set();
   if (!userId) return ids;
   try {
@@ -43,7 +44,8 @@ export function savedCategoryIds(userId) {
     const keys = Object.keys(localStorage).filter((k) => k.startsWith(prefix));
     for (const key of keys) {
       const id = key.slice(prefix.length);
-      if (loadProgress(userId, id)) ids.add(id);
+      const saved = loadProgress(userId, id);
+      if (saved && !(unsyncedOnly && saved.synced)) ids.add(id);
     }
   } catch { /* ignore */ }
   return ids;

@@ -136,11 +136,12 @@ function reducer(state, action) {
       return { ...state, highestScore: newHighScore };
     }
 
+    // "Try Again" after submitting: same questions, fresh answers and clock
     case "Reset":
       return {
         ...initialState,
         Questions: state.Questions,
-        status: "ready",
+        status: "start",
         secondsRemaining:action.payload,
         totalTime:action.payload,                                                                                                                                                                                                                                                                                                                              
         highestScore: state.highestScore
@@ -236,7 +237,8 @@ export function ContextProvider({ children }) {
         syncedToServer.current = true;
         queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress });
       })
-      .catch((err) => console.warn('Could not save quiz progress:', err.message));
+      // Still resumable from this browser's copy; logged loudly so the cause is visible
+      .catch((err) => console.error('Could not save quiz progress to the server:', err.message));
   };
 
   // Local copy, every tick
@@ -304,6 +306,18 @@ export function ContextProvider({ children }) {
     }
     if (local && (local.savedAt || 0) > (server.savedAt || 0)) return { ...local, fromServer: false };
     return { ...server, fromServer: true };
+  };
+
+  // Play the same questions again after submitting. Submitting marked this quiz as
+  // discarded (so late saves can't revive it); a new attempt must clear that,
+  // or none of its progress would ever be saved.
+  const retryQuiz = () => {
+    discarded.current = null;
+    syncedToServer.current = false;
+    lastServerSync.current = Date.now();
+    setResult(null);
+    setResumed(false);
+    dispatch({ type: "Reset", payload: Questions.length * 10 });
   };
 
   const submitQuiz = async (categoryId, answers, timeTaken) => {
@@ -393,6 +407,7 @@ export function ContextProvider({ children }) {
         resumed,
         discardProgress,
         flushProgress,
+        retryQuiz,
         dispatch
       }}
     >

@@ -49,9 +49,10 @@ export default function MyQuizzes() {
   const { user } = useQuiz();
   // Saved on the server (any device); this browser's copy if the server can't be reached
   const savedQuery = useSavedProgress();
-  // plus saves/deletes still in flight, so "Save & exit" shows "Resume" immediately
+  // plus copies whose server save failed (opening the quiz resumes those from this
+  // browser), plus saves/deletes still in flight, so "Save & exit" shows "Resume" immediately
   const resumable = savedQuery.isSuccess
-    ? new Set(savedQuery.data.map((p) => String(p.category)))
+    ? new Set([...savedQuery.data.map((p) => String(p.category)), ...savedCategoryIds(user?._id, { unsyncedOnly: true })])
     : savedCategoryIds(user?._id);
   for (const id of pendingSaves.keys()) resumable.add(String(id));
   for (const id of pendingDeletes.keys()) resumable.delete(String(id));

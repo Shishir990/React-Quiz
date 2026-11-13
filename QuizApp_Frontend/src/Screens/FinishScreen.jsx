@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import '../Styles/Finish.css';
 
 export function Finish() {
-  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz } = useQuiz();
+  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz, retryQuiz } = useQuiz();
   const navigate = useNavigate();
 
   const categoryId = Questions[0]?.category?._id || Questions[0]?.category;
@@ -14,8 +14,7 @@ export function Finish() {
   };
 
   function handleReset(){
-    setResult(null)
-    dispatch({ type: "Reset",payload: Questions.length * 10  })
+    retryQuiz()
   }
   const formatTime = (seconds) => {
   if (!seconds || seconds === 0) return '00:00';
