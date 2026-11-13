@@ -196,7 +196,10 @@ export function ContextProvider({ children }) {
   const login = (token, userData) => {
     queryClient.clear();
     localStorage.setItem('token', token);
-    setUser(userData);
+    // Login/register used to answer with `id`, /auth/me with `_id`. The app reads
+    // `_id` (e.g. to save quiz progress), so without this nothing was saved after
+    // signing in until the page was refreshed.
+    setUser(userData && { ...userData, _id: userData._id || userData.id });
   };
 
   const logout = () => {
