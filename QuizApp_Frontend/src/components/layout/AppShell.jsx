@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
 import { Icon } from '../ui';
@@ -14,6 +14,64 @@ const NAV_ITEMS = [
   { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
   { label: 'Settings', icon: 'settings', to: '/settings', separate: true },
 ];
+
+// Top bar search: filters My Quizzes as you type (writes ?q=); on other pages,
+// Enter opens My Quizzes with the search. Ctrl K / ⌘K focuses it.
+function TopSearch() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [params, setParams] = useSearchParams();
+  const onQuizzes = pathname === '/quizzes';
+  // Local text so fast typing never loses letters while the URL catches up
+  const [text, setText] = useState(() => (onQuizzes ? params.get('q') || '' : ''));
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const change = (value) => {
+    setText(value);
+    if (!onQuizzes) return;
+    const next = new URLSearchParams(params);
+    if (value.trim()) next.set('q', value); else next.delete('q');
+    setParams(next, { replace: true });
+  };
+
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+
+  return (
+    <form
+      className="db-search"
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!onQuizzes && text.trim()) navigate('/quizzes?q=' + encodeURIComponent(text.trim()));
+      }}
+    >
+      <Icon name="search" size={16} />
+      <input
+        ref={inputRef}
+        type="search"
+        placeholder="Search quizzes or topics…"
+        aria-label="Search quizzes"
+        className="db-search-input"
+        value={text}
+        onChange={(e) => change(e.target.value)}
+        onKeyDown={(e) => e.key === 'Escape' && (change(''), e.currentTarget.blur())}
+      />
+      <kbd className="db-search-kbd">{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+    </form>
+  );
+}
 
 function NavItem({ item }) {
   const content = <><Icon name={item.icon} size={17} />{item.label}</>;
@@ -188,10 +246,7 @@ export default function AppShell({ title, children }) {
             <h2 className="db-navbar-heading">{title}</h2>
           </div>
 
-          <div className="db-search">
-            <Icon name="search" size={16} />
-            <input type="text" placeholder="Search quizzes, topics..." className="db-search-input" />
-          </div>
+          <TopSearch />
 
           <div className="db-navbar-right">
             <LiveClock />

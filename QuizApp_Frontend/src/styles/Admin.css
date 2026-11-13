@@ -1150,3 +1150,55 @@ select.ad-input { cursor: pointer; }
 }
 @media (hover: none) {
 }
+
+/* ── Navbar: full width, text tabs and a search box ──
+   (selectors carry .ad-navbar so they win over Theme.css, which loads last) */
+.ad-navbar .ad-navbar-inner { max-width: none; height: 64px; padding: 0 32px; gap: 28px; }
+.ad-navbar .ad-brand-tag {
+  background: transparent;
+  border: 1px solid rgba(var(--acc-rgb), 0.6);
+  border-radius: 4px;
+  color: var(--acc);
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.ad-navbar .ad-nav { flex: 0 0 auto; gap: 2px; }
+.ad-navbar .ad-nav-item { height: 34px; padding: 0 12px; border-radius: 6px; font-size: 14px; color: var(--th-on-dark-2); }
+.ad-navbar .ad-nav-item:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+.ad-navbar .ad-nav-item.active { background: var(--th-card-hover); color: var(--th-on-dark); font-weight: 700; box-shadow: none; }
+
+.ad-global-search {
+  flex: 0 1 520px;
+  min-width: 0;
+  display: flex; align-items: center; gap: 10px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--th-card-edge);
+  border-radius: 8px;
+  background: var(--th-surface);
+  color: var(--th-on-dark-muted);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ad-global-search:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(var(--acc-rgb), 0.15); }
+.ad-global-search input {
+  flex: 1; min-width: 0;
+  border: none; outline: none; background: transparent;
+  font: inherit; font-size: 14px; color: var(--th-on-dark);
+}
+.ad-global-search input::placeholder { color: var(--th-on-dark-muted); }
+.ad-global-search input::-webkit-search-cancel-button { display: none; }
+.ad-global-search kbd {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--th-border-strong);
+  border-radius: 4px;
+  font: inherit; font-size: 11px;
+  color: var(--th-on-dark-muted);
+}
+.ad-navbar .ad-navbar-right { margin-left: auto; }
+
+@media (max-width: 1024px) {
+  .ad-navbar .ad-navbar-inner { height: auto; padding: 10px 16px 0; gap: 0 12px; }
+  .ad-navbar .ad-nav { flex-basis: 100%; }
+  .ad-global-search { order: 4; flex: 1 1 100%; margin-bottom: 10px; }
+  .ad-global-search kbd { display: none; }
+}

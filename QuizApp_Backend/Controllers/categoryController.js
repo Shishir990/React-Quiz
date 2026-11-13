@@ -16,7 +16,7 @@ exports.getAll = async (req, res) => {
     // Quizzes are played per category from its questions, so count those too,
     // broken down by difficulty
     const questionStats = await Question.aggregate([
-      { $group: { _id: { category: '$category', difficulty: '$difficulty' }, count: { $sum: 1 } } },
+      { $group: { _id: { category: '$category', difficulty: '$difficulty' }, count: { $sum: 1 }, last: { $max: '$updatedAt' } } },
     ]);
 
     // Map counts onto categories
@@ -26,10 +26,12 @@ exports.getAll = async (req, res) => {
     });
 
     const questionMap = {};
-    questionStats.forEach(({ _id, count }) => {
+    const lastQuestionAt = {}; // newest question change per category
+    questionStats.forEach(({ _id, count, last }) => {
       const key = _id.category.toString();
       questionMap[key] = questionMap[key] || { easy: 0, medium: 0, hard: 0 };
       questionMap[key][_id.difficulty || 'medium'] += count;
+      if (last && (!lastQuestionAt[key] || last > lastQuestionAt[key])) lastQuestionAt[key] = last;
     });
 
     const result = categories.map((cat) => {
@@ -39,6 +41,8 @@ exports.getAll = async (req, res) => {
         quizCount: countMap[cat._id.toString()] || 0,
         questionCount: byDifficulty.easy + byDifficulty.medium + byDifficulty.hard,
         difficulty: byDifficulty,
+        // Latest edit to the category or any of its questions
+        lastActivity: [cat.updatedAt, lastQuestionAt[cat._id.toString()]].filter(Boolean).sort((a, b) => b - a)[0] || null,
       };
     });
 

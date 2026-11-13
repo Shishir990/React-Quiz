@@ -6,10 +6,58 @@ import '../../styles/Admin.css';
 import { Icon, Toasts } from '../ui';
 
 const NAV = [
-  { to: '/admin', label: 'Overview', icon: 'dashboard', end: true },
-  { to: '/admin/questions', label: 'Questions', icon: 'quizzes' },
-  { to: '/admin/users', label: 'Users', icon: 'users' },
+  { to: '/admin', label: 'Overview', end: true },
+  { to: '/admin/questions', label: 'Questions' },
+  { to: '/admin/users', label: 'Users' },
 ];
+
+// Navbar search: filters the category library on the Questions page.
+// Typing on another admin page jumps to Questions. Ctrl K / ⌘K focuses it.
+function AdminSearch({ value, onChange }) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const search = (text) => {
+    onChange(text);
+    if (text && pathname !== '/admin/questions') navigate('/admin/questions');
+  };
+
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+
+  return (
+    <label className="ad-global-search">
+      <Icon name="search" size={15} />
+      <input
+        ref={inputRef}
+        type="search"
+        placeholder="Search categories…"
+        aria-label="Search categories"
+        value={value}
+        onChange={(e) => search(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            search('');
+            e.currentTarget.blur();
+          }
+        }}
+      />
+      <kbd>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+    </label>
+  );
+}
 
 function UserMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -64,6 +112,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [toasts, setToasts] = useState([]);
+  const [search, setSearch] = useState('');
   const nextId = useRef(0);
 
   const current = [...NAV].reverse().find((n) => pathname.startsWith(n.to)) || NAV[0];
@@ -102,15 +151,16 @@ export default function AdminLayout() {
           <nav className="ad-nav" aria-label="Admin sections">
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => `ad-nav-item ${isActive ? 'active' : ''}`}>
-                <Icon name={n.icon} size={16} />
                 {n.label}
               </NavLink>
             ))}
           </nav>
 
+          <AdminSearch value={search} onChange={setSearch} />
+
           <div className="ad-navbar-right">
             <Link to="/dashboard" className="ad-btn ad-btn-glass ad-player-link">
-              <Icon name="back" size={15} /> Player app
+              <Icon name="play" size={13} /> Player app
             </Link>
             <UserMenu user={user} onLogout={handleLogout} />
           </div>
@@ -119,7 +169,7 @@ export default function AdminLayout() {
       )}
 
       <main className={`ad-content ${focusMode ? 'is-focus' : ''}`}>
-        <Outlet context={{ toast }} />
+        <Outlet context={{ toast, search, setSearch }} />
       </main>
 
       <Toasts items={toasts} onDismiss={dismiss} />

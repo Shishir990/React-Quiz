@@ -34,3 +34,33 @@ export function buildAnswersLog(questions, answers) {
       selectedOption: questions[i].options[answers[i]],
     }));
 }
+
+// ── A category's state for the player (My Quizzes cards) ──
+
+export const STATUS_TEXT = { progress: 'In progress', done: 'Completed', new: 'Not started', empty: 'Coming soon' };
+
+// Where the player stands with one category:
+// 'progress' (a saved quiz to resume), 'done' (played before), 'new' or 'empty' (no questions)
+export function quizStatus(cat, { progress, saved }) {
+  if (!(cat.questionCount > 0)) return 'empty';
+  if (saved[cat._id]) return 'progress';
+  if (progress[cat._id]) return 'done';
+  return 'new';
+}
+
+// Label, value and bar width for a card's progress row
+export function progressInfo(cat, status, { progress, saved }) {
+  if (status === 'progress') {
+    const s = saved[cat._id];
+    const total = s.total || cat.questionCount;
+    return { label: 'Progress', value: `${s.answered} / ${total}`, pct: total ? (s.answered / total) * 100 : 0 };
+  }
+  if (status === 'done') {
+    const best = progress[cat._id].best;
+    return { label: 'Best score', value: `${best}%`, pct: best };
+  }
+  if (status === 'new') return { label: 'Not started yet', value: `0 / ${cat.questionCount}`, pct: 0 };
+  return { label: 'No questions yet', value: '', pct: 0 };
+}
+
+export const ACTION_TEXT = { progress: 'Resume', done: 'Play again', new: 'Start quiz', empty: 'Unavailable' };

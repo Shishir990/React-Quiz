@@ -1,57 +1,64 @@
 import '../../styles/MyQuizzes.css';
 import { Icon } from '../ui';
-import { difficultyLabel, estimateTime } from '../../utils/quiz';
+import { quizStatus, progressInfo, ACTION_TEXT } from '../../utils/quiz';
+import { plural, shortTimeAgo } from '../../utils/format';
 
-const DIFFICULTY_TEXT = { easy: 'Easy', medium: 'Medium', hard: 'Hard', mixed: 'Mixed' };
+// When the player last touched this quiz: the latest result or save
+function lastPlayed(cat, { progress, saved }) {
+  const times = [progress[cat._id]?.last, saved[cat._id]?.updatedAt].filter(Boolean).map((t) => new Date(t).getTime());
+  return times.length ? Math.max(...times) : null;
+}
 
-function CategoryCard({ cat, progress, isToday, inProgress, onStart, index }) {
-  const playable = cat.questionCount > 0;
-  const level = difficultyLabel(cat.difficulty);
-  const best = progress?.best;
+function QuizCard({ cat, index, data, onStart }) {
+  const status = quizStatus(cat, data);
+  const info = progressInfo(cat, status, data);
+  const last = lastPlayed(cat, data);
+  const playable = status !== 'empty';
 
   return (
-    <article
-      className={`mq-card ${isToday ? 'is-today' : ''} ${playable ? '' : 'is-empty'}`}
-      style={{ animationDelay: `${Math.min(index, 12) * 30}ms` }}
-    >
-      {isToday && <span className="mq-today"><Icon name="flame" size={12} /> Today's challenge</span>}
-
-      <header className="mq-card-head">
+    <article className={`mq-card is-${status}`} style={{ animationDelay: `${Math.min(index, 12) * 30}ms` }}>
+      <div className="mq-card-head">
         <span className="mq-icon" aria-hidden="true">{cat.icon || cat.name.charAt(0).toUpperCase()}</span>
-        {level && <span className={`mq-diff is-${level}`}>{DIFFICULTY_TEXT[level]}</span>}
-      </header>
-
-      <div className="mq-title">
         <h3 className="mq-name">{cat.name}</h3>
-        <p className="mq-meta">
-          {playable
-            ? <>{cat.questionCount} {cat.questionCount === 1 ? 'question' : 'questions'} · {estimateTime(cat.questionCount)}</>
-            : 'No questions yet'}
-        </p>
+        <span className="mq-meta">
+          {playable ? plural(cat.questionCount, 'question') : 'No questions yet'}
+        </span>
       </div>
 
-      {progress && (
-        <div className="mq-best" title={`${progress.attempts} ${progress.attempts === 1 ? 'attempt' : 'attempts'}`}>
-          <span className="mq-best-label">Best</span>
-          <div className="mq-track"><span style={{ width: `${best}%` }} /></div>
-          <strong>{best}%</strong>
+      {/* Only once there is something to show */}
+      {(status === 'progress' || status === 'done') && (
+        <div className="mq-progress">
+          <div className="mq-progress-row">
+            <span>{info.label}</span>
+            <strong>{info.value}</strong>
+          </div>
+          <div className="mq-track"><span style={{ width: `${info.pct}%` }} /></div>
         </div>
       )}
 
-      <button className="mq-start" disabled={!playable} onClick={() => onStart(cat._id)}>
-        {!playable ? 'Unavailable' : inProgress ? 'Resume quiz' : progress ? 'Play again' : 'Start quiz'}
-        {playable && <Icon name="arrow" size={15} />}
-      </button>
+      <div className="mq-foot">
+        <span className="mq-last">{last ? `Played ${shortTimeAgo(last)}` : playable ? 'New for you' : ''}</span>
+        <button
+          className={`mq-btn mq-start ${status === 'progress' ? 'is-primary' : ''}`}
+          disabled={!playable}
+          onClick={() => onStart(cat._id)}
+          aria-label={playable ? `${ACTION_TEXT[status]}: ${cat.name}` : `${cat.name} has no questions yet`}
+        >
+          {ACTION_TEXT[status]}
+          {playable && <Icon name="arrow" size={14} />}
+        </button>
+      </div>
     </article>
   );
 }
 
-// Category cards with the player's own progress on each
-export default function CategoryGrid({ categories, progress = {}, resumable, loading, error, todayId, onStart, emptyText }) {
+// Category cards with the player's own progress on each.
+// data: { progress: best score etc. per category, saved: unfinished quiz per category }
+export default function CategoryGrid({ categories, data, loading, error, onStart, emptyText }) {
   if (loading) {
     return (
-      <div className="mq-grid">
-        {[...Array(8)].map((_, i) => <div key={i} className="mq-card mq-skeleton" />)}
+      <div className="mq-grid" aria-hidden="true">
+        {[...Array(6)].map((_, i) => <div key={i} className="mq-card mq-skeleton" />)}
       </div>
     );
   }
@@ -71,15 +78,7 @@ export default function CategoryGrid({ categories, progress = {}, resumable, loa
   return (
     <div className="mq-grid">
       {categories.map((cat, i) => (
-        <CategoryCard
-          key={cat._id}
-          cat={cat}
-          index={i}
-          progress={progress[cat._id]}
-          isToday={todayId === cat._id}
-          inProgress={resumable?.has(cat._id)}
-          onStart={onStart}
-        />
+        <QuizCard key={cat._id} cat={cat} index={i} data={data} onStart={onStart} />
       ))}
     </div>
   );

@@ -29,6 +29,20 @@ export function formatDuration(seconds) {
 // 3, "quiz" → "3 quizzes"-style counts (adds a plain "s")
 export const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
+// Compact age: "just now", "25m ago", "3h ago", "2d ago", "1w ago", "2mo ago", "1y ago"
+export function shortTimeAgo(date) {
+  const mins = Math.floor((Date.now() - new Date(date)) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
 // "13 Nov"
 export const shortDate = (d) => new Date(d).toLocaleDateString([], { day: 'numeric', month: 'short' });
 
