@@ -75,7 +75,7 @@
 .db-wrapper {
   --status-progress: var(--acc);
   --status-done: #38BDF8;
-  --status-new: #F472B6; /* pink: checked to stay distinct from lime and blue, incl. colour-blind */
+  --status-new: #FACC15; /* yellow */
 }
 .mq-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .mq-dot.is-progress { background: var(--status-progress); }
