@@ -6,10 +6,10 @@ import AppShell from '../components/layout/AppShell';
 import { greeting, initialsOf, timeAgo } from '../utils/format';
 import { addDays, dayKey } from '../utils/date';
 import { pickDailyChallenge } from '../utils/daily';
-import { computeStreaks } from '../utils/results';
+import { computeStreaks, scoreTone } from '../utils/results';
 import { ActivityChart } from '../components/dashboard/ActivityChart';
 import { GoalRing } from '../components/dashboard/GoalRing';
-import { Icon, ScoreRing } from '../components/ui';
+import { Icon } from '../components/ui';
 import '../styles/Dashboard.css';
 
 const DAILY_GOAL = 3;
@@ -45,8 +45,6 @@ export default function Dashboard() {
     ? Math.round(results.reduce((sum, r) => sum + r.percentage, 0) / results.length)
     : 0;
   const bestScore = Math.max(Number(highestScore) || 0, ...results.map((r) => r.percentage));
-  const weekAgo = addDays(new Date(), -7);
-  const thisWeek = results.filter((r) => new Date(r.createdAt) >= weekAgo).length;
 
   const activity = [...Array(7)].map((_, i) => {
     const date = addDays(new Date(), i - 6);
@@ -71,20 +69,16 @@ export default function Dashboard() {
   const hasHistory = results.length > 0;
   const stats = [
     {
-      label: 'Quizzes taken', value: results.length, icon: 'check', tone: 'emerald',
-      trend: hasHistory ? `${thisWeek} this week` : 'Take your first quiz',
+      label: 'Quizzes taken', value: results.length, icon: 'check', tone: 'emerald', valueTone: '',
     },
     {
-      label: 'Average score', value: hasHistory ? `${avgScore}%` : '—', icon: 'target', tone: 'blue',
-      trend: hasHistory ? 'Across all quizzes' : 'Appears after a quiz',
+      label: 'Average score', value: hasHistory ? `${avgScore}%` : '—', icon: 'target', tone: 'blue', valueTone: hasHistory ? scoreTone(avgScore) : '',
     },
     {
-      label: 'Current streak', value: `${streaks.current} ${streaks.current === 1 ? 'day' : 'days'}`, icon: 'flame', tone: 'orange',
-      trend: streaks.best ? `Best: ${streaks.best} ${streaks.best === 1 ? 'day' : 'days'}` : 'Play daily to build one',
+      label: 'Streak', value: `${streaks.current} ${streaks.current === 1 ? 'day' : 'days'}`, icon: 'flame', tone: 'orange', valueTone: streaks.current > 0 ? 'good' : 'warn',
     },
     {
-      label: 'Highest score', value: bestScore ? `${bestScore}%` : '—', icon: 'star', tone: 'violet',
-      trend: bestScore ? 'Personal best' : 'Set your first record',
+      label: 'Highest score', value: bestScore ? `${bestScore}%` : '—', icon: 'star', tone: 'violet', valueTone: bestScore ? scoreTone(bestScore) : '',
     },
   ];
 
@@ -100,7 +94,7 @@ export default function Dashboard() {
         {/* Hero */}
         <section className="db-hero">
           <div className="db-hero-content">
-            <span className="db-hero-badge">✨ Level up today</span>
+            <span className="db-hero-badge">Level up today</span>
             <h1 className="db-hero-title">{greeting()}, {firstName}!</h1>
             <p className="db-hero-sub">
               Jump into a random quiz, or browse every category in My Quizzes.
@@ -113,6 +107,19 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* Stats */}
+        <div className="db-stats is-graded">
+          {stats.map((s, i) => (
+            <div key={s.label} className={`db-stat-card tone-${s.tone}`} style={{ animationDelay: `${i * 60}ms` }}>
+              <div className="db-stat-icon"><Icon name={s.icon} size={20} /></div>
+              <div>
+                <p className="db-stat-label">{s.label}</p>
+                <p className={`db-stat-value ${s.valueTone ? `is-${s.valueTone}` : ''}`}>{s.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Today: daily challenge + daily goal */}
         <div className="db-today">
@@ -161,20 +168,6 @@ export default function Dashboard() {
               </p>
             </div>
           </section>
-        </div>
-
-        {/* Stats */}
-        <div className="db-stats">
-          {stats.map((s, i) => (
-            <div key={s.label} className={`db-stat-card tone-${s.tone}`} style={{ animationDelay: `${i * 60}ms` }}>
-              <div className="db-stat-icon"><Icon name={s.icon} size={20} /></div>
-              <div>
-                <p className="db-stat-label">{s.label}</p>
-                <p className="db-stat-value">{s.value}</p>
-                <p className="db-stat-trend">{s.trend}</p>
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* Bottom grid */}
@@ -226,7 +219,7 @@ export default function Dashboard() {
                         {timeAgo(r.createdAt)}
                       </p>
                     </div>
-                    <ScoreRing score={r.percentage} />
+                    <span className={`db-recent-score is-${scoreTone(r.percentage)}`}>{r.percentage}%</span>
                   </div>
                 ))}
               </div>

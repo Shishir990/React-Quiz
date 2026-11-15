@@ -4,6 +4,8 @@ import './index.css'
 import App from './App.jsx'
 // After App so it loads after every page stylesheet and wins on colours
 import './styles/Theme.css'
+// Soft lime look (flat cards, soft accent); remove this line to go back to neon
+import './styles/SoftLime.css'
 import { ContextProvider } from './context/QuizContext.jsx'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './api/queries'

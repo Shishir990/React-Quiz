@@ -2,6 +2,7 @@ import { useQuiz } from "../context/QuizContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import '../styles/Finish.css';
+import { scoreTone } from '../utils/results';
 
 export function Finish() {
   const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz, retryQuiz } = useQuiz();
@@ -35,7 +36,7 @@ export function Finish() {
       <div className="result-screen">
         <div className="result-icon">{result.passed ? '🎉' : '😔'}</div>
         <h2>{result.passed ? 'Well done!' : 'Better luck next time!'}</h2>
-        <p className="result-score">{result.percentage}%</p>
+        <p className={`result-score is-${scoreTone(result.percentage)}`}>{result.percentage}%</p>
         <p className="result-sub">{result.score} out of {result.total} correct</p>
         <p className="result-sub">Time taken: {formatTime(result.timeTaken)}</p>
         <p className="result-sub">HighestScore:{highestScore}</p>

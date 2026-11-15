@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMyResults } from '../api/queries';
 import AppShell from '../components/layout/AppShell';
 import { timeAgo, formatDuration } from '../utils/format';
@@ -29,7 +29,9 @@ export default function Results() {
   const loading = resultsQuery.isPending;
   const error = resultsQuery.isError ? resultsQuery.error.message : '';
 
-  const [category, setCategory] = useState('all');
+  // ?category=<id> (e.g. from a quiz card's menu) opens the list already filtered
+  const [params] = useSearchParams();
+  const [category, setCategory] = useState(() => params.get('category') || 'all');
   const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('newest');
   const [visible, setVisible] = useState(PAGE_SIZE);

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import MyQuizzes from './pages/MyQuizzes';
 import Login from './pages/Login';
@@ -26,6 +27,7 @@ function App() {
     <BrowserRouter>
       <RouteErrorBoundary>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -130,7 +132,8 @@ function App() {
             <Route path="users" element={<AdminUsers />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Unknown addresses go to the home page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </RouteErrorBoundary>
     </BrowserRouter>

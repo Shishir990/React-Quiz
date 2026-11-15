@@ -212,3 +212,71 @@ const resetEmailHtml = (name, link) => `
     </p>
   </div>
 </div>`;
+
+// ── Sign in with Google ──
+// The browser gets a signed ID token from Google Identity Services and sends it here.
+// We verify it with Google's library (signature, expiry, and that it was issued for
+// OUR client id), then find or create the account and return our own JWT.
+const { OAuth2Client } = require('google-auth-library');
+let googleClient = null;
+const googleClientId = () => (process.env.GOOGLE_CLIENT_ID || '').trim();
+
+// GET /api/auth/google/config: the public client id (not a secret), or null when
+// Google sign-in isn't set up, so the frontend knows whether to show the button
+exports.googleConfig = (req, res) => {
+  res.json({ clientId: googleClientId() || null });
+};
+
+// POST /api/auth/google  { credential: "<Google ID token>" }
+exports.googleLogin = async (req, res) => {
+  const clientId = googleClientId();
+  if (!clientId) return res.status(503).json({ message: 'Google sign-in is not set up on this server.' });
+
+  const { credential } = req.body || {};
+  if (!isText(credential) || !credential) return res.status(400).json({ message: 'Missing Google credential' });
+
+  let profile;
+  try {
+    googleClient = googleClient || new OAuth2Client(clientId);
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: clientId });
+    profile = ticket.getPayload();
+  } catch (err) {
+    console.warn(`[auth] Google token rejected: ${err.message}`);
+    return res.status(401).json({ message: 'Google sign-in failed. Please try again.' });
+  }
+  // Only trust addresses Google has verified, otherwise anyone could claim someone's email
+  if (!profile?.sub || !profile.email || profile.email_verified !== true) {
+    return res.status(401).json({ message: 'Your Google account email is not verified.' });
+  }
+
+  const email = normalizeEmail(profile.email);
+  try {
+    let user = await User.findOne({ $or: [{ googleId: profile.sub }, { email }] });
+    if (user && user.isActive === false) {
+      return res.status(403).json({ message: 'This account has been disabled. Contact an admin.' });
+    }
+
+    let created = false;
+    if (!user) {
+      // New player: name and picture from the Google profile, no password
+      const name = (profile.name || email.split('@')[0]).trim().slice(0, 60);
+      user = await User.create({ name, email, googleId: profile.sub, avatar: profile.picture || '' });
+      created = true;
+    } else if (!user.googleId) {
+      // Existing email/password account: link it, since Google verified the address
+      user.googleId = profile.sub;
+      if (!user.avatar && profile.picture) user.avatar = profile.picture;
+      await user.save();
+    }
+
+    res.status(created ? 201 : 200).json({
+      token: generateToken(user._id),
+      user: { _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role },
+      created,
+    });
+  } catch (err) {
+    // Two first-time sign-ins racing: the unique index catches the second
+    if (err.code === 11000) return res.status(409).json({ message: 'Please try signing in again.' });
+    serverError(req, res, err);
+  }
+};

@@ -143,6 +143,7 @@ export default function MyQuizzes() {
               onClick={() => setFilter(f.value)}
               aria-pressed={filter === f.value}
             >
+              {f.value !== 'all' && <span className={`mq-dot is-${f.value}`} aria-hidden="true" />}
               {f.label} <span className="mq-segment-count">{counts[f.value]}</span>
             </button>
           ))}
@@ -158,6 +159,7 @@ export default function MyQuizzes() {
       <CategoryGrid
         categories={shown}
         data={data}
+        todayId={challenge?._id}
         loading={categoriesQuery.isPending}
         error={categoriesQuery.isError ? categoriesQuery.error.message : ''}
         onStart={startQuiz}

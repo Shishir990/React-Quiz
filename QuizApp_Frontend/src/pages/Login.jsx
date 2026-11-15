@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { loginApi } from '../api/auth';
 import { useQuiz } from '../context/QuizContext';
 import AuthLayout from '../components/layout/AuthLayout';
-import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
+import { AuthAlert, AuthField, AuthSubmit, GoogleButton } from '../components/auth';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -89,6 +89,8 @@ export default function Login() {
 
         <AuthSubmit loading={loading} loadingText="Signing in…">Sign in</AuthSubmit>
       </form>
+
+      <GoogleButton text="signin_with" onError={setError} />
 
       <p className="au-switch">
         Don't have an account? <Link to="/register">Create one</Link>

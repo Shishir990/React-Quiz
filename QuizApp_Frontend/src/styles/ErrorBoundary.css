@@ -3,7 +3,7 @@
   display: flex; align-items: center; justify-content: center;
   padding: 24px 16px;
   background: var(--th-bg, #F7F9FB);
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 .eb-card {
   width: 100%; max-width: 440px;

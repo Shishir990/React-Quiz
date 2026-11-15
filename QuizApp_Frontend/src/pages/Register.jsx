@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { registerApi } from '../api/auth';
 import { useQuiz } from '../context/QuizContext';
 import AuthLayout from '../components/layout/AuthLayout';
-import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
+import { AuthAlert, AuthField, AuthSubmit, GoogleButton } from '../components/auth';
 import { getStrength, PASSWORD_MIN } from '../utils/password';
 
 const strengthLabel = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
@@ -161,6 +161,8 @@ export default function Register() {
 
         <AuthSubmit loading={loading} loadingText="Creating account…">Create account</AuthSubmit>
       </form>
+
+      <GoogleButton text="signup_with" onError={setError} />
 
       <p className="au-switch">
         Already have an account? <Link to="/login">Sign in</Link>

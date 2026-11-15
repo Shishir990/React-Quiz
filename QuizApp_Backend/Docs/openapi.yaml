@@ -140,6 +140,75 @@ paths:
         '429': { $ref: '#/components/responses/TooManyRequests' }
         '500': { $ref: '#/components/responses/ServerError' }
 
+  /api/auth/google/config:
+    get:
+      tags: [Auth]
+      summary: Google sign-in settings for the frontend
+      description: The public OAuth client id (not a secret), or null when Google sign-in isn't set up.
+      security: []
+      responses:
+        '200':
+          description: Client id or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clientId: { type: string, nullable: true, example: 1234567890-abc.apps.googleusercontent.com }
+
+  /api/auth/google:
+    post:
+      tags: [Auth]
+      summary: Sign in with Google
+      description: |
+        Send the ID token (`credential`) from Google Identity Services. The server verifies it
+        with Google (signature, expiry, issued for this app) and accepts only verified emails.
+        Creates a player account on first sign-in (201), or signs in / links an existing account
+        with the same email (200). Rate limited like password sign-in.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credential]
+              properties:
+                credential: { type: string, description: Google ID token (JWT) }
+      responses:
+        '200':
+          description: Signed in to an existing account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '201':
+          description: New account created and signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400':
+          description: Credential missing
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Token invalid, expired, issued for another app, or email not verified
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: The account has been disabled by an admin
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503':
+          description: Google sign-in isn't set up on this server
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/auth/me:
     get:
       tags: [Auth]
@@ -1057,6 +1126,7 @@ components:
             name: { type: string }
             email: { type: string }
             role: { type: string, enum: [admin, player] }
+        created: { type: boolean, description: 'Google sign-in only: true when a new account was made' }
     User:
       type: object
       properties:

@@ -6,6 +6,9 @@ import { shortDate } from './format';
 // A quiz counts as passed at this score (%)
 export const PASS_MARK = 50;
 
+// 'good' / 'warn' / 'bad' for colouring a score (%)
+export const scoreTone = (pct) => (pct >= 70 ? 'good' : pct >= 40 ? 'warn' : 'bad');
+
 // Results whose category was deleted are grouped together
 export const categoryKey = (r) => r.category?._id || 'deleted';
 

@@ -1,0 +1,464 @@
+/* ════════════════════════════════════════════════════════════════
+   Soft lime theme: flat cards with square corners and thin borders,
+   a soft lime accent instead of neon green, no glows, and scores
+   coloured by how good they are. Loaded after Theme.css, so it only
+   overrides; removing its import in main.jsx brings the old look back.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Palette ── */
+:root {
+  --th-bg: #0C0D0C;
+  --th-surface: #0C0D0C;
+  --th-surface-hover: #161816;
+  --th-edge: #1F221F;
+  --th-card: #121412;
+  --th-card-hover: #161916;
+  --th-card-2: #181B18;
+  --th-card-2-hover: #1F231F;
+  --th-card-sunk: #0E100E;
+  --th-card-edge: #262A26;
+  --th-border-strong: #353A35;
+  --th-on-dark: #F2F4EF;
+  --th-on-dark-2: #C6CBC1;
+  --th-on-dark-muted: #8C9286;
+  --th-faint: #5F655B;
+  --th-deep: #1C2612;
+  --th-lime: #BEF264;
+  --th-glow: 0, 0, 0;
+
+  --acc: #A3E635;
+  --acc-strong: #B5EE55;
+  --acc-soft: #BEF264;
+  --acc-rgb: 163, 230, 53;
+  --acc-ink: #172503;
+  --acc-glow: none;
+
+  /* Scores and streaks are coloured by how good they are */
+  --tone-good: #A3E635;
+  --tone-warn: #FBBF24;
+  --tone-bad: #F87171;
+
+  --radius-card: 8px; /* cards: softly rounded */
+  --radius-ctl: 3px;
+}
+
+/* ── 2. Sidebar: same palette and font, its own layout ── */
+.db-logo-icon { box-shadow: none; }
+
+/* ── 3. Flat canvas: no radial glow ── */
+body,
+.db-wrapper,
+.ad-wrapper,
+.qz-page,
+.qz-page.ad-qv,
+.quiz-wrapper { background: var(--th-bg); }
+
+/* ── 4. Cards and panels: flat, square, thin border ── */
+.db-main .db-stat-card,
+.db-main .db-panel,
+.db-main .db-challenge,
+.db-main .db-goal,
+.db-main .db-cat-card,
+.db-dropdown,
+.lb-me, .lb-me.is-empty,
+.lb-step .lb-step-block,
+.st-card,
+.an-panel,
+.rs-item,
+.qb-card,
+.au-card, .au-panel,
+.ad-wrapper .ad-card,
+.ad-panel,
+.ad-kpi,
+.ad-modal,
+.ad-dropdown,
+.ad-qv-paper,
+.ad-qv-empty,
+.qz-option,
+.qz-palette,
+.qz-question-box,
+.questionContainer {
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}
+.db-main .db-stat-card,
+.db-main .db-panel,
+.db-main .db-challenge,
+.db-main .db-goal { border: 1px solid var(--th-card-edge); background: var(--th-card); }
+.db-main .db-stat-card:hover,
+.db-main .db-cat-card:hover { box-shadow: none; transform: none; border-color: var(--th-border-strong); }
+
+/* Boxes inside cards (icons, rows, inputs) */
+.db-challenge-icon,
+.db-stat-icon,
+.db-recent-icon,
+.st-card-icon,
+.ad-kpi-icon,
+.qb-card-icon,
+.qz-option-letter,
+.qz-palette-btn,
+.ad-qv-btn,
+.pg-select,
+.ad-input,
+.ad-search,
+.ad-global-search,
+.db-search,
+.mq-phone-search,
+.au-input input,
+.ad-table,
+.rs-cat { border-radius: var(--radius-ctl); }
+
+/* ── 5. Buttons, chips and pills: square, flat ── */
+.db-btn-light, .db-btn-ghost, .db-challenge-btn,
+.mq-btn, .ad-btn, .au-btn,
+.qz-next, .qz-prev, .qz-mark, .qz-close, .qz-timer, .qz-palette-submit, .qz-modal-btn,
+.db-icon-btn, .db-clock,
+.db-pill, .db-hero-badge, .db-done-badge, .db-tag,
+.mq-segments, .mq-segment, .mq-badge,
+.qb-chip, .pg-chip, .pg-chips, .ad-chip, .ad-pill, .ad-tab, .ad-brand-tag,
+.lb-you {
+  border-radius: var(--radius-ctl);
+  box-shadow: none;
+}
+.db-btn-light, .db-btn-ghost, .db-challenge-btn { transform: none !important; }
+
+/* Primary: soft lime fill, dark text */
+.db-btn-light,
+.mq-btn.is-primary,
+.ad-btn.ad-btn-primary,
+.au-btn {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--acc-ink);
+}
+.db-btn-light:hover:not(:disabled),
+.mq-btn.is-primary:hover:not(:disabled),
+.ad-btn.ad-btn-primary:hover:not(:disabled),
+.au-btn:hover:not(:disabled) { background: var(--acc-strong); box-shadow: none; }
+
+/* Secondary: thin outline */
+.db-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--th-border-strong);
+  color: var(--th-on-dark);
+}
+.db-btn-ghost:hover { background: var(--th-surface-hover); border-color: var(--th-border-strong); }
+
+/* ── 6. No glows anywhere outside the sidebar ── */
+.ad-nav-item.active,
+.ad-brand-mark,
+.ad-btn.ad-btn-glow,
+.ad-filterbar-cta,
+.ad-qv-btn.is-primary,
+.rs-bar-avg,
+.qz-palette-btn.is-answered,
+.qz-option:hover:not(:disabled):not(.is-selected),
+.mq-track span,
+.qb-dot.is-live,
+.lb-step.is-me .lb-avatar,
+.db-avatar-lg,
+.mq-btn.is-primary:hover:not(:disabled) { box-shadow: none; }
+.qz-option.is-selected { box-shadow: 0 0 0 1px var(--acc); }
+.db-navbar .db-search:focus-within,
+.db-search:focus-within,
+.ad-global-search:focus-within,
+.ad-search:focus-within,
+.ad-input:focus,
+.au-input input:focus,
+.mq-search:focus-within { box-shadow: 0 0 0 2px rgba(var(--acc-rgb), 0.25); }
+
+/* ── 7. Top bar: flat, clock as plain monospace text ── */
+.db-navbar {
+  border: none;
+  border-bottom: 1px solid var(--th-edge);
+  border-radius: 0;
+  background: var(--th-bg);
+}
+.db-navbar .db-clock {
+  background: transparent;
+  border-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.db-navbar .db-clock svg { display: none; }
+.db-clock-time, .db-clock-date { font-family: var(--font-mono); font-weight: 400; }
+.db-navbar .db-icon-btn { background: transparent; border: 1px solid var(--th-card-edge); }
+.db-search-kbd, .ad-global-search kbd { font-family: var(--font-mono); border-radius: 2px; }
+
+/* ── 8. Dashboard details ── */
+.db-wrapper .db-hero-badge {
+  background: var(--th-deep);
+  border: none;
+  color: var(--acc);
+  font-weight: 500;
+}
+.db-wrapper .db-hero-title { font-weight: 700; letter-spacing: -0.02em; }
+
+/* Daily challenge */
+.db-wrapper .db-challenge-icon {
+  border: 1px solid rgba(var(--acc-rgb), 0.35);
+  background: rgba(var(--acc-rgb), 0.07);
+  color: var(--acc);
+}
+.db-wrapper .db-challenge-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--acc-rgb), 0.4);
+  color: var(--acc);
+}
+.db-wrapper .db-challenge-btn:hover:not(:disabled) { background: rgba(var(--acc-rgb), 0.1); color: var(--acc); }
+.db-wrapper .db-done-badge { background: rgba(var(--acc-rgb), 0.12); color: var(--acc); border: 1px solid rgba(var(--acc-rgb), 0.3); }
+.db-eyebrow { letter-spacing: 0.08em; }
+
+/* Daily goal ring: thin and quiet */
+.db-goal-track { stroke: var(--th-edge); }
+.db-goal-bar { stroke: var(--acc); filter: none; }
+.db-goal-num { font-family: var(--font-mono); font-weight: 500; }
+
+/* Stat cards: square icon box, big value coloured by meaning */
+.db-wrapper .db-stat-icon {
+  border: 1px solid var(--th-card-edge);
+  background: var(--th-card-2);
+  color: var(--th-on-dark-2);
+}
+.db-wrapper .db-stat-card [class*='db-stat-icon'] svg { color: var(--th-on-dark-2); }
+.db-wrapper .db-stat-value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--th-on-dark); }
+.db-wrapper .db-stat-value.is-good { color: var(--tone-good); }
+.db-wrapper .db-stat-value.is-warn { color: var(--tone-warn); }
+.db-wrapper .db-stat-value.is-bad { color: var(--tone-bad); }
+
+/* Small outlined pills ("6 this week", "This week") */
+.db-wrapper .db-pill {
+  background: transparent;
+  border: 1px solid var(--th-card-edge);
+  color: var(--th-on-dark-2);
+  font-weight: 500;
+}
+.db-wrapper .db-link { color: var(--acc); }
+
+/* Activity chart: muted olive bars, today in full lime */
+.db-wrapper .db-chart-bar { background: #4D6B1E; border-radius: 0; box-shadow: none; }
+.db-wrapper .db-chart-col.is-today .db-chart-bar { background: var(--acc); }
+.db-wrapper .db-chart-bar.is-empty { background: var(--th-edge); }
+.db-wrapper .db-chart-value { font-family: var(--font-mono); font-weight: 500; color: var(--th-on-dark-2); }
+
+/* Recent quizzes: plain rows with dividers, score as coloured text */
+.db-wrapper .db-recent-list { gap: 0; }
+.db-wrapper .db-recent-item,
+.db-wrapper .db-recent-item:hover {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--th-card-edge);
+  border-radius: 0;
+  padding: 14px 0;
+  transform: none;
+}
+.db-wrapper .db-recent-icon { border: 1px solid var(--th-card-edge); background: var(--th-card-2); }
+.db-recent-score { margin-left: auto; font-family: var(--font-mono); font-weight: 700; font-size: 15px; }
+.db-recent-score.is-good { color: var(--tone-good); }
+.db-recent-score.is-warn { color: var(--tone-warn); }
+.db-recent-score.is-bad { color: var(--tone-bad); }
+
+/* Top players: plain ranked rows */
+.db-wrapper .db-lb-list { gap: 0; }
+.db-wrapper .db-lb-item,
+.db-wrapper .db-lb-item:hover,
+.db-wrapper .db-lb-top {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--th-card-edge);
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+}
+.db-wrapper .db-lb-rank,
+.db-wrapper .db-lb-1 .db-lb-rank,
+.db-wrapper .db-lb-2 .db-lb-rank,
+.db-wrapper .db-lb-3 .db-lb-rank {
+  background: transparent;
+  color: var(--th-on-dark-muted);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  box-shadow: none;
+}
+.db-wrapper .db-lb-item .db-avatar-sm {
+  background: transparent;
+  border: 1px solid var(--th-border-strong);
+  color: var(--th-on-dark);
+}
+.db-wrapper .db-lb-pts { font-family: var(--font-mono); font-weight: 500; color: var(--th-on-dark); }
+.db-wrapper .db-lb-pts span { font-family: var(--font-sans); }
+.db-wrapper .lb-you { background: var(--th-deep); color: var(--acc); }
+
+/* ── 9. My Quizzes and admin cards pick up the same look ── */
+.qb-card { border: 1px solid var(--th-card-edge); background: var(--th-card); }
+.qb-card:hover, .qb-card:focus-within { background: var(--th-card-hover); }
+.qb-card-icon { border: 1px solid var(--th-card-edge); background: var(--th-card-2); }
+.qb-card-foot strong { font-family: var(--font-mono); font-weight: 500; }
+
+/* ── 10. Small fixes ── */
+.db-wrapper .db-challenge-btn svg { color: currentColor; stroke: currentColor; }
+/* The busiest day is highlighted too, so the chart has a focus even before today's first quiz */
+.db-wrapper .db-chart-col.is-peak .db-chart-bar { background: var(--acc); }
+/* Pass/fail as quiet text: the coloured score already says it */
+.db-wrapper .db-recent-meta .db-tag {
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--th-on-dark-muted);
+  font-weight: 500;
+}
+.db-wrapper .db-recent-meta .db-tag::after { content: ' ·'; }
+
+/* ── 11. Leaderboard and admin overview ── */
+.lb-table tr.is-me td,
+.lb-table tr.is-me:hover td { background: rgba(var(--acc-rgb), 0.06); }
+.lb-table tr.is-me td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
+
+.ad-wrapper .ad-chart-bar { background: var(--acc); box-shadow: none; border-radius: 0; filter: none; }
+.ad-wrapper .ad-chart-grid span { border-color: var(--th-edge); }
+
+/* Category icons sat on pastel tints: neutral boxes fit the flat look */
+.ad-wrapper .ad-rank-icon,
+.ad-wrapper .ad-feed-icon {
+  background: var(--th-card-2) !important;
+  border: 1px solid var(--th-card-edge);
+  border-radius: var(--radius-ctl);
+}
+.ad-wrapper .ad-bar-fill, .ad-wrapper .ad-rank-bar span { box-shadow: none; }
+.ad-wrapper .ad-chart-bar.is-empty { background: var(--th-edge); }
+
+/* ── 12. Submit and result screens (their stylesheet predates the dark theme) ── */
+.finish-screen h2,
+.result-screen h2,
+.result-score { color: var(--th-on-dark); }
+.finish-screen p,
+.result-sub { color: var(--th-on-dark-muted); }
+.finish-screen button,
+.result-actions button { border-radius: var(--radius-ctl); box-shadow: none; transform: none; }
+/* Every result button starts as an outline; the last one (Review answers) is primary */
+.result-actions button {
+  background: transparent;
+  border: 1px solid var(--th-border-strong);
+  color: var(--th-on-dark);
+}
+.result-actions button:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+/* Primary action: submit / review answers */
+.finish-screen button:first-of-type,
+.result-actions button:last-child {
+  background: var(--acc);
+  border: 1px solid var(--acc);
+  color: var(--acc-ink);
+}
+.finish-screen button:first-of-type:hover,
+.result-actions button:last-child:hover { background: var(--acc-strong); color: var(--acc-ink); }
+/* Secondary: outline */
+.finish-screen button:last-of-type,
+.result-actions button:first-child {
+  background: transparent;
+  border: 1px solid var(--th-border-strong);
+  color: var(--th-on-dark);
+}
+.finish-screen button:last-of-type:hover,
+.result-actions button:first-child:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+.review-item {
+  background: var(--th-card-2);
+  border: 1px solid var(--th-card-edge);
+  border-radius: var(--radius-ctl);
+  box-shadow: none;
+  color: var(--th-on-dark-2);
+}
+.review-item.correct,
+.review-item.wrong { background: var(--th-card-2); color: var(--th-on-dark-2); }
+.review-item.correct { border-left: 3px solid var(--tone-good); }
+.review-item.wrong { border-left: 3px solid var(--tone-bad); }
+.review-item.correct span:last-child { color: var(--tone-good); }
+.review-item.wrong span:last-child { color: var(--tone-bad); }
+.result-score.is-good { color: var(--tone-good); }
+.result-score.is-warn { color: var(--tone-warn); }
+.result-score.is-bad { color: var(--tone-bad); }
+.answer-review::-webkit-scrollbar-track { background: var(--th-card-sunk); }
+.answer-review::-webkit-scrollbar-thumb { background: var(--th-border-strong); }
+
+/* ── 13. Stat cards: a little shorter, value on the far right ── */
+
+/* Stat cards (Dashboard, Results, Analytics): icon, label + note on the left, value far right */
+.db-wrapper .db-stats { gap: 12px; }
+.db-wrapper .db-stat-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+  padding: 22px 20px;
+}
+.db-wrapper .db-stat-icon { width: 38px; height: 38px; flex-shrink: 0; }
+.db-wrapper .db-stat-card > div:last-child {
+  flex: 1; min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'label value' 'trend value';
+  align-items: center;
+  column-gap: 12px;
+}
+.db-wrapper .db-stat-label { grid-area: label; margin: 0; }
+.db-wrapper .db-stat-trend { grid-area: trend; margin: 4px 0 0; }
+.db-wrapper .db-stat-value {
+  grid-area: value;
+  justify-self: end;
+  margin: 0;
+  font-size: 28px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Admin KPI cards: same layout */
+.ad-wrapper .ad-kpi { min-height: 0; padding: 22px 20px; gap: 14px; }
+.ad-wrapper .ad-kpi-icon { width: 38px; height: 38px; flex-shrink: 0; }
+.ad-wrapper .ad-kpi > div:last-child {
+  flex: 1; min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'label value' 'sub value';
+  align-items: center;
+  column-gap: 12px;
+}
+.ad-wrapper .ad-kpi-label { grid-area: label; margin: 0; }
+.ad-wrapper .ad-kpi-sub { grid-area: sub; margin: 4px 0 0; }
+.ad-wrapper .ad-kpi-value { grid-area: value; justify-self: end; margin: 0; font-size: 26px; white-space: nowrap; }
+
+/* Narrow stat cards (phones): stack again so long values never squeeze the label */
+@media (max-width: 560px) {
+  .db-wrapper .db-stat-card > div:last-child,
+  .ad-wrapper .ad-kpi > div:last-child {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'label' 'value' 'trend';
+  }
+  .ad-wrapper .ad-kpi > div:last-child { grid-template-areas: 'label' 'value' 'sub'; }
+  .db-wrapper .db-stat-value, .ad-wrapper .ad-kpi-value { justify-self: start; text-align: left; font-size: 22px; }
+}
+
+/* Stat cards without a note (Dashboard): one row, label centred next to the value */
+.db-wrapper .db-stat-card > div:last-child:not(:has(.db-stat-trend)) { grid-template-areas: 'label value'; }
+.db-wrapper .db-stat-card > div:last-child:not(:has(.db-stat-trend)) .db-stat-label { font-size: 14px; color: var(--th-on-dark-2); }
+@media (max-width: 560px) {
+  .db-wrapper .db-stat-card > div:last-child:not(:has(.db-stat-trend)) { grid-template-areas: 'label' 'value'; }
+}
+
+/* Dashboard order is hero, stats, today's challenge/goal, panels: even spacing between them */
+.db-wrapper .db-stats { margin-bottom: 24px; }
+
+/* ── 14. One colour per stat (Results, Analytics, admin) ──
+   Each stat keeps the same colour on every page: quizzes taken lime, average score
+   blue, pass rate / accuracy violet, time spent amber. The Dashboard instead colours
+   values by how good they are (.is-graded). */
+.db-stats:not(.is-graded) .db-stat-card.tone-emerald { --stat: #A3E635; }
+.db-stats:not(.is-graded) .db-stat-card.tone-blue    { --stat: #38BDF8; }
+.db-stats:not(.is-graded) .db-stat-card.tone-violet  { --stat: #A78BFA; }
+.db-stats:not(.is-graded) .db-stat-card.tone-orange  { --stat: #FBBF24; }
+.ad-kpi.tone-blue   { --stat: #38BDF8; }
+.ad-kpi.tone-teal   { --stat: #2DD4BF; }
+.ad-kpi.tone-green  { --stat: #A3E635; }
+.ad-kpi.tone-orange { --stat: #FBBF24; }
+.db-wrapper .db-stats:not(.is-graded) .db-stat-value,
+.ad-wrapper .ad-kpi .ad-kpi-value { color: var(--stat, var(--th-on-dark)); }
+.db-wrapper .db-stats:not(.is-graded) .db-stat-card [class*='db-stat-icon'] svg,
+.ad-wrapper .ad-kpi .ad-kpi-icon svg { color: var(--stat, var(--th-on-dark-2)); }

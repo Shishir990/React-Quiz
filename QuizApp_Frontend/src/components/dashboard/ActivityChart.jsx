@@ -10,7 +10,7 @@ export function ActivityChart({ days }) {
         {days.map((d) => {
           const showLabel = d.count > 0 && (d.isToday || d === peak);
           return (
-            <div key={d.key} className={`db-chart-col ${d.isToday ? 'is-today' : ''}`} tabIndex={0}>
+            <div key={d.key} className={`db-chart-col ${d.isToday ? 'is-today' : ''} ${d.count > 0 && d === peak ? 'is-peak' : ''}`} tabIndex={0}>
               <div className="db-chart-track">
                 {showLabel && (
                   <span className="db-chart-value" style={{ bottom: `calc(${(d.count / max) * 100}% + 6px)` }}>
