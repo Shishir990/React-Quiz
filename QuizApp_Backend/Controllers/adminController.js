@@ -3,6 +3,7 @@ const User = require('../Models/Users');
 const Category = require('../Models/Category');
 const Question = require('../Models/Question');
 const Result = require('../Models/Result');
+const serverError = require('../Utils/serverError');
 
 const DAY = 24 * 60 * 60 * 1000;
 const ACTIVITY_DAYS = 14;
@@ -80,7 +81,7 @@ exports.stats = async (req, res) => {
       })),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -110,7 +111,7 @@ exports.users = async (req, res) => {
       };
     }));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -143,7 +144,7 @@ exports.setRole = async (req, res) => {
     await user.save();
     res.json(publicUser(user));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -158,6 +159,6 @@ exports.setStatus = async (req, res) => {
     await user.save();
     res.json(publicUser(user));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

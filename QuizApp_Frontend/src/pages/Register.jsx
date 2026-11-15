@@ -4,7 +4,7 @@ import { registerApi } from '../api/auth';
 import { useQuiz } from '../context/QuizContext';
 import AuthLayout from '../components/layout/AuthLayout';
 import { AuthAlert, AuthField, AuthSubmit } from '../components/auth';
-import { getStrength } from '../utils/password';
+import { getStrength, PASSWORD_MIN } from '../utils/password';
 
 const strengthLabel = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
 const strengthColor = ['#DC2626', '#DC2626', '#F59E0B', '#10B981', '#047857'];
@@ -37,7 +37,7 @@ export default function Register() {
     if (!form.lastName.trim()) errors.lastName = 'Required.';
     if (!form.email) errors.email = 'Email is required.';
     else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Enter a valid email address.';
-    if (form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
+    if (form.password.length < PASSWORD_MIN) errors.password = `Password must be at least ${PASSWORD_MIN} characters.`;
     if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.';
     else if (form.password !== form.confirmPassword) errors.confirmPassword = 'Passwords do not match.';
     return errors;
@@ -122,7 +122,7 @@ export default function Register() {
             icon="lock"
             type="password"
             name="password"
-            placeholder="At least 6 characters"
+            placeholder={`At least ${PASSWORD_MIN} characters`}
             value={form.password}
             onChange={handleChange}
             autoComplete="new-password"

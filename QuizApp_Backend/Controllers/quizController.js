@@ -1,4 +1,6 @@
 const Quiz = require('../Models/Quiz');
+const serverError = require('../Utils/serverError');
+const inputError = require('../Utils/inputError');
 
 exports.getAll = async (req, res) => {
   try {
@@ -12,7 +14,7 @@ exports.getAll = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(quizzes);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -24,7 +26,7 @@ exports.getOne = async (req, res) => {
     if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
     res.json(quiz);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -33,7 +35,7 @@ exports.create = async (req, res) => {
     const quiz = await Quiz.create({ ...req.body, createdBy: req.user._id });
     res.status(201).json(quiz);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    inputError(req, res, err);
   }
 };
 
@@ -43,7 +45,7 @@ exports.update = async (req, res) => {
     if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
     res.json(quiz);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    inputError(req, res, err);
   }
 };
 
@@ -52,6 +54,6 @@ exports.remove = async (req, res) => {
     await Quiz.findByIdAndDelete(req.params.id);
     res.json({ message: 'Quiz deleted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

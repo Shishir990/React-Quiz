@@ -2,6 +2,8 @@ const User = require('../Models/Users');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { isMailConfigured, sendMail } = require('../Config/mailer');
+const serverError = require('../Utils/serverError');
+const { isText, normalizeEmail, emailError, nameError, newPasswordError } = require('../Utils/validate');
 
 const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 
@@ -11,23 +13,30 @@ const generateToken = (id) =>
 exports.register = async (req, res) => {
   // Role is never taken from the request: everyone signs up as a player and
   // admins are promoted from the admin console (or scripts/makeAdmin.js)
-  const { name, email, password } = req.body;
+  const { name, password } = req.body || {};
+  const email = normalizeEmail(req.body?.email);
+  const problem = nameError(name) || emailError(email) || newPasswordError(password);
+  if (problem) return res.status(400).json({ message: problem });
+
   try {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: 'Email already registered' });
 
-    const user = await User.create({ name, email, password });
-    res.status(201).json({ token: generateToken(user._id), user: { _id: user._id, id: user._id, name, email, role: user.role } });
+    const user = await User.create({ name: name.trim(), email, password });
+    res.status(201).json({ token: generateToken(user._id), user: { _id: user._id, id: user._id, name: user.name, email, role: user.role } });
   } catch (err) {
-    console.error('❌ Register error name:', err.name);
-    console.error('❌ Register error message:', err.message);
-    console.error('❌ Register error stack:', err.stack);
-    res.status(500).json({ message: err.message });
+    // Two sign-ups with the same email at the same moment: the unique index catches the second
+    if (err.code === 11000) return res.status(400).json({ message: 'Email already registered' });
+    serverError(req, res, err);
   }
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const email = normalizeEmail(req.body?.email);
+  const { password } = req.body || {};
+  if (!email || !isText(password) || !password)
+    return res.status(400).json({ message: 'Email and password are required' });
+
   try {
     const user = await User.findOne({ email });
     if (!user || !(await user.matchPassword(password)))
@@ -37,7 +46,7 @@ exports.login = async (req, res) => {
 
     res.json({ token: generateToken(user._id), user: { _id: user._id, id: user._id, name: user.name, email, role: user.role } });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -46,11 +55,11 @@ exports.getMe = async (req, res) => {
 };
 
 exports.changePassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword)
+  const { currentPassword, newPassword } = req.body || {};
+  if (!isText(currentPassword) || !currentPassword || !isText(newPassword) || !newPassword)
     return res.status(400).json({ message: 'Current and new password are required' });
-  if (newPassword.length < 6)
-    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  const problem = newPasswordError(newPassword, 'New password');
+  if (problem) return res.status(400).json({ message: problem });
   if (newPassword === currentPassword)
     return res.status(400).json({ message: 'New password must be different from the current one' });
 
@@ -64,7 +73,7 @@ exports.changePassword = async (req, res) => {
     await user.save();
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -126,7 +135,7 @@ exports.forgotPassword = async (req, res) => {
 
     res.json(reply);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -147,7 +156,7 @@ const maskEmail = (email) => {
 // Lets the reset page say which account the link is for (and catch dead
 // links) before the user types a new password
 exports.checkResetToken = async (req, res) => {
-  const { token } = req.body;
+  const { token } = req.body || {};
   if (!token || typeof token !== 'string')
     return res.status(400).json({ message: 'Reset link is invalid' });
 
@@ -158,16 +167,16 @@ exports.checkResetToken = async (req, res) => {
 
     res.json({ valid: true, email: maskEmail(user.email), name: user.name.split(' ')[0] });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
 exports.resetPassword = async (req, res) => {
-  const { token, password } = req.body;
+  const { token, password } = req.body || {};
   if (!token || typeof token !== 'string')
     return res.status(400).json({ message: 'Reset link is invalid' });
-  if (!password || password.length < 6)
-    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  const problem = newPasswordError(password);
+  if (problem) return res.status(400).json({ message: problem });
 
   try {
     const user = await findByResetToken(token);
@@ -181,7 +190,7 @@ exports.resetPassword = async (req, res) => {
 
     res.json({ success: true, message: 'Your password has been reset. You can now sign in.' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 

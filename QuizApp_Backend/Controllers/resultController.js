@@ -3,16 +3,19 @@ const Result = require('../Models/Result');
 const Question = require('../Models/Question');
 const Quiz = require('../Models/Quiz');
 const QuizProgress = require('../Models/QuizProgress');
+const serverError = require('../Utils/serverError');
 
 exports.submit = async (req, res) => {
-  const { categoryId, answers = [], timeTaken, questionIds } = req.body;
+  const { categoryId, answers = [], timeTaken, questionIds } = req.body || {};
   // answers: [{ question: "questionId", selectedOption: "answer" }]
   // questionIds: every question the player was shown, answered or not
-  console.log('Submit body received:', { categoryId, answers, timeTaken });
+  // Must be a real id string: an object would reach MongoDB as a query operator
+  if (!mongoose.isValidObjectId(categoryId) || typeof categoryId !== 'string') {
+    return res.status(400).json({ message: 'Invalid category' });
+  }
   try {
     // Fetch questions WITH correctAnswer from DB
     const questions = await Question.find({ category: categoryId });
-    console.log('Questions found:', questions.length);
     if (!questions.length) {
       return res.status(404).json({ message: 'Questions not found' });
     }
@@ -72,7 +75,7 @@ exports.submit = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 // GET /api/results/me — the logged-in user's quiz history, newest first
@@ -96,7 +99,7 @@ exports.myHistory = async (req, res) => {
       createdAt: r.createdAt,
     })));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -141,7 +144,7 @@ exports.analytics = async (req, res) => {
       };
     }));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -179,7 +182,7 @@ exports.getOne = async (req, res) => {
       })),
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -250,6 +253,6 @@ exports.leaderboard = async (req, res) => {
       me: players.find((p) => p.userId.toString() === myId) || null,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

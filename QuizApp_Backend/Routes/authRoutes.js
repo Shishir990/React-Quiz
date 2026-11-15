@@ -1,19 +1,16 @@
 const router = require('express').Router();
 const { register, login, getMe, changePassword, forgotPassword, checkResetToken, resetPassword } = require('../Controllers/authController');
 const { protect } = require('../Middleware/authMiddleware');
-console.log('protect:', protect); // should print [Function: protect]
-router.post('/register', register);
-router.post('/login', login);
+const {
+  loginLimiter, changePasswordLimiter, registerLimiter, forgotPasswordLimiter, resetPasswordLimiter,
+} = require('../Middleware/rateLimit');
+
+router.post('/register', registerLimiter, register);
+router.post('/login', loginLimiter, login);
 router.get('/me', protect, getMe);
-router.put('/password', protect, changePassword);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password/check', checkResetToken);
-router.post('/reset-password', resetPassword);
-
-console.log('register:', register);
-console.log('login:', login);
-console.log('getMe:', getMe);
-console.log('protect:', protect);
-
+router.put('/password', protect, changePasswordLimiter, changePassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
+router.post('/reset-password/check', resetPasswordLimiter, checkResetToken);
+router.post('/reset-password', resetPasswordLimiter, resetPassword);
 
 module.exports = router;

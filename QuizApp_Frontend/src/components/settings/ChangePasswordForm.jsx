@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { changePasswordApi } from '../../api/auth';
-import { getStrength } from '../../utils/password';
+import { getStrength, PASSWORD_MIN } from '../../utils/password';
 import { Icon } from '../ui';
 
 const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'];
@@ -25,7 +25,7 @@ export function ChangePasswordForm() {
 
   const validate = () => {
     if (!form.currentPassword) return 'Enter your current password.';
-    if (form.newPassword.length < 6) return 'New password must be at least 6 characters.';
+    if (form.newPassword.length < PASSWORD_MIN) return `New password must be at least ${PASSWORD_MIN} characters.`;
     if (form.newPassword === form.currentPassword) return 'New password must be different from the current one.';
     if (form.newPassword !== form.confirmPassword) return 'Passwords do not match.';
     return null;
@@ -66,7 +66,7 @@ export function ChangePasswordForm() {
         <div className="st-card-icon"><Icon name="shield" size={18} /></div>
         <div>
           <h3 className="st-card-title">Change password</h3>
-          <p className="db-section-sub">Use at least 6 characters. A mix of letters, numbers and symbols is stronger.</p>
+          <p className="db-section-sub">Use at least {PASSWORD_MIN} characters. A mix of letters, numbers and symbols is stronger.</p>
         </div>
       </div>
 

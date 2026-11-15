@@ -1,6 +1,8 @@
 const Question = require('../Models/Question');
 const Category = require('../Models/Category');
 const mongoose = require('mongoose');
+const serverError = require('../Utils/serverError');
+const inputError = require('../Utils/inputError');
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const MAX_OPTIONS = 6;
@@ -44,7 +46,7 @@ exports.getAll = async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(questions);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -56,7 +58,7 @@ exports.create = async (req, res) => {
     await question.populate('category', 'name icon');
     res.status(201).json(question);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    inputError(req, res, err);
   }
 };
 
@@ -86,7 +88,7 @@ exports.bulkCreate = async (req, res) => {
       message: created.length ? `${created.length} questions imported` : 'No questions were valid',
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -100,7 +102,7 @@ exports.update = async (req, res) => {
     if (!question) return res.status(404).json({ message: 'Question not found' });
     res.json(question);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    inputError(req, res, err);
   }
 };
 
@@ -111,7 +113,7 @@ exports.remove = async (req, res) => {
     if (!question) return res.status(404).json({ message: 'Question not found' });
     res.json({ message: 'Question deleted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -143,6 +145,6 @@ exports.getQuizQuestions = async (req, res) => {
 
     res.json({ count: questions.length, questions });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

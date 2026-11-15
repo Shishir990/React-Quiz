@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const QuizProgress = require('../Models/QuizProgress');
 const Question = require('../Models/Question');
+const serverError = require('../Utils/serverError');
 
 const SECONDS_PER_QUESTION = 10;
 const MAX_QUESTIONS = 500;
@@ -40,7 +41,7 @@ exports.listMine = async (req, res) => {
       updatedAt: p.updatedAt,
     })));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -106,7 +107,7 @@ exports.getOne = async (req, res) => {
     });
   } catch (err) {
     logEvent(req, 'read failed (500)', { error: err.message });
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -178,7 +179,7 @@ exports.save = async (req, res) => {
     );
     res.json({ saved: true, secondsRemaining: seconds });
   } catch (err) {
-    reject(req, res, 500, err.message);
+    reject(req, res, 500, 'Could not save your progress. Please try again.', { error: err.message });
   }
 };
 
@@ -193,6 +194,6 @@ exports.remove = async (req, res) => {
     res.json({ deleted: true });
   } catch (err) {
     logEvent(req, 'delete failed (500)', { error: err.message });
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

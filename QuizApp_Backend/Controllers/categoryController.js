@@ -2,6 +2,8 @@ const Category = require('../Models/Category');
 const Quiz = require('../Models/Quiz');
 const Question = require('../Models/Question');
 const mongoose = require('mongoose');
+const serverError = require('../Utils/serverError');
+const inputError = require('../Utils/inputError');
 
 exports.getAll = async (req, res) => {
   try {
@@ -48,7 +50,7 @@ exports.getAll = async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };
 
@@ -75,7 +77,8 @@ exports.create = async (req, res) => {
     const category = await Category.create({ ...data, createdBy: req.user._id });
     res.status(201).json(category);
   } catch (err) {
-    res.status(400).json({ message: duplicateName(err) ? 'A category with this name already exists' : err.message });
+    if (duplicateName(err)) return res.status(400).json({ message: 'A category with this name already exists' });
+    inputError(req, res, err);
   }
 };
 
@@ -88,7 +91,8 @@ exports.update = async (req, res) => {
     if (!category) return res.status(404).json({ message: 'Category not found' });
     res.json(category);
   } catch (err) {
-    res.status(400).json({ message: duplicateName(err) ? 'A category with this name already exists' : err.message });
+    if (duplicateName(err)) return res.status(400).json({ message: 'A category with this name already exists' });
+    inputError(req, res, err);
   }
 };
 
@@ -101,6 +105,6 @@ exports.remove = async (req, res) => {
     const { deletedCount } = await Question.deleteMany({ category: category._id });
     res.json({ message: 'Category deleted', questionsDeleted: deletedCount });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    serverError(req, res, err);
   }
 };

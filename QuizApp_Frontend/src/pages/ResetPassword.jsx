@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { checkResetTokenApi, resetPasswordApi } from '../api/auth';
 import AuthLayout from '../components/layout/AuthLayout';
 import { AuthAlert, AuthField, AuthIcon, AuthSubmit } from '../components/auth';
+import { PASSWORD_MIN } from '../utils/password';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function ResetPassword() {
 
   const validate = () => {
     const errors = {};
-    if (form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
+    if (form.password.length < PASSWORD_MIN) errors.password = `Password must be at least ${PASSWORD_MIN} characters.`;
     if (!form.confirmPassword) errors.confirmPassword = 'Please confirm your password.';
     else if (form.password !== form.confirmPassword) errors.confirmPassword = 'Passwords do not match.';
     return errors;
@@ -112,7 +113,7 @@ export default function ResetPassword() {
           icon="lock"
           type="password"
           name="password"
-          placeholder="At least 6 characters"
+          placeholder={`At least ${PASSWORD_MIN} characters`}
           value={form.password}
           onChange={handleChange}
           autoComplete="new-password"

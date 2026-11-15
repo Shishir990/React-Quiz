@@ -1,0 +1,1360 @@
+openapi: 3.0.3
+info:
+  title: QuizApp API
+  version: 1.0.0
+  description: |
+    REST API behind QuizApp: accounts, quiz categories and questions, playing and
+    saving quizzes, results, leaderboards and the admin console.
+
+    **Authentication.** Sign in with `POST /api/auth/login` (or register), then send the
+    returned token on every other request as `Authorization: Bearer <token>`.
+    In this page, click **Authorize** and paste the token.
+
+    **Roles.** Endpoints marked *Admin only* return `403` for players.
+
+    **Errors.** Every error response is JSON: `{ "message": "..." }`. Unexpected server
+    errors return a generic message; the details are only logged on the server.
+
+    **Rate limits** (per IP): sign-in and change password allow 10 failed attempts per
+    15 minutes, sign-up 10 per hour, forgot password 5 per hour, reset password 10 per
+    15 minutes. Over the limit the API returns `429`; the `RateLimit` headers say when
+    to retry.
+servers:
+  - url: /
+    description: This server
+
+tags:
+  - name: Health
+  - name: Auth
+    description: Accounts, sign-in and passwords
+  - name: Categories
+    description: Quiz topics. Everyone can list them; admins manage them.
+  - name: Play
+    description: Questions for a quiz (answers hidden) and submitting it
+  - name: Progress
+    description: Unfinished quizzes saved on the server, so they can be resumed on any device
+  - name: Results
+    description: The signed-in player's attempts, analytics and the leaderboard
+  - name: Questions (admin)
+    description: The question bank, including correct answers
+  - name: Admin
+    description: Console overview and user management
+  - name: Quizzes (legacy)
+    description: |
+      Older fixed-quiz model. **Not used by the app** (quizzes are played straight
+      from categories). Kept for compatibility; candidates for removal.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      description: 200 when the API can reach MongoDB, 503 otherwise. Used by uptime monitors.
+      security: []
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: Database unreachable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  # ── Auth ──────────────────────────────────────────────
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Create a player account
+      description: Everyone signs up as a player; admins are promoted from the admin console. Rate limited to 10 per hour.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, maxLength: 60, example: Ana Silva }
+                email: { type: string, format: email, example: ana@example.com }
+                password: { type: string, minLength: 8, maxLength: 128, example: correct-horse-battery }
+      responses:
+        '201':
+          description: Account created and signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400':
+          description: Invalid input, or the email is already registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Password must be at least 8 characters }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Sign in
+      description: 'Returns a JWT to send as `Authorization: Bearer <token>`. Rate limited to 10 failed attempts per 15 minutes.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: ana@example.com }
+                password: { type: string, example: correct-horse-battery }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400':
+          description: Email or password missing
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Wrong email or password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: Invalid credentials }
+        '403':
+          description: The account has been disabled by an admin
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: The signed-in user
+      responses:
+        '200':
+          description: The account behind the token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/password:
+    put:
+      tags: [Auth]
+      summary: Change password
+      description: Rate limited to 10 failed attempts per 15 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+        '400':
+          description: Missing fields, new password too short or same as before, or current password wrong
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Email a password reset link
+      description: |
+        Always gives the same reply whether or not the account exists, so it can't be used
+        to discover accounts. The link expires after 15 minutes. Rate limited to 5 per hour.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email, example: ana@example.com }
+      responses:
+        '200':
+          description: Request accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+        '400':
+          description: Not a valid email address
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+        '503':
+          description: Email sending isn't configured on this server
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/auth/reset-password/check:
+    post:
+      tags: [Auth]
+      summary: Check a reset link before showing the form
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string, description: The token from the emailed link }
+      responses:
+        '200':
+          description: The link is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid: { type: boolean, example: true }
+                  email: { type: string, description: Partly hidden, example: ana•••@example.com }
+                  name: { type: string, description: First name, example: Ana }
+        '400':
+          description: Invalid or expired link
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Set a new password with a reset link
+      description: Each link works once.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        '200':
+          description: Password reset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+        '400':
+          description: Invalid or expired link, or the password is too short
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Categories ────────────────────────────────────────
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: List categories with question counts
+      responses:
+        '200':
+          description: Every category, sorted by name
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CategoryWithStats' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Categories]
+      summary: Create a category (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '400':
+          description: Name missing or too long, or already taken
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      tags: [Categories]
+      summary: Update a category (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+        '400':
+          description: Name missing or too long, or already taken
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Categories]
+      summary: Delete a category and its questions (admin only)
+      description: Players' past results keep their scores and show "Deleted category".
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Category deleted }
+                  questionsDeleted: { type: integer, example: 15 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Play ──────────────────────────────────────────────
+  /api/questions/quiz/{categoryId}:
+    get:
+      tags: [Play]
+      summary: Questions for a quiz, shuffled, without answers
+      description: Correct answers and explanations are never included; they come back after submitting.
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+        - name: limit
+          in: query
+          description: Return a random subset of this many questions instead of all of them
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: The questions in random order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer, example: 15 }
+                  questions:
+                    type: array
+                    items: { $ref: '#/components/schemas/PlayQuestion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/results/submit:
+    post:
+      tags: [Play]
+      summary: Submit a finished quiz for scoring
+      description: |
+        Scores against the stored answers, counting each shown question once.
+        Also deletes the saved progress for this category.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoryId]
+              properties:
+                categoryId: { type: string, example: 6a1f0c2b9d3e4f5a6b7c8d9e }
+                questionIds:
+                  type: array
+                  description: Every question shown to the player, answered or not. The score is out of these.
+                  items: { type: string }
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      question: { type: string, description: Question id }
+                      selectedOption: { type: string, description: The chosen option's text }
+                timeTaken: { type: integer, description: Seconds, example: 95 }
+      responses:
+        '201':
+          description: Scored and saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id: { type: string }
+                  score: { type: integer, example: 11 }
+                  total: { type: integer, example: 15 }
+                  percentage: { type: integer, example: 73 }
+                  passed: { type: boolean, description: 50% or more }
+                  timeTaken: { type: integer }
+                  answers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question: { type: string }
+                        selectedOption: { type: string }
+                        isCorrect: { type: boolean }
+        '400':
+          description: Invalid category id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Progress ──────────────────────────────────────────
+  /api/progress:
+    get:
+      tags: [Progress]
+      summary: Categories with an unfinished quiz
+      description: Saves older than a week, or with no time left, are not listed.
+      responses:
+        '200':
+          description: One entry per unfinished quiz
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category: { type: string, description: Category id }
+                    total: { type: integer, example: 15 }
+                    answered: { type: integer, example: 6 }
+                    secondsRemaining: { type: integer, example: 92 }
+                    updatedAt: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/progress/{categoryId}:
+    parameters:
+      - $ref: '#/components/parameters/CategoryId'
+    get:
+      tags: [Progress]
+      summary: The saved quiz, ready to resume
+      description: |
+        Same question format as the play endpoint (no answers), in the saved order.
+        Questions deleted since the save are dropped and positions shift to match.
+      responses:
+        '200':
+          description: The saved quiz
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SavedQuiz' }
+        '204':
+          description: Nothing saved for this category (or the save expired)
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [Progress]
+      summary: Save or update the unfinished quiz
+      description: |
+        The clock only runs down: a save can never add time back. Each question is worth
+        10 seconds. A save with no time left deletes the saved quiz instead.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [questionIds, secondsRemaining]
+              properties:
+                questionIds:
+                  type: array
+                  description: The questions in the order shown (all from this category, max 500)
+                  items: { type: string }
+                answers:
+                  type: object
+                  description: Question position → chosen option index
+                  additionalProperties: { type: integer }
+                  example: { '0': 2, '3': 1 }
+                visited:
+                  type: object
+                  description: Positions opened, as keys
+                  additionalProperties: { type: boolean }
+                marked:
+                  type: object
+                  description: Positions marked for review, as keys
+                  additionalProperties: { type: boolean }
+                index: { type: integer, description: Current position }
+                secondsRemaining: { type: integer, example: 92 }
+                savedAt: { type: integer, description: Client time in ms, used to pick the newer of two copies }
+      responses:
+        '200':
+          description: Saved, or deleted because no time was left
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved: { type: boolean }
+                  secondsRemaining: { type: integer, description: The time actually stored }
+        '400':
+          description: Invalid category or question list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Progress]
+      summary: Discard the unfinished quiz
+      description: Used by "Exit & restart" and "Start over". Succeeds even if nothing was saved.
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean, example: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Results ───────────────────────────────────────────
+  /api/results/me:
+    get:
+      tags: [Results]
+      summary: My quiz history
+      description: Newest first, up to 200.
+      responses:
+        '200':
+          description: Attempts without per-question detail
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ResultSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/results/analytics:
+    get:
+      tags: [Results]
+      summary: My attempts, shaped for the analytics charts
+      description: Oldest first, up to 1000, with answer counts and accuracy by difficulty.
+      responses:
+        '200':
+          description: One entry per attempt
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AnalyticsAttempt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/results/leaderboard:
+    get:
+      tags: [Results]
+      summary: Leaderboard
+      description: |
+        Points are the sum of each player's best score (%) in every category they played,
+        so replaying can raise a score but never farm points. Ties go to the faster player.
+        Returns the top 50 plus the signed-in player's own row.
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string, enum: [week, month, all], default: week }
+        - name: category
+          in: query
+          description: Only count this category
+          schema: { type: string }
+      responses:
+        '200':
+          description: Ranked players
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Leaderboard' }
+        '400':
+          description: Invalid category id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/results/{id}:
+    get:
+      tags: [Results]
+      summary: One of my attempts, question by question
+      description: Includes correct answers and explanations. Only the attempt's owner can read it.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: The attempt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Questions (admin) ─────────────────────────────────
+  /api/questions:
+    get:
+      tags: [Questions (admin)]
+      summary: List questions with answers (admin only)
+      parameters:
+        - name: category
+          in: query
+          description: Only this category
+          schema: { type: string }
+      responses:
+        '200':
+          description: Newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Question' }
+        '400':
+          description: Invalid category id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Questions (admin)]
+      summary: Add a question (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuestionInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Question' }
+        '400': { $ref: '#/components/responses/InvalidQuestion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/questions/bulk:
+    post:
+      tags: [Questions (admin)]
+      summary: Import many questions at once (admin only)
+      description: |
+        Saves every valid question and reports the rest by position, so one bad row doesn't
+        block the whole import. Up to 500 per request. Returns 201 if at least one was saved,
+        400 if none were.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [questions]
+              properties:
+                questions:
+                  type: array
+                  maxItems: 500
+                  items: { $ref: '#/components/schemas/QuestionInput' }
+      responses:
+        '201':
+          description: Some or all saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BulkImportResult' }
+        '400':
+          description: Not a list, more than 500, or none valid (then `errors` lists why)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BulkImportResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/questions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    put:
+      tags: [Questions (admin)]
+      summary: Edit a question (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuestionInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Question' }
+        '400': { $ref: '#/components/responses/InvalidQuestion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Questions (admin)]
+      summary: Delete a question (admin only)
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Admin ─────────────────────────────────────────────
+  /api/admin/stats:
+    get:
+      tags: [Admin]
+      summary: Numbers for the console overview (admin only)
+      responses:
+        '200':
+          description: Totals, recent activity and popular categories
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminStats' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: Every account with its quiz activity (admin only)
+      responses:
+        '200':
+          description: Newest accounts first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/users/{id}/role:
+    patch:
+      tags: [Admin]
+      summary: Make a user an admin or a player (admin only)
+      description: Admins can't change their own role, so there is always at least one admin.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [admin, player] }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicUser' }
+        '400':
+          description: Invalid role, or trying to change your own account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/admin/users/{id}/status:
+    patch:
+      tags: [Admin]
+      summary: Enable or disable an account (admin only)
+      description: A disabled account is signed out on its next request and can't sign in.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isActive]
+              properties:
+                isActive: { type: boolean }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicUser' }
+        '400':
+          description: isActive is not true/false, or trying to change your own account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Quizzes (legacy) ──────────────────────────────────
+  /api/quizzes:
+    get:
+      tags: [Quizzes (legacy)]
+      summary: List fixed quizzes (unused by the app)
+      deprecated: true
+      responses:
+        '200':
+          description: Quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LegacyQuiz' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [Quizzes (legacy)]
+      summary: Create a fixed quiz (admin only, unused by the app)
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LegacyQuiz' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LegacyQuiz' }
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/quizzes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Quizzes (legacy)]
+      summary: One fixed quiz with its questions (unused by the app)
+      description: |
+        **Known issue:** returns full questions *including correct answers* to any signed-in
+        user. Unused by the app; remove these routes or strip answers before relying on them.
+      deprecated: true
+      responses:
+        '200':
+          description: The quiz
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LegacyQuiz' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [Quizzes (legacy)]
+      summary: Update a fixed quiz (admin only, unused by the app)
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LegacyQuiz' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LegacyQuiz' }
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [Quizzes (legacy)]
+      summary: Delete a fixed quiz (admin only, unused by the app)
+      deprecated: true
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The `token` from login or register
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, example: 6a1f0c2b9d3e4f5a6b7c8d9e }
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema: { type: string, example: 6a1f0c2b9d3e4f5a6b7c8d9e }
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid or expired token, or the account is disabled
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Not authorized }
+    Forbidden:
+      description: Signed in, but not an admin
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Admin access only }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit reached; see the RateLimit headers for when to retry
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Too many failed sign-in attempts. Please wait 15 minutes and try again. }
+    ServerError:
+      description: Unexpected error (details are logged on the server, not returned)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: Something went wrong on our side. Please try again. }
+    InvalidQuestion:
+      description: |
+        Invalid question: text missing, fewer than 2 or more than 6 options, duplicate options,
+        correct answer not among the options, bad difficulty, or unknown category
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: { message: The correct answer must be one of the options }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+    Message:
+      type: object
+      properties:
+        message: { type: string }
+    Success:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+    Health:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, error] }
+        db:
+          type: object
+          properties:
+            ok: { type: boolean }
+            state: { type: string, example: connected }
+            latencyMs: { type: integer }
+            message: { type: string }
+        uptimeSeconds: { type: integer }
+        timestamp: { type: string, format: date-time }
+    CategoryRef:
+      type: object
+      nullable: true
+      description: null when the category has since been deleted
+      properties:
+        _id: { type: string }
+        name: { type: string, example: Geography }
+        icon: { type: string, example: 🌍 }
+
+    # Users
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string, description: JWT for the Authorization header }
+        user:
+          type: object
+          properties:
+            _id: { type: string }
+            id: { type: string, description: Same as _id (kept for older clients) }
+            name: { type: string }
+            email: { type: string }
+            role: { type: string, enum: [admin, player] }
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [admin, player] }
+        avatar: { type: string }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PublicUser:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [admin, player] }
+        isActive: { type: boolean }
+    AdminUser:
+      allOf:
+        - $ref: '#/components/schemas/PublicUser'
+        - type: object
+          properties:
+            createdAt: { type: string, format: date-time }
+            quizzes: { type: integer, description: Attempts }
+            avgScore: { type: integer, nullable: true }
+            lastActive: { type: string, format: date-time, nullable: true }
+
+    # Categories
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 60, example: Geography }
+        description: { type: string, example: Capitals, rivers and landmarks }
+        icon: { type: string, example: 🌍 }
+    Category:
+      allOf:
+        - $ref: '#/components/schemas/CategoryInput'
+        - type: object
+          properties:
+            _id: { type: string }
+            createdBy: { type: string }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    CategoryWithStats:
+      allOf:
+        - $ref: '#/components/schemas/Category'
+        - type: object
+          properties:
+            questionCount: { type: integer, example: 16 }
+            difficulty:
+              type: object
+              properties:
+                easy: { type: integer }
+                medium: { type: integer }
+                hard: { type: integer }
+            lastActivity:
+              type: string
+              format: date-time
+              nullable: true
+              description: Latest change to the category or any of its questions
+            quizCount: { type: integer, description: Published legacy quizzes }
+
+    # Questions
+    QuestionInput:
+      type: object
+      required: [text, options, correctAnswer, category]
+      properties:
+        text: { type: string, example: What is the capital of Australia? }
+        options:
+          type: array
+          minItems: 2
+          maxItems: 6
+          items: { type: string }
+          example: [Sydney, Canberra, Melbourne, Perth]
+        correctAnswer: { type: string, description: Must match one option exactly, example: Canberra }
+        explanation: { type: string, example: Canberra was chosen as a compromise between Sydney and Melbourne. }
+        difficulty: { type: string, enum: [easy, medium, hard], default: medium }
+        category: { type: string, description: Category id }
+    Question:
+      type: object
+      properties:
+        _id: { type: string }
+        text: { type: string }
+        options: { type: array, items: { type: string } }
+        correctAnswer: { type: string }
+        explanation: { type: string }
+        difficulty: { type: string, enum: [easy, medium, hard] }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+        createdBy: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PlayQuestion:
+      type: object
+      description: A question as players see it, without the answer or explanation
+      properties:
+        _id: { type: string }
+        text: { type: string }
+        options: { type: array, items: { type: string } }
+        difficulty: { type: string, enum: [easy, medium, hard] }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+    BulkImportResult:
+      type: object
+      properties:
+        created: { type: integer, example: 48 }
+        message: { type: string, example: 48 questions imported }
+        questions:
+          type: array
+          items: { $ref: '#/components/schemas/Question' }
+        errors:
+          type: array
+          description: Rows that were skipped, by position in the request
+          items:
+            type: object
+            properties:
+              index: { type: integer, example: 3 }
+              message: { type: string, example: Add at least two options }
+
+    # Progress
+    SavedQuiz:
+      type: object
+      properties:
+        categoryId: { type: string }
+        Questions:
+          type: array
+          items: { $ref: '#/components/schemas/PlayQuestion' }
+        answers:
+          type: object
+          description: Question position → chosen option index
+          additionalProperties: { type: integer }
+        visited:
+          type: object
+          additionalProperties: { type: boolean }
+        marked:
+          type: object
+          additionalProperties: { type: boolean }
+        index: { type: integer }
+        secondsRemaining: { type: integer }
+        totalTime: { type: integer }
+        savedAt: { type: integer, description: Time of the save in ms }
+
+    # Results
+    ResultSummary:
+      type: object
+      properties:
+        _id: { type: string }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+        score: { type: integer }
+        percentage: { type: integer }
+        passed: { type: boolean }
+        timeTaken: { type: integer, description: Seconds }
+        createdAt: { type: string, format: date-time }
+    ResultDetail:
+      allOf:
+        - $ref: '#/components/schemas/ResultSummary'
+        - type: object
+          properties:
+            answers:
+              type: array
+              items:
+                type: object
+                properties:
+                  selectedOption: { type: string }
+                  isCorrect: { type: boolean }
+                  question:
+                    type: object
+                    nullable: true
+                    description: null when the question has since been deleted
+                    properties:
+                      text: { type: string }
+                      options: { type: array, items: { type: string } }
+                      correctAnswer: { type: string }
+                      explanation: { type: string }
+                      difficulty: { type: string }
+    AnalyticsAttempt:
+      type: object
+      properties:
+        _id: { type: string }
+        category: { $ref: '#/components/schemas/CategoryRef' }
+        percentage: { type: integer }
+        passed: { type: boolean }
+        timeTaken: { type: integer }
+        createdAt: { type: string, format: date-time }
+        total: { type: integer }
+        correct: { type: integer }
+        wrong: { type: integer }
+        skipped: { type: integer }
+        difficulty:
+          type: object
+          description: Correct and answered counts per difficulty
+          properties:
+            easy: { $ref: '#/components/schemas/DifficultyCount' }
+            medium: { $ref: '#/components/schemas/DifficultyCount' }
+            hard: { $ref: '#/components/schemas/DifficultyCount' }
+    DifficultyCount:
+      type: object
+      properties:
+        correct: { type: integer }
+        answered: { type: integer }
+    LeaderboardRow:
+      type: object
+      properties:
+        rank: { type: integer, example: 1 }
+        userId: { type: string }
+        name: { type: string }
+        avatar: { type: string }
+        points: { type: integer, example: 640 }
+        quizzes: { type: integer, description: Attempts in the period }
+        categories: { type: integer, description: Categories played }
+        avgScore: { type: integer }
+        time: { type: integer, description: Seconds spent on the best attempts (tie-breaker) }
+    Leaderboard:
+      type: object
+      properties:
+        period: { type: string, enum: [week, month, all] }
+        category: { type: string, nullable: true }
+        totalPlayers: { type: integer }
+        players:
+          type: array
+          description: Top 50
+          items: { $ref: '#/components/schemas/LeaderboardRow' }
+        me:
+          allOf:
+            - $ref: '#/components/schemas/LeaderboardRow'
+          nullable: true
+          description: The signed-in player's row, or null if they haven't played in this period
+
+    # Admin
+    AdminStats:
+      type: object
+      properties:
+        users:
+          type: object
+          properties:
+            total: { type: integer }
+            admins: { type: integer }
+            newThisWeek: { type: integer }
+        content:
+          type: object
+          properties:
+            categories: { type: integer }
+            questions: { type: integer }
+            emptyCategories:
+              type: array
+              description: Categories players can't start because they have no questions
+              items: { $ref: '#/components/schemas/CategoryRef' }
+            missingExplanations: { type: integer }
+        attempts:
+          type: object
+          properties:
+            total: { type: integer }
+            thisWeek: { type: integer }
+            avgScore: { type: integer }
+            passRate: { type: integer, description: Percent }
+        activity:
+          type: array
+          description: Attempts per day for the last 14 days (UTC)
+          items:
+            type: object
+            properties:
+              day: { type: string, example: '2026-11-14' }
+              count: { type: integer }
+        popular:
+          type: array
+          description: Top 5 categories by attempts
+          items:
+            type: object
+            properties:
+              _id: { type: string }
+              name: { type: string }
+              icon: { type: string }
+              createdAt: { type: string, format: date-time }
+              attempts: { type: integer }
+              avgScore: { type: integer }
+        recent:
+          type: array
+          description: Last 8 attempts by anyone
+          items:
+            type: object
+            properties:
+              _id: { type: string }
+              user: { type: string, description: Player name }
+              category: { $ref: '#/components/schemas/CategoryRef' }
+              percentage: { type: integer }
+              passed: { type: boolean }
+              createdAt: { type: string, format: date-time }
+
+    # Legacy
+    LegacyQuiz:
+      type: object
+      properties:
+        _id: { type: string, readOnly: true }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        questions: { type: array, items: { type: string } }
+        duration: { type: integer, description: Minutes, default: 10 }
+        passMark: { type: integer, description: Percent, default: 50 }
+        isPublished: { type: boolean, default: false }
