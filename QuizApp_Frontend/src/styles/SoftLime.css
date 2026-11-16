@@ -462,3 +462,23 @@ body,
 .ad-wrapper .ad-kpi .ad-kpi-value { color: var(--stat, var(--th-on-dark)); }
 .db-wrapper .db-stats:not(.is-graded) .db-stat-card [class*='db-stat-icon'] svg,
 .ad-wrapper .ad-kpi .ad-kpi-icon svg { color: var(--stat, var(--th-on-dark-2)); }
+
+/* ── 15. Loading skeletons: a dark shimmer (the old ones were light grey, so they flashed white) ── */
+.db-cat-skeleton,
+.db-chart-skeleton,
+.db-recent-skeleton,
+.ad-skeleton,
+.an-skeleton {
+  background: linear-gradient(90deg, var(--th-card) 25%, var(--th-card-2-hover) 50%, var(--th-card) 75%);
+  background-size: 200% 100%;
+  border: 1px solid var(--th-card-edge);
+  border-radius: var(--radius-card);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+/* Card-shaped placeholders that pulse instead of shimmering */
+.mq-skeleton,
+.qb-skeleton { background: var(--th-card); border-color: var(--th-card-edge); }
+@media (prefers-reduced-motion: reduce) {
+  .db-cat-skeleton, .db-chart-skeleton, .db-recent-skeleton, .ad-skeleton, .an-skeleton,
+  .mq-skeleton, .qb-skeleton { animation: none; }
+}
