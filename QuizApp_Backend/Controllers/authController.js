@@ -1,6 +1,7 @@
 const User = require('../Models/Users');
 const Session = require('../Models/Session');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const { isMailConfigured, sendMail } = require('../Config/mailer');
 const serverError = require('../Utils/serverError');
 const { isText, normalizeEmail, emailError, nameError, newPasswordError } = require('../Utils/validate');
@@ -330,7 +331,7 @@ exports.refresh = async (req, res) => {
       return res.status(401).json({ message: 'Account not found or disabled' });
     }
 
-    const next = await createSession(req, res, user);
+    const next = await createSession(req, res, user, session);
     session.replacedBy = next._id;
     await session.save();
     setAccessCookie(res, user);
@@ -360,6 +361,55 @@ exports.logoutAll = async (req, res) => {
     await endAllSessions(user);
     clearSessionCookies(res);
     res.json({ success: true, message: 'Signed out of all devices.' });
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// GET /api/auth/sessions: the devices signed in to this account.
+// The refresh cookie is sent to /api/auth, so the device asking can be marked "current".
+exports.listSessions = async (req, res) => {
+  try {
+    const token = req.cookies?.[REFRESH_COOKIE];
+    const currentHash = isText(token) && token ? hashSessionToken(token) : null;
+    const rows = await Session.find({ user: req.user._id, revokedAt: null, expiresAt: { $gt: new Date() } })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const sessions = rows.map((s) => ({
+      id: String(s.family || s._id),
+      userAgent: s.userAgent || '',
+      ip: s.ip || '',
+      startedAt: s.startedAt || s.createdAt,
+      lastActiveAt: s.createdAt, // a new row is written on every refresh
+      expiresAt: s.expiresAt,
+      current: s.tokenHash === currentHash,
+    }));
+    // This device first, then most recently active
+    sessions.sort((a, b) => Number(b.current) - Number(a.current));
+    res.json(sessions);
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// DELETE /api/auth/sessions/:id: sign out one other device. Its refresh token stops
+// working at once; an access token it already holds runs out within 15 minutes.
+exports.revokeSession = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) return res.status(404).json({ message: 'Session not found' });
+
+  try {
+    const owned = { user: req.user._id, $or: [{ family: id }, { _id: id }] };
+    const token = req.cookies?.[REFRESH_COOKIE];
+    if (isText(token) && token) {
+      const mine = await Session.exists({ ...owned, tokenHash: hashSessionToken(token) });
+      if (mine) return res.status(400).json({ message: 'Use "Sign out" to end the session on this device.' });
+    }
+
+    const { deletedCount } = await Session.deleteMany(owned);
+    if (!deletedCount) return res.status(404).json({ message: 'Session not found' });
+    res.json({ success: true, message: 'Device signed out.' });
   } catch (err) {
     serverError(req, res, err);
   }

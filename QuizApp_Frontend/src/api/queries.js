@@ -4,6 +4,7 @@ import { getCategoriesApi } from './categories';
 import { listProgressApi } from './progress';
 import { getMyResultsApi, getMyAnalyticsApi, getResultApi, getLeaderboardApi } from './results';
 import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi } from './admin';
+import { getSessionsApi } from './auth';
 
 export { queryClient };
 
@@ -16,6 +17,7 @@ export const queryKeys = {
   result: (id) => ['results', 'detail', id],
   leaderboard: (period, category) => ['leaderboard', period, category || 'all'],
   savedProgress: ['progress'],
+  sessions: ['auth', 'sessions'],
 };
 
 // authFetch resolves with the server's error body instead of throwing,
@@ -37,6 +39,14 @@ export const useSavedProgress = () =>
   useQuery({
     queryKey: queryKeys.savedProgress,
     queryFn: async () => expect(await listProgressApi(), Array.isArray, 'Could not load saved quizzes.'),
+    staleTime: 0,
+  });
+
+// Devices signed in to this account; always refetched, since other devices change it
+export const useSessions = () =>
+  useQuery({
+    queryKey: queryKeys.sessions,
+    queryFn: async () => expect(await getSessionsApi(), Array.isArray, 'Could not load your sessions.'),
     staleTime: 0,
   });
 

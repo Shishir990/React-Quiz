@@ -96,3 +96,10 @@ export const logoutApi = async () => {
 
 // Ends every session of this account, on every device
 export const logoutAllApi = async () => authFetch('/auth/logout-all', { method: 'POST' });
+
+// Devices signed in to this account (this one is marked `current`)
+export const getSessionsApi = async () => authFetch('/auth/sessions');
+
+// Signs out one other device
+export const revokeSessionApi = async (id) =>
+  authFetch(`/auth/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });

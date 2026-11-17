@@ -12,6 +12,7 @@ import ResultDetail from './pages/ResultDetail';
 import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Sessions from './pages/Sessions';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminOverview from './pages/admin/Overview';
 import AdminQuestionBank from './pages/admin/QuestionBank';
@@ -78,6 +79,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/sessions"
+            element={
+              <ProtectedRoute>
+                <Sessions />
               </ProtectedRoute>
             }
           />

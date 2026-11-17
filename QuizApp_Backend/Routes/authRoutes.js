@@ -2,6 +2,7 @@ const router = require('express').Router();
 const {
   register, login, getMe, changePassword, forgotPassword, checkResetToken, resetPassword,
   googleConfig, googleLogin, refresh, logout, logoutAll,
+  listSessions, revokeSession,
 } = require('../Controllers/authController');
 const { protect } = require('../Middleware/authMiddleware');
 const {
@@ -15,6 +16,8 @@ router.post('/google', loginLimiter, googleLogin);
 router.post('/refresh', refreshLimiter, refresh);
 router.post('/logout', logout);
 router.post('/logout-all', protect, logoutAll);
+router.get('/sessions', protect, listSessions);
+router.delete('/sessions/:id', protect, revokeSession);
 router.get('/me', protect, getMe);
 router.put('/password', protect, changePasswordLimiter, changePassword);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);

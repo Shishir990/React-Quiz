@@ -274,6 +274,49 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '500': { $ref: '#/components/responses/ServerError' }
 
+  /api/auth/sessions:
+    get:
+      tags: [Auth]
+      summary: Signed-in devices
+      description: |
+        Every active session of the signed-in user, this device first. `current` marks the
+        device making the request (known from its refresh cookie).
+      responses:
+        '200':
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ActiveSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/sessions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    delete:
+      tags: [Auth]
+      summary: Sign out one device
+      description: |
+        Ends another device's session. Its refresh token stops working at once; an access
+        token it already holds expires within 15 minutes. The current device can't be ended
+        here (`400`); use `POST /api/auth/logout`.
+      responses:
+        '200':
+          description: Device signed out
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+        '400':
+          description: That is this device's session
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
   /api/auth/me:
     get:
       tags: [Auth]
@@ -1161,6 +1204,16 @@ components:
       properties:
         success: { type: boolean, example: true }
         message: { type: string }
+    ActiveSession:
+      type: object
+      properties:
+        id: { type: string, description: Stable id of the device (survives token rotation) }
+        userAgent: { type: string }
+        ip: { type: string }
+        startedAt: { type: string, format: date-time }
+        lastActiveAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        current: { type: boolean }
     Health:
       type: object
       properties:

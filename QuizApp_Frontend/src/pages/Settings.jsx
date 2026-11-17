@@ -3,7 +3,10 @@ import AppShell from '../components/layout/AppShell';
 import { initialsOf } from '../utils/format';
 import { ChangePasswordForm } from '../components/settings/ChangePasswordForm';
 import { SignOutEverywhere } from '../components/settings/SignOutEverywhere';
+import { Link } from 'react-router-dom';
+import { Icon } from '../components/ui';
 import '../styles/Settings.css';
+import '../styles/Sessions.css';
 
 export default function Settings() {
   const { user } = useQuiz();
@@ -30,6 +33,18 @@ export default function Settings() {
         </section>
 
         <ChangePasswordForm />
+
+        <Link to="/settings/sessions" className="db-panel st-card ss-link">
+          <div className="st-card-head">
+            <div className="st-card-icon"><Icon name="monitor" size={18} /></div>
+            <div>
+              <h3 className="st-card-title">Active sessions</h3>
+              <p className="db-section-sub">See the devices signed in to your account and sign out the ones you don't use.</p>
+            </div>
+          </div>
+          <span className="ss-link-arrow"><Icon name="arrow" size={18} /></span>
+        </Link>
+
         <SignOutEverywhere />
       </div>
     </AppShell>

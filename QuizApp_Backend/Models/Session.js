@@ -11,6 +11,11 @@ const sessionSchema = new mongoose.Schema({
   revokedAt:  { type: Date },
   replacedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Session' },
   userAgent:  { type: String, default: '' },
+  ip:         { type: String, default: '' },
+  // Rotation gives a device a new row on every refresh. These stay the same across
+  // the whole chain: `family` identifies the device, `startedAt` is when it signed in.
+  family:     { type: mongoose.Schema.Types.ObjectId, index: true },
+  startedAt:  { type: Date },
 }, { timestamps: true });
 
 // MongoDB deletes rows on its own once they expire

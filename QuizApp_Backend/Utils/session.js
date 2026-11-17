@@ -5,6 +5,7 @@
 // `tv` is the user's tokenVersion: bumping it ends every access token at once.
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const Session = require('../Models/Session');
 
 const ACCESS_COOKIE = 'qa_access';
@@ -48,14 +49,20 @@ function clearSessionCookies(res) {
   res.clearCookie(HINT_COOKIE, { ...cookieBase, httpOnly: false, path: '/' });
 }
 
-// A new refresh session for this device; returns the Session row
-async function createSession(req, res, user) {
+// A new refresh session for this device; returns the Session row.
+// `previous` is the row being rotated, so the device keeps its id and sign-in time.
+async function createSession(req, res, user, previous = null) {
   const token = crypto.randomBytes(32).toString('hex');
+  const _id = new mongoose.Types.ObjectId();
   const session = await Session.create({
+    _id,
     user: user._id,
     tokenHash: hashToken(token),
     expiresAt: new Date(Date.now() + REFRESH_MAX_AGE_MS),
     userAgent: String(req.headers['user-agent'] || '').slice(0, 200),
+    ip: String(req.ip || '').replace(/^::ffff:/, '').slice(0, 45),
+    family: previous ? (previous.family || previous._id) : _id,
+    startedAt: previous ? (previous.startedAt || previous.createdAt) : new Date(),
   });
   setRefreshCookie(res, token);
   return session;
