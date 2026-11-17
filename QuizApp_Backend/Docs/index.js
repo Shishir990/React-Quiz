@@ -35,6 +35,8 @@ const init = `window.ui = SwaggerUIBundle({
   dom_id: '#swagger-ui',
   deepLinking: true,
   persistAuthorization: true,
+  // Data-changing requests need this header (CSRF protection); the sign-in cookies go automatically
+  requestInterceptor: (req) => { req.headers['X-QuizApp-CSRF'] = '1'; return req; },
   docExpansion: 'list',
   defaultModelsExpandDepth: 0,
   tryItOutEnabled: false,

@@ -60,8 +60,8 @@ export default function Register() {
         password: form.password,
       });
 
-      if (data.token) {
-        login(data.token, data.user);
+      if (data.user) {
+        login(data.user);
         navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
       } else {
         setError(data.message || 'Registration failed. Try again.');

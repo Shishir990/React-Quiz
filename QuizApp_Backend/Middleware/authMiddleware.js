@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Models/Users');
+const { ACCESS_COOKIE } = require('../Utils/session');
 
 exports.protect = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    // The httpOnly cookie from the browser, or an Authorization header from API tools
+    const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null;
+    const token = bearer || req.cookies?.[ACCESS_COOKIE];
 
     if (!token) {
       console.warn(`[auth] 401 no token: ${req.method} ${req.originalUrl}`);
@@ -18,10 +21,19 @@ exports.protect = async (req, res, next) => {
       console.warn(`[auth] 401 account missing/disabled: ${req.method} ${req.originalUrl} user ${decoded.id}`);
       return res.status(401).json({ message: 'Account not found or disabled' });
     }
+    // Password changed or "sign out everywhere" since this token was issued
+    if ((decoded.tv || 0) !== (req.user.tokenVersion || 0)) {
+      console.warn(`[auth] 401 revoked token: ${req.method} ${req.originalUrl} user ${decoded.id}`);
+      return res.status(401).json({ message: 'Your session has ended. Please sign in again.' });
+    }
 
     next();
   } catch (err) {
-    console.error(`[auth] 401 ${err.name}: ${err.message}: ${req.method} ${req.originalUrl}`);
+    // Access tokens expire every 15 minutes by design (the browser then refreshes), so only
+    // log tokens that are actually bad
+    if (err.name !== 'TokenExpiredError') {
+      console.error(`[auth] 401 ${err.name}: ${err.message}: ${req.method} ${req.originalUrl}`);
+    }
     res.status(401).json({ message: 'Token invalid or expired' });
   }
 };

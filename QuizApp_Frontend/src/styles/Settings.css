@@ -40,3 +40,8 @@
 @media (max-width: 560px) {
   .st-actions .db-btn-light { width: 100%; justify-content: center; }
 }
+
+/* Sign out of all devices */
+.st-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.db-wrapper .st-danger,
+.db-wrapper .st-danger:hover:not(:disabled) { background: var(--tone-bad, #F87171); border-color: var(--tone-bad, #F87171); color: #1F0606; }

@@ -41,3 +41,9 @@ exports.resetPasswordLimiter = limiter({
   minutes: 15, max: 10,
   message: 'Too many attempts. Please wait 15 minutes and try again.',
 });
+
+// Refreshes happen about every 15 minutes per open tab; this only stops runaway loops or abuse
+exports.refreshLimiter = limiter({
+  minutes: 15, max: 60,
+  message: 'Too many session refreshes. Please wait a few minutes and try again.',
+});

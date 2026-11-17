@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuiz } from '../../context/QuizContext';
 import { readJson } from '../../api/readJson';
+import { apiFetch } from '../../api/client';
 
 // Google Identity Services, loaded once and only when Google sign-in is configured
 let gisPromise = null;
@@ -37,7 +38,7 @@ export function GoogleButton({ text = 'continue_with', onError }) {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch('/api/auth/google/config');
+        const res = await apiFetch('/auth/google/config');
         const data = res.ok ? await res.json() : null;
         if (alive) setClientId(data?.clientId || null);
       } catch {
@@ -55,14 +56,10 @@ export function GoogleButton({ text = 'continue_with', onError }) {
     const onCredential = async ({ credential }) => {
       setBusy(true);
       try {
-        const res = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential }),
-        });
+        const res = await apiFetch('/auth/google', { method: 'POST', body: JSON.stringify({ credential }) });
         const data = await readJson(res);
-        if (!res.ok || !data.token) throw new Error(data.message || 'Google sign-in failed. Please try again.');
-        handlers.current.login(data.token, data.user);
+        if (!res.ok || !data.user) throw new Error(data.message || 'Google sign-in failed. Please try again.');
+        handlers.current.login(data.user);
         handlers.current.navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
       } catch (err) {
         handlers.current.onError?.(err.message);

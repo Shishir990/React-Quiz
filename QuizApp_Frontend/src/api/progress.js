@@ -2,16 +2,10 @@
 // Unlike authFetch these throw on network/server errors, which lets the caller
 // tell "nothing saved" (null) apart from "couldn't reach the server".
 import { readJson } from './readJson';
-
-const BASE = '/api/progress';
-
-const headers = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import { apiFetch } from './client';
 
 async function request(url, options = {}) {
-  const res = await fetch(`${BASE}${url}`, { ...options, headers: headers() });
+  const res = await apiFetch(`/progress${url}`, options);
   // 204 = nothing saved. Anything else that isn't OK (including 404, e.g. a backend
   // without this route) is an error: it must never look like a successful save,
   // or the browser copy gets marked "on the server" and is later thrown away.

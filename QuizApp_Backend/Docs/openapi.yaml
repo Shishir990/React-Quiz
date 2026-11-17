@@ -6,9 +6,18 @@ info:
     REST API behind QuizApp: accounts, quiz categories and questions, playing and
     saving quizzes, results, leaderboards and the admin console.
 
-    **Authentication.** Sign in with `POST /api/auth/login` (or register), then send the
-    returned token on every other request as `Authorization: Bearer <token>`.
-    In this page, click **Authorize** and paste the token.
+    **Authentication.** Signing in (`POST /api/auth/login`, register or Google) sets two
+    httpOnly cookies that page scripts cannot read: a 15-minute access token sent to `/api`,
+    and a 30-day refresh token sent only to `/api/auth`. When the access token expires the
+    API returns `401`; call `POST /api/auth/refresh` for a new pair and retry. No token is
+    ever returned in a response body. In this page, sign in with `/api/auth/login` and the
+    browser sends the cookies for you.
+
+    **CSRF.** Every `POST`, `PUT`, `PATCH` and `DELETE` must send the header
+    `X-QuizApp-CSRF: 1` (this page adds it). Without it the API returns `403`.
+
+    **Revocation.** Changing or resetting a password, or `POST /api/auth/logout-all`, ends
+    every existing session at once.
 
     **Roles.** Endpoints marked *Admin only* return `403` for players.
 
@@ -45,7 +54,7 @@ tags:
       from categories). Kept for compatibility; candidates for removal.
 
 security:
-  - bearerAuth: []
+  - cookieAuth: []
 
 paths:
   /api/health:
@@ -103,7 +112,7 @@ paths:
     post:
       tags: [Auth]
       summary: Sign in
-      description: 'Returns a JWT to send as `Authorization: Bearer <token>`. Rate limited to 10 failed attempts per 15 minutes.'
+      description: 'Sets the session cookies (see Authentication above). Rate limited to 10 failed attempts per 15 minutes.'
       security: []
       requestBody:
         required: true
@@ -208,6 +217,62 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renew the session
+      description: |
+        Exchanges the refresh cookie for a new access and refresh cookie. Each refresh token
+        works once; presenting one that was already used ends all of that user's sessions
+        (a copy was stolen), except within 15 seconds of its rotation, when another tab simply
+        refreshed first (`409`, retry the original request). Rate limited to 60 per 15 minutes.
+      security: []
+      responses:
+        '200':
+          description: New cookies set
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401':
+          description: No session, expired, revoked, or the account is disabled; cookies are cleared
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Another tab refreshed a moment ago; retry the original request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Sign out of this device
+      description: Ends this device's session and clears the cookies. Always succeeds.
+      security: []
+      responses:
+        '200':
+          description: Signed out
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+
+  /api/auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: Sign out of all devices
+      description: Ends every session of the signed-in user at once, including copied tokens.
+      responses:
+        '200':
+          description: Signed out everywhere
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
 
   /api/auth/me:
     get:
@@ -1020,6 +1085,11 @@ paths:
 
 components:
   securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: qa_access
+      description: httpOnly access cookie, set by sign-in and renewed by /api/auth/refresh
     bearerAuth:
       type: http
       scheme: bearer
@@ -1117,7 +1187,6 @@ components:
     AuthResponse:
       type: object
       properties:
-        token: { type: string, description: JWT for the Authorization header }
         user:
           type: object
           properties:

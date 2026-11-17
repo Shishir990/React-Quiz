@@ -1,5 +1,6 @@
 import { createContext, useEffect, useReducer, useState, useContext, useRef } from "react";
-import { getMeApi, authFetch } from '../api/auth';
+import { getMeApi, authFetch, logoutApi } from '../api/auth';
+import { SIGNED_OUT_EVENT, mightBeSignedIn } from '../api/client';
 import { queryClient, queryKeys, invalidateAfterSubmit } from '../api/queries';
 import { getProgressApi, saveProgressApi, deleteProgressApi } from '../api/progress';
 import { saveProgress, loadProgress, clearProgress } from '../utils/quizProgress';
@@ -155,23 +156,20 @@ export function ContextProvider({ children }) {
   const [resumed, setResumed] = useState(false);
   const numQuestions = Questions?.length;
 
+  // The session lives in httpOnly cookies, so ask the server who is signed in
+  // (apiFetch renews an expired session on the way)
   useEffect(() => {
     const restoreUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!mightBeSignedIn()) {
         setLoading(false);
         return;
       }
       try {
         const data = await getMeApi();
-        if (data._id) {
-          setUser(data);
-        } else {
-          logout();
-        }
+        setUser(data?._id ? data : null);
       } catch (err) {
         console.error('Session restore failed:', err.message);
-        logout();
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -179,21 +177,30 @@ export function ContextProvider({ children }) {
     restoreUser();
   }, []);
 
+  // The session ended and couldn't be renewed (expired, revoked, signed out elsewhere)
+  useEffect(() => {
+    const onSignedOut = () => {
+      queryClient.clear();
+      setUser(null);
+    };
+    window.addEventListener(SIGNED_OUT_EVENT, onSignedOut);
+    return () => window.removeEventListener(SIGNED_OUT_EVENT, onSignedOut);
+  }, []);
+
   // Cached data belongs to whoever was signed in, so wipe it on every
   // account change; otherwise the next user briefly sees the last one's data
-  const login = (token, userData) => {
+  const login = (userData) => {
     queryClient.clear();
-    localStorage.setItem('token', token);
     // Login/register used to answer with `id`, /auth/me with `_id`. The app reads
     // `_id` (e.g. to save quiz progress), so without this nothing was saved after
     // signing in until the page was refreshed.
     setUser(userData && { ...userData, _id: userData._id || userData.id });
   };
 
-  const logout = () => {
+  const logout = async () => {
     queryClient.clear();
-    localStorage.removeItem('token');
     setUser(null);
+    await logoutApi(); // clears the session cookies on the server
   };
 
   const categoryId = Questions[0]?.category?._id || Questions[0]?.category;

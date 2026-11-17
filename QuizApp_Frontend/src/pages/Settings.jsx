@@ -2,6 +2,7 @@ import { useQuiz } from '../context/QuizContext';
 import AppShell from '../components/layout/AppShell';
 import { initialsOf } from '../utils/format';
 import { ChangePasswordForm } from '../components/settings/ChangePasswordForm';
+import { SignOutEverywhere } from '../components/settings/SignOutEverywhere';
 import '../styles/Settings.css';
 
 export default function Settings() {
@@ -29,6 +30,7 @@ export default function Settings() {
         </section>
 
         <ChangePasswordForm />
+        <SignOutEverywhere />
       </div>
     </AppShell>
   );

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const csrfGuard = require('./Middleware/csrf');
 const dotenv = require('dotenv');
 const connectDB = require('./Config/db');
 const { checkDB } = require('./Config/db');
@@ -46,10 +48,14 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map((o) => o.
 app.use(cors({
   origin: (origin, done) => done(null,
     !origin || allowedOrigins.includes(origin) || (!isProduction && /^http:\/\/localhost:\d+$/.test(origin))),
+  credentials: true, // sign-in lives in cookies
 }));
 
 // 1mb leaves room for bulk question imports (up to 500 rows)
 app.use(express.json({ limit: '1mb' }));
+// Sign-in cookies, and the CSRF check every data-changing request must pass
+app.use(cookieParser());
+app.use('/api', csrfGuard);
 
 // Debug logger (local only — it would print tokens and user data to production logs)
 if (!isProduction) {

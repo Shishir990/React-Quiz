@@ -1,16 +1,8 @@
-const BASE = '/api';
+import { apiFetch } from './client';
+import { readJson } from './readJson';
 
-export const authFetch = async (url, options = {}) => {
-  const response = await fetch(`${BASE}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-      ...options.headers,
-    },
-  });
-  return response.json();
-};
+// Resolves with the JSON body whatever the status (callers check for the data they need)
+export const authFetch = async (url, options = {}) => readJson(await apiFetch(url, options));
 
 export const loginApi = async (email, password) => {
   try {
@@ -92,3 +84,15 @@ export const checkResetTokenApi = async (token) => {
     throw new Error(err.message || 'Failed to check reset link');
   }
 };
+
+// Ends this device's session (clears the cookies). Never throws: signing out locally still happens.
+export const logoutApi = async () => {
+  try {
+    await apiFetch('/auth/logout', { method: 'POST' });
+  } catch {
+    // Offline: the cookies expire on their own
+  }
+};
+
+// Ends every session of this account, on every device
+export const logoutAllApi = async () => authFetch('/auth/logout-all', { method: 'POST' });

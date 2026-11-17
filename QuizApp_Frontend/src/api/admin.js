@@ -1,20 +1,15 @@
 import { queryClient } from './queryClient';
 import { readJson } from './readJson';
-
-const BASE = '/api';
+import { apiFetch } from './client';
 
 // Like authFetch, but throws the server's message when the request fails,
 // so admin forms can show exactly what went wrong
 const adminFetch = async (url, { body, ...options } = {}) => {
-  const response = await fetch(`${BASE}${url}`, {
+  const response = await apiFetch(url, {
     // Admin data changes constantly; never answer a GET from the browser's
     // HTTP cache (TanStack Query decides when to reuse data instead)
     cache: 'no-store',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await readJson(response);

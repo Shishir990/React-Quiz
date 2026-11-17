@@ -1,5 +1,5 @@
 const User = require('../Models/Users');
-const jwt = require('jsonwebtoken');
+const Session = require('../Models/Session');
 const crypto = require('crypto');
 const { isMailConfigured, sendMail } = require('../Config/mailer');
 const serverError = require('../Utils/serverError');
@@ -7,8 +7,14 @@ const { isText, normalizeEmail, emailError, nameError, newPasswordError } = requ
 
 const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+const {
+  REFRESH_COOKIE, REUSE_GRACE_MS, hashToken: hashSessionToken,
+  setAccessCookie, clearSessionCookies, createSession, startSession, endAllSessions,
+} = require('../Utils/session');
+
+// What the client is told about the signed-in user. The session itself lives in
+// httpOnly cookies, so no token is ever sent in a response body.
+const publicUser = (user) => ({ _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role });
 
 exports.register = async (req, res) => {
   // Role is never taken from the request: everyone signs up as a player and
@@ -23,7 +29,8 @@ exports.register = async (req, res) => {
     if (exists) return res.status(400).json({ message: 'Email already registered' });
 
     const user = await User.create({ name: name.trim(), email, password });
-    res.status(201).json({ token: generateToken(user._id), user: { _id: user._id, id: user._id, name: user.name, email, role: user.role } });
+    await startSession(req, res, user);
+    res.status(201).json({ user: publicUser(user) });
   } catch (err) {
     // Two sign-ups with the same email at the same moment: the unique index catches the second
     if (err.code === 11000) return res.status(400).json({ message: 'Email already registered' });
@@ -44,7 +51,8 @@ exports.login = async (req, res) => {
     if (user.isActive === false)
       return res.status(403).json({ message: 'This account has been disabled. Contact an admin.' });
 
-    res.json({ token: generateToken(user._id), user: { _id: user._id, id: user._id, name: user.name, email, role: user.role } });
+    await startSession(req, res, user);
+    res.json({ user: publicUser(user) });
   } catch (err) {
     serverError(req, res, err);
   }
@@ -70,8 +78,10 @@ exports.changePassword = async (req, res) => {
       return res.status(400).json({ message: 'Current password is incorrect' });
 
     user.password = newPassword; // hashed by the pre('save') hook
-    await user.save();
-    res.json({ success: true, message: 'Password updated successfully' });
+    // Old sessions (any device, any copied token) end now; this device gets a fresh one
+    await endAllSessions(user);
+    await startSession(req, res, user);
+    res.json({ success: true, message: 'Password updated. Other devices have been signed out.' });
   } catch (err) {
     serverError(req, res, err);
   }
@@ -186,7 +196,9 @@ exports.resetPassword = async (req, res) => {
     user.password = password; // hashed by the pre('save') hook
     user.resetPasswordToken = undefined; // one-time use
     user.resetPasswordExpires = undefined;
-    await user.save();
+    // Whoever had the old password (or a copied token) is signed out everywhere
+    await endAllSessions(user);
+    clearSessionCookies(res);
 
     res.json({ success: true, message: 'Your password has been reset. You can now sign in.' });
   } catch (err) {
@@ -269,14 +281,86 @@ exports.googleLogin = async (req, res) => {
       await user.save();
     }
 
-    res.status(created ? 201 : 200).json({
-      token: generateToken(user._id),
-      user: { _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role },
-      created,
-    });
+    await startSession(req, res, user);
+    res.status(created ? 201 : 200).json({ user: publicUser(user), created });
   } catch (err) {
     // Two first-time sign-ins racing: the unique index catches the second
     if (err.code === 11000) return res.status(409).json({ message: 'Please try signing in again.' });
+    serverError(req, res, err);
+  }
+};
+
+// ── Sessions ──
+
+// POST /api/auth/refresh: swap the refresh cookie for a new pair of cookies.
+// Each refresh token works once. Presenting one that was already used means a copy
+// exists somewhere else, so every session of that user is ended (theft detection),
+// except within a few seconds of its rotation, when it is just two tabs racing.
+exports.refresh = async (req, res) => {
+  const token = req.cookies?.[REFRESH_COOKIE];
+  if (!isText(token) || !token) return res.status(401).json({ message: 'Not signed in' });
+
+  try {
+    const tokenHash = hashSessionToken(token);
+    // Claim the session atomically, so two requests cannot both rotate it
+    const session = await Session.findOneAndUpdate(
+      { tokenHash, revokedAt: null, expiresAt: { $gt: new Date() } },
+      { revokedAt: new Date() },
+    );
+
+    if (!session) {
+      const used = await Session.findOne({ tokenHash });
+      if (used?.revokedAt && Date.now() - used.revokedAt.getTime() < REUSE_GRACE_MS) {
+        // Another tab refreshed a moment ago and the browser already has its new cookie
+        return res.status(409).json({ message: 'Session was just refreshed. Retry the request.', code: 'REFRESH_RACE' });
+      }
+      if (used?.revokedAt) {
+        console.warn(`[auth] refresh token reused for user ${used.user}: ending all sessions`);
+        const owner = await User.findById(used.user);
+        if (owner) await endAllSessions(owner);
+      }
+      clearSessionCookies(res);
+      return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+    }
+
+    const user = await User.findById(session.user);
+    if (!user || user.isActive === false) {
+      await Session.deleteMany({ user: session.user });
+      clearSessionCookies(res);
+      return res.status(401).json({ message: 'Account not found or disabled' });
+    }
+
+    const next = await createSession(req, res, user);
+    session.replacedBy = next._id;
+    await session.save();
+    setAccessCookie(res, user);
+    res.json({ user: publicUser(user) });
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// POST /api/auth/logout: end this device's session
+exports.logout = async (req, res) => {
+  const token = req.cookies?.[REFRESH_COOKIE];
+  try {
+    if (isText(token) && token) await Session.deleteOne({ tokenHash: hashSessionToken(token) });
+  } catch (err) {
+    // The cookies are cleared below either way; an orphaned session just expires
+    console.warn(`[auth] logout cleanup failed: ${err.message}`);
+  }
+  clearSessionCookies(res);
+  res.json({ success: true });
+};
+
+// POST /api/auth/logout-all: end every session of this user, on every device
+exports.logoutAll = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    await endAllSessions(user);
+    clearSessionCookies(res);
+    res.json({ success: true, message: 'Signed out of all devices.' });
+  } catch (err) {
     serverError(req, res, err);
   }
 };

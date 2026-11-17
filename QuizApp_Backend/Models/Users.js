@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
   role:     { type: String, enum: ['admin', 'player'], default: 'player' },
   avatar:   { type: String, default: '' },
   isActive: { type: Boolean, default: true },
+  // Written into every access token; bumping it signs the user out everywhere at once
+  tokenVersion: { type: Number, default: 0 },
   // Forgot-password: only a SHA-256 hash of the emailed token is stored.
   // select: false keeps both out of every normal query.
   resetPasswordToken:   { type: String, select: false },
