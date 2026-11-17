@@ -1,17 +1,9 @@
-/* ════ Active sessions page ════ */
-.ss-back {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-bottom: 14px;
-  color: var(--muted); font-size: 13px; font-weight: 600;
-  text-decoration: none;
-}
-.ss-back:hover { color: var(--ink); }
-
-.ss-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+/* ════ Active sessions (Settings tab) ════ */
+.ss-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 
 .ss-row {
   display: flex; align-items: flex-start; gap: 14px;
-  padding: 14px;
+  padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--th-card-2, #F8FAFC);
@@ -20,7 +12,7 @@
 
 .ss-icon {
   display: grid; place-items: center; flex-shrink: 0;
-  width: 40px; height: 40px; border-radius: 10px;
+  width: 36px; height: 36px; border-radius: 10px;
   background: var(--th-card-sunk, #EEF2F6); color: var(--ink-2);
 }
 .ss-row.is-current .ss-icon { color: var(--acc); background: rgba(var(--acc-rgb, 16, 185, 129), 0.12); }
@@ -42,18 +34,9 @@
 
 .ss-state { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 
-.ss-skeleton { height: 74px; animation: ss-pulse 1.2s ease-in-out infinite; }
+.ss-skeleton { height: 64px; animation: ss-pulse 1.2s ease-in-out infinite; }
 @keyframes ss-pulse { 50% { opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) { .ss-skeleton { animation: none; } }
-
-/* Link card on the Settings page */
-.ss-link {
-  display: flex; align-items: center; gap: 12px;
-  color: inherit; text-decoration: none;
-}
-.ss-link .st-card-head { flex: 1; margin-bottom: 0; }
-.ss-link-arrow { color: var(--muted); flex-shrink: 0; }
-.ss-link:hover .ss-link-arrow { color: var(--acc); }
 
 @media (max-width: 560px) {
   .ss-row { flex-wrap: wrap; }

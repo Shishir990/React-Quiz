@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../Models/Users');
-const { ACCESS_COOKIE } = require('../Utils/session');
+const { ACCESS_COOKIE, isSessionLive } = require('../Utils/session');
 
 exports.protect = async (req, res, next) => {
   try {
@@ -24,6 +24,12 @@ exports.protect = async (req, res, next) => {
     // Password changed or "sign out everywhere" since this token was issued
     if ((decoded.tv || 0) !== (req.user.tokenVersion || 0)) {
       console.warn(`[auth] 401 revoked token: ${req.method} ${req.originalUrl} user ${decoded.id}`);
+      return res.status(401).json({ message: 'Your session has ended. Please sign in again.' });
+    }
+    // This device was signed out (from another device, or by logging out). Tokens issued
+    // before `sid` existed have none and simply run out within 15 minutes.
+    if (decoded.sid && !(await isSessionLive(req.user._id, decoded.sid))) {
+      console.warn(`[auth] 401 session ended: ${req.method} ${req.originalUrl} user ${decoded.id}`);
       return res.status(401).json({ message: 'Your session has ended. Please sign in again.' });
     }
 

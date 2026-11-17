@@ -27,6 +27,12 @@ exports.changePasswordLimiter = limiter({
   message: 'Too many attempts. Please wait 15 minutes and try again.',
 });
 
+// Each request emails the new address (and the old one), so keep it tight
+exports.emailChangeLimiter = limiter({
+  minutes: 60, max: 5,
+  message: 'Too many email change requests. Please wait an hour and try again.',
+});
+
 exports.registerLimiter = limiter({
   minutes: 60, max: 10,
   message: 'Too many accounts created from this network. Please try again later.',

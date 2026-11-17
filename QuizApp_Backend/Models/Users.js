@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
   // select: false keeps both out of every normal query.
   resetPasswordToken:   { type: String, select: false },
   resetPasswordExpires: { type: Date, select: false },
+  // Change of email: the new address only replaces `email` once the link sent to
+  // it is opened. Again only a hash of the token is stored.
+  pendingEmail:       { type: String, lowercase: true },
+  emailChangeToken:   { type: String, select: false },
+  emailChangeExpires: { type: Date, select: false },
 }, { timestamps: true });
 
 userSchema.pre('save', async function () {

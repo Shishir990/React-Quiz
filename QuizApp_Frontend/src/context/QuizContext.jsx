@@ -197,6 +197,9 @@ export function ContextProvider({ children }) {
     setUser(userData && { ...userData, _id: userData._id || userData.id });
   };
 
+  // Same account, new details (name, email): keep the session and cached data
+  const updateUser = (changes) => setUser((u) => (u ? { ...u, ...changes } : u));
+
   const logout = async () => {
     queryClient.clear();
     setUser(null);
@@ -400,6 +403,7 @@ export function ContextProvider({ children }) {
         user,
         login,
         logout,
+        updateUser,
         loading,
         resloading,
         submitQuiz,

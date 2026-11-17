@@ -7,7 +7,7 @@ const SAFE_METHODS = new Set(['GET', 'HEAD']);
 
 // A 401 from these means "wrong password" or "no session", not "token expired"
 const NO_REFRESH = ['/auth/login', '/auth/register', '/auth/google', '/auth/refresh', '/auth/logout',
-  '/auth/forgot-password', '/auth/reset-password'];
+  '/auth/forgot-password', '/auth/reset-password', '/auth/email-change/confirm'];
 
 // The server sets this readable, secret-free cookie next to the real (httpOnly) ones.
 // Without it there is no session to restore, so signed-out visitors skip the request.

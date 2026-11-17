@@ -11,11 +11,21 @@ const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERC
 const {
   REFRESH_COOKIE, REUSE_GRACE_MS, hashToken: hashSessionToken,
   setAccessCookie, clearSessionCookies, createSession, startSession, endAllSessions,
+  sessionIdOf, sessionRowsFilter,
 } = require('../Utils/session');
 
 // What the client is told about the signed-in user. The session itself lives in
 // httpOnly cookies, so no token is ever sent in a response body.
-const publicUser = (user) => ({ _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role });
+// `user` must be loaded with its password hash (not stripped) for hasPassword to be right.
+const publicUser = (user) => ({
+  _id: user._id, id: user._id, name: user.name, email: user.email, role: user.role,
+  hasPassword: !!user.password, // Google-only accounts have none
+  pendingEmail: pendingEmailOf(user),
+});
+
+// The address waiting to be confirmed, while its link still works
+const pendingEmailOf = (user) =>
+  user.pendingEmail && user.emailChangeExpires > new Date() ? user.pendingEmail : undefined;
 
 exports.register = async (req, res) => {
   // Role is never taken from the request: everyone signs up as a player and
@@ -46,7 +56,7 @@ exports.login = async (req, res) => {
     return res.status(400).json({ message: 'Email and password are required' });
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+emailChangeExpires');
     if (!user || !(await user.matchPassword(password)))
       return res.status(401).json({ message: 'Invalid credentials' });
     if (user.isActive === false)
@@ -60,7 +70,169 @@ exports.login = async (req, res) => {
 };
 
 exports.getMe = async (req, res) => {
-  res.json(req.user);
+  try {
+    // protect() leaves out the password hash; it's only read here to say whether one exists
+    const extra = await User.findById(req.user._id).select('password pendingEmail emailChangeExpires').lean();
+    const { pendingEmail: _pending, ...me } = req.user.toObject();
+    res.json({ ...me, hasPassword: !!extra?.password, pendingEmail: extra ? pendingEmailOf(extra) : undefined });
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// ── Profile ──
+
+// PUT /api/auth/profile  { name }
+exports.updateProfile = async (req, res) => {
+  const { name } = req.body || {};
+  const problem = nameError(name);
+  if (problem) return res.status(400).json({ message: problem });
+
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id, { name: name.trim() }, { new: true })
+      .select('+emailChangeExpires');
+    res.json({ success: true, message: 'Your name has been updated.', user: publicUser(user) });
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// ── Change of email ──
+// The new address must prove it's real and belongs to this person: it only replaces
+// the old one once the link emailed to it is opened. The old address is told, so a
+// stolen session can't quietly move the account (and its password resets) elsewhere.
+const EMAIL_CHANGE_TTL_MINUTES = 60;
+
+// POST /api/auth/email-change  { email, password }  (password: when the account has one)
+exports.requestEmailChange = async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const { password } = req.body || {};
+  const problem = emailError(email);
+  if (problem) return res.status(400).json({ message: problem });
+
+  if (isProduction && (!isMailConfigured() || !clientUrl()))
+    return res.status(503).json({ message: 'Changing your email is not available right now. Contact an admin.' });
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (email === user.email) return res.status(400).json({ message: 'That is already your email address.' });
+    if (user.password && !(await user.matchPassword(password)))
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    if (await User.exists({ email }))
+      return res.status(400).json({ message: 'That email address is already used by another account.' });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.pendingEmail = email;
+    user.emailChangeToken = hashToken(token);
+    user.emailChangeExpires = new Date(Date.now() + EMAIL_CHANGE_TTL_MINUTES * 60 * 1000);
+    await user.save();
+
+    const link = `${clientUrl()}/confirm-email?token=${token}`;
+    const reply = {
+      success: true,
+      message: `We've sent a confirmation link to ${email}. Your email changes once you open it.`,
+      pendingEmail: email,
+    };
+
+    if (!isMailConfigured()) {
+      console.log(`\n🔗 Email change link for ${user.email} -> ${email} (SMTP not configured):\n${link}\n`);
+      return res.json(reply);
+    }
+
+    try {
+      await sendMail({
+        to: email,
+        subject: 'Confirm your new QuizApp email',
+        text:
+          `Hi ${user.name},\n\nOpen this link to make ${email} the email for your QuizApp account ` +
+          `(it expires in ${EMAIL_CHANGE_TTL_MINUTES} minutes):\n\n${link}\n\n` +
+          `If you didn't ask for this, ignore this email; nothing will change.`,
+        html: actionEmailHtml({
+          heading: 'Confirm your new email',
+          body: `Hi ${escapeHtml(user.name)}, open this link to make <b>${escapeHtml(email)}</b> the email for your QuizApp account. It expires in ${EMAIL_CHANGE_TTL_MINUTES} minutes.`,
+          button: 'Confirm new email',
+          link,
+          footer: "If you didn't ask for this, you can ignore this email. Nothing will change.",
+        }),
+      });
+    } catch (mailErr) {
+      console.error('❌ Email change mail failed:', mailErr.message);
+      user.pendingEmail = undefined;
+      user.emailChangeToken = undefined;
+      user.emailChangeExpires = undefined;
+      await user.save();
+      return res.status(502).json({ message: "We couldn't send the confirmation email. Please try again later." });
+    }
+
+    // Heads-up to the current address; failing to send it shouldn't block the change
+    sendMail({
+      to: user.email,
+      subject: 'Your QuizApp email is being changed',
+      text:
+        `Hi ${user.name},\n\nSomeone signed in to your QuizApp account asked to change its email to ${maskEmail(email)}. ` +
+        `If this was you, there's nothing to do.\n\nIf it wasn't, change your password and sign out of all devices ` +
+        `in Settings right away.`,
+      html: actionEmailHtml({
+        heading: 'Your email is being changed',
+        body: `Hi ${escapeHtml(user.name)}, someone signed in to your QuizApp account asked to change its email to <b>${escapeHtml(maskEmail(email))}</b>. If this was you, there's nothing to do.`,
+        footer: "If it wasn't you, change your password and sign out of all devices in Settings right away.",
+      }),
+    }).catch((err) => console.warn(`[auth] email change notice failed: ${err.message}`));
+
+    res.json(reply);
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// DELETE /api/auth/email-change: drop a change that hasn't been confirmed yet
+exports.cancelEmailChange = async (req, res) => {
+  try {
+    await User.updateOne(
+      { _id: req.user._id },
+      { $unset: { pendingEmail: 1, emailChangeToken: 1, emailChangeExpires: 1 } },
+    );
+    res.json({ success: true, message: 'Email change cancelled.' });
+  } catch (err) {
+    serverError(req, res, err);
+  }
+};
+
+// POST /api/auth/email-change/confirm  { token }: no session needed, the link is the proof
+exports.confirmEmailChange = async (req, res) => {
+  const { token } = req.body || {};
+  if (!isText(token) || !token) return res.status(400).json({ message: 'Confirmation link is invalid' });
+
+  const invalid = { message: 'This confirmation link is invalid or has expired. Request a new one from Settings.' };
+  try {
+    const user = await User.findOne({
+      emailChangeToken: hashToken(token),
+      emailChangeExpires: { $gt: new Date() },
+    });
+    if (!user || user.isActive === false || !user.pendingEmail) return res.status(400).json(invalid);
+
+    const email = user.pendingEmail;
+    const clear = () => {
+      user.pendingEmail = undefined;
+      user.emailChangeToken = undefined; // one-time use
+      user.emailChangeExpires = undefined;
+    };
+
+    // Someone may have signed up with it since the link was sent
+    if (await User.exists({ email, _id: { $ne: user._id } })) {
+      clear();
+      await user.save();
+      return res.status(400).json({ message: 'That email address is now used by another account.' });
+    }
+
+    user.email = email;
+    clear();
+    await user.save();
+    res.json({ success: true, message: `Your email is now ${email}.`, user: publicUser(user) });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ message: 'That email address is now used by another account.' });
+    serverError(req, res, err);
+  }
 };
 
 exports.changePassword = async (req, res) => {
@@ -226,6 +398,19 @@ const resetEmailHtml = (name, link) => `
   </div>
 </div>`;
 
+// Same look as the reset email. `body` is HTML: escape anything user-supplied in it.
+// `button`/`link` are optional (a notice has no action).
+const actionEmailHtml = ({ heading, body, button, link, footer }) => `
+<div style="background:#F8FAFD;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px">
+    <p style="margin:0 0 24px;font-size:18px;font-weight:700">QuizApp</p>
+    <h1 style="margin:0 0 12px;font-size:22px">${escapeHtml(heading)}</h1>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.5;color:#334155">${body}</p>
+    ${button && link ? `<a href="${link}" style="display:inline-block;background:#10B981;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:10px">${escapeHtml(button)}</a>` : ''}
+    ${footer ? `<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#64748B">${escapeHtml(footer)}</p>` : ''}
+  </div>
+</div>`;
+
 // ── Sign in with Google ──
 // The browser gets a signed ID token from Google Identity Services and sends it here.
 // We verify it with Google's library (signature, expiry, and that it was issued for
@@ -264,7 +449,7 @@ exports.googleLogin = async (req, res) => {
 
   const email = normalizeEmail(profile.email);
   try {
-    let user = await User.findOne({ $or: [{ googleId: profile.sub }, { email }] });
+    let user = await User.findOne({ $or: [{ googleId: profile.sub }, { email }] }).select('+emailChangeExpires');
     if (user && user.isActive === false) {
       return res.status(403).json({ message: 'This account has been disabled. Contact an admin.' });
     }
@@ -334,18 +519,22 @@ exports.refresh = async (req, res) => {
     const next = await createSession(req, res, user, session);
     session.replacedBy = next._id;
     await session.save();
-    setAccessCookie(res, user);
+    setAccessCookie(res, user, sessionIdOf(next));
     res.json({ user: publicUser(user) });
   } catch (err) {
     serverError(req, res, err);
   }
 };
 
-// POST /api/auth/logout: end this device's session
+// POST /api/auth/logout: end this device's session. Every row of it goes, so its
+// access token stops working too (protect checks the session still exists).
 exports.logout = async (req, res) => {
   const token = req.cookies?.[REFRESH_COOKIE];
   try {
-    if (isText(token) && token) await Session.deleteOne({ tokenHash: hashSessionToken(token) });
+    if (isText(token) && token) {
+      const row = await Session.findOneAndDelete({ tokenHash: hashSessionToken(token) }).lean();
+      if (row) await Session.deleteMany(sessionRowsFilter(row.user, sessionIdOf(row)));
+    }
   } catch (err) {
     // The cookies are cleared below either way; an orphaned session just expires
     console.warn(`[auth] logout cleanup failed: ${err.message}`);
@@ -377,7 +566,7 @@ exports.listSessions = async (req, res) => {
       .lean();
 
     const sessions = rows.map((s) => ({
-      id: String(s.family || s._id),
+      id: String(sessionIdOf(s)),
       userAgent: s.userAgent || '',
       ip: s.ip || '',
       startedAt: s.startedAt || s.createdAt,
@@ -393,14 +582,14 @@ exports.listSessions = async (req, res) => {
   }
 };
 
-// DELETE /api/auth/sessions/:id: sign out one other device. Its refresh token stops
-// working at once; an access token it already holds runs out within 15 minutes.
+// DELETE /api/auth/sessions/:id: sign out one other device, at once: its refresh token
+// stops working and protect rejects its access token on the next request.
 exports.revokeSession = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id)) return res.status(404).json({ message: 'Session not found' });
 
   try {
-    const owned = { user: req.user._id, $or: [{ family: id }, { _id: id }] };
+    const owned = sessionRowsFilter(req.user._id, id);
     const token = req.cookies?.[REFRESH_COOKIE];
     if (isText(token) && token) {
       const mine = await Session.exists({ ...owned, tokenHash: hashSessionToken(token) });

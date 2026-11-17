@@ -31,12 +31,25 @@ const cookieBase = {
   sameSite: 'lax',               // not sent on cross-site POSTs (CSRF), still sent on normal links
 };
 
-const signAccessToken = (user) =>
-  jwt.sign({ id: user._id, tv: user.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: ACCESS_TTL });
+// `sid` is the device's session id (its family), so ending that one session also
+// ends its access token at once (checked in protect)
+const signAccessToken = (user, sid) =>
+  jwt.sign({ id: user._id, tv: user.tokenVersion || 0, sid: String(sid) }, process.env.JWT_SECRET, { expiresIn: ACCESS_TTL });
 
-function setAccessCookie(res, user) {
-  res.cookie(ACCESS_COOKIE, signAccessToken(user), { ...cookieBase, path: '/api', maxAge: ACCESS_MAX_AGE_MS });
+function setAccessCookie(res, user, sid) {
+  res.cookie(ACCESS_COOKIE, signAccessToken(user, sid), { ...cookieBase, path: '/api', maxAge: ACCESS_MAX_AGE_MS });
 }
+
+// The stable id of a device's session, the same across every refresh
+const sessionIdOf = (row) => row.family || row._id;
+
+// Rows of one device's session (older rows may predate `family` and use their own _id)
+const sessionRowsFilter = (userId, sid) => ({ user: userId, $or: [{ family: sid }, { _id: sid }] });
+
+// Is this device still signed in? Rows replaced by a refresh are kept until they
+// expire, so any unexpired row of the device counts; signing it out deletes them all.
+const isSessionLive = (userId, sid) =>
+  Session.exists({ ...sessionRowsFilter(userId, sid), expiresAt: { $gt: new Date() } });
 
 function setRefreshCookie(res, token) {
   res.cookie(REFRESH_COOKIE, token, { ...cookieBase, path: '/api/auth', maxAge: REFRESH_MAX_AGE_MS });
@@ -70,8 +83,8 @@ async function createSession(req, res, user, previous = null) {
 
 // Sign this device in: both cookies
 async function startSession(req, res, user) {
-  setAccessCookie(res, user);
-  await createSession(req, res, user);
+  const session = await createSession(req, res, user);
+  setAccessCookie(res, user, sessionIdOf(session));
 }
 
 // End every session of a user: access tokens via tokenVersion, refresh tokens by deletion
@@ -87,6 +100,9 @@ module.exports = {
   REUSE_GRACE_MS,
   hashToken,
   setAccessCookie,
+  sessionIdOf,
+  sessionRowsFilter,
+  isSessionLive,
   clearSessionCookies,
   createSession,
   startSession,

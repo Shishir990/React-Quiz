@@ -7,12 +7,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ConfirmEmail from './pages/ConfirmEmail';
 import Results from './pages/Results';
 import ResultDetail from './pages/ResultDetail';
 import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
-import Sessions from './pages/Sessions';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminOverview from './pages/admin/Overview';
 import AdminQuestionBank from './pages/admin/QuestionBank';
@@ -33,6 +33,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/confirm-email" element={<ConfirmEmail />} />
 
           <Route
             path="/dashboard"
@@ -82,14 +83,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/settings/sessions"
-            element={
-              <ProtectedRoute>
-                <Sessions />
-              </ProtectedRoute>
-            }
-          />
+          {/* Active sessions is now a tab on the Settings page */}
+          <Route path="/settings/sessions" element={<Navigate to="/settings?tab=sessions" replace />} />
           <Route
             path="/leaderboard"
             element={

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { changePasswordApi } from '../../api/auth';
+import { ForgotPasswordLink } from './ForgotPasswordLink';
 import { getStrength, PASSWORD_MIN } from '../../utils/password';
 import { Icon } from '../ui';
 
@@ -15,7 +16,6 @@ export function ChangePasswordForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
   const strength = getStrength(form.newPassword);
 
   const handleChange = (e) => {
@@ -75,7 +75,10 @@ export function ChangePasswordForm() {
 
       <form onSubmit={handleSubmit} noValidate className="st-form">
         <div className="field">
-          <label htmlFor="currentPassword">Current password</label>
+          <div className="st-label-row">
+            <label htmlFor="currentPassword">Current password</label>
+            <ForgotPasswordLink onSent={setSuccess} onError={setError} />
+          </div>
           <input
             id="currentPassword"
             type={inputType}

@@ -1,15 +1,40 @@
+import { useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuiz } from '../context/QuizContext';
 import AppShell from '../components/layout/AppShell';
 import { initialsOf } from '../utils/format';
 import { ChangePasswordForm } from '../components/settings/ChangePasswordForm';
+import { ActiveSessions } from '../components/settings/ActiveSessions';
+import { NameForm, EmailForm } from '../components/settings/ProfileForms';
 import { SignOutEverywhere } from '../components/settings/SignOutEverywhere';
-import { Link } from 'react-router-dom';
 import { Icon } from '../components/ui';
 import '../styles/Settings.css';
-import '../styles/Sessions.css';
+
+const TABS = [
+  { id: 'profile', label: 'Profile', icon: 'user' },
+  { id: 'password', label: 'Change password', icon: 'shield' },
+  { id: 'sessions', label: 'Active sessions', icon: 'monitor' },
+];
 
 export default function Settings() {
   const { user } = useQuiz();
+  // The open tab lives in the URL (?tab=sessions), so it survives a refresh and can be linked to
+  const [params, setParams] = useSearchParams();
+  const active = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : TABS[0].id;
+  const tabRefs = useRef({});
+
+  const select = (id) => setParams(id === TABS[0].id ? {} : { tab: id }, { replace: true });
+
+  // Arrow keys move between tabs, as in any tab list
+  const onKeyDown = (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const i = TABS.findIndex((t) => t.id === active);
+    const next = TABS[(i + step + TABS.length) % TABS.length].id;
+    select(next);
+    tabRefs.current[next]?.focus();
+  };
 
   return (
     <AppShell title="Settings">
@@ -21,6 +46,24 @@ export default function Settings() {
       </div>
 
       <div className="st-grid">
+        <div className="pg-chips st-tabs" role="tablist" aria-label="Settings sections" onKeyDown={onKeyDown}>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              ref={(el) => { tabRefs.current[t.id] = el; }}
+              id={`st-tab-${t.id}`}
+              role="tab"
+              aria-selected={active === t.id}
+              aria-controls={`st-panel-${t.id}`}
+              tabIndex={active === t.id ? 0 : -1}
+              className={`pg-chip st-tab ${active === t.id ? 'is-active' : ''}`}
+              onClick={() => select(t.id)}
+            >
+              <Icon name={t.icon} size={15} /> {t.label}
+            </button>
+          ))}
+        </div>
+
         <section className="db-panel st-card">
           <div className="st-profile">
             <div className="db-avatar db-avatar-brand st-avatar">{initialsOf(user?.name)}</div>
@@ -32,20 +75,26 @@ export default function Settings() {
           </div>
         </section>
 
-        <ChangePasswordForm />
-
-        <Link to="/settings/sessions" className="db-panel st-card ss-link">
-          <div className="st-card-head">
-            <div className="st-card-icon"><Icon name="monitor" size={18} /></div>
-            <div>
-              <h3 className="st-card-title">Active sessions</h3>
-              <p className="db-section-sub">See the devices signed in to your account and sign out the ones you don't use.</p>
-            </div>
-          </div>
-          <span className="ss-link-arrow"><Icon name="arrow" size={18} /></span>
-        </Link>
-
-        <SignOutEverywhere />
+        <div
+          className="st-panel"
+          role="tabpanel"
+          id={`st-panel-${active}`}
+          aria-labelledby={`st-tab-${active}`}
+        >
+          {active === 'profile' ? (
+            <>
+              <NameForm />
+              <EmailForm />
+            </>
+          ) : active === 'password' ? (
+            <ChangePasswordForm />
+          ) : (
+            <>
+              <ActiveSessions />
+              <SignOutEverywhere />
+            </>
+          )}
+        </div>
       </div>
     </AppShell>
   );
