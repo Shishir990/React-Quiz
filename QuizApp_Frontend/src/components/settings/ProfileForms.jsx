@@ -43,7 +43,7 @@ export function NameForm() {
   };
 
   return (
-    <section className="db-panel st-card">
+    <div className="st-subsection">
       <div className="st-card-head">
         <div className="st-card-icon"><Icon name="user" size={18} /></div>
         <div>
@@ -73,7 +73,7 @@ export function NameForm() {
           </button>
         </div>
       </form>
-    </section>
+    </div>
   );
 }
 
@@ -132,7 +132,7 @@ export function EmailForm() {
   };
 
   return (
-    <section className="db-panel st-card">
+    <div className="st-subsection">
       <div className="st-card-head">
         <div className="st-card-icon"><Icon name="mail" size={18} /></div>
         <div>
@@ -201,6 +201,17 @@ export function EmailForm() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// Name and email share one card, split by a divider
+export function ProfileCard() {
+  return (
+    <section className="db-panel st-card">
+      <NameForm />
+      <hr className="st-divider" />
+      <EmailForm />
     </section>
   );
 }

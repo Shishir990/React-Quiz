@@ -5,7 +5,7 @@ import AppShell from '../components/layout/AppShell';
 import { initialsOf } from '../utils/format';
 import { ChangePasswordForm } from '../components/settings/ChangePasswordForm';
 import { ActiveSessions } from '../components/settings/ActiveSessions';
-import { NameForm, EmailForm } from '../components/settings/ProfileForms';
+import { ProfileCard } from '../components/settings/ProfileForms';
 import { SignOutEverywhere } from '../components/settings/SignOutEverywhere';
 import { Icon } from '../components/ui';
 import '../styles/Settings.css';
@@ -82,10 +82,7 @@ export default function Settings() {
           aria-labelledby={`st-tab-${active}`}
         >
           {active === 'profile' ? (
-            <>
-              <NameForm />
-              <EmailForm />
-            </>
+            <ProfileCard />
           ) : active === 'password' ? (
             <ChangePasswordForm />
           ) : (
