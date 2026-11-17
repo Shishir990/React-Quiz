@@ -1,4 +1,5 @@
 import { queryClient } from './queryClient';
+import { readJson } from './readJson';
 
 const BASE = '/api';
 
@@ -16,7 +17,7 @@ const adminFetch = async (url, { body, ...options } = {}) => {
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const data = await response.json().catch(() => ({}));
+  const data = await readJson(response);
   if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`);
   // Any admin change (categories, questions, users) can affect other pages,
   // so mark all cached data stale; pages on screen refetch right away.

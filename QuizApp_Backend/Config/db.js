@@ -15,20 +15,21 @@ const connectDB = async () => {
   }
   usePublicDnsForAtlas();
 
-  connectionPromise = mongoose
-    .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 })
-    .then((conn) => {
+  // Kept as one shared promise so requests arriving during the connect all wait for it
+  connectionPromise = (async () => {
+    try {
+      const conn = await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 });
       console.log(`MongoDB Connected: ${conn.connection.host}`);
       return conn.connection;
-    })
-    .catch((err) => {
+    } catch (err) {
       connectionPromise = null; // allow a retry on the next request
       console.error('MongoDB connection error:', err.message);
       // Locally a dead DB means the server is useless; on Vercel let the
       // request fail with a 503 instead of killing the function
       if (!isServerless) process.exit(1);
       throw err;
-    });
+    }
+  })();
 
   return connectionPromise;
 };

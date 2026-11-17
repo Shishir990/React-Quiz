@@ -20,7 +20,7 @@ export const queryKeys = {
 
 // authFetch resolves with the server's error body instead of throwing,
 // so check the shape and turn anything unexpected into a real error
-const expect = (isValid, fallback) => (data) => {
+const expect = (data, isValid, fallback) => {
   if (isValid(data)) return data;
   throw new Error(data?.message || fallback);
 };
@@ -28,7 +28,7 @@ const expect = (isValid, fallback) => (data) => {
 export const useCategories = () =>
   useQuery({
     queryKey: queryKeys.categories,
-    queryFn: () => getCategoriesApi().then(expect(Array.isArray, 'Failed to load categories.')),
+    queryFn: async () => expect(await getCategoriesApi(), Array.isArray, 'Failed to load categories.'),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -36,37 +36,35 @@ export const useCategories = () =>
 export const useSavedProgress = () =>
   useQuery({
     queryKey: queryKeys.savedProgress,
-    queryFn: () => listProgressApi().then(expect(Array.isArray, 'Could not load saved quizzes.')),
+    queryFn: async () => expect(await listProgressApi(), Array.isArray, 'Could not load saved quizzes.'),
     staleTime: 0,
   });
 
 export const useMyResults = () =>
   useQuery({
     queryKey: queryKeys.myResults,
-    queryFn: () => getMyResultsApi().then(expect(Array.isArray, 'Could not load your results.')),
+    queryFn: async () => expect(await getMyResultsApi(), Array.isArray, 'Could not load your results.'),
   });
 
 export const useMyAnalytics = () =>
   useQuery({
     queryKey: queryKeys.analytics,
-    queryFn: () => getMyAnalyticsApi().then(expect(Array.isArray, 'Could not load your analytics.')),
+    queryFn: async () => expect(await getMyAnalyticsApi(), Array.isArray, 'Could not load your analytics.'),
   });
 
 // A finished attempt never changes, so it never needs refetching
 export const useResult = (id) =>
   useQuery({
     queryKey: queryKeys.result(id),
-    queryFn: () => getResultApi(id).then(expect((d) => !!d?._id, 'Could not load this result.')),
+    queryFn: async () => expect(await getResultApi(id), (d) => !!d?._id, 'Could not load this result.'),
     staleTime: Infinity,
   });
 
 export const useLeaderboard = ({ period = 'week', category } = {}) =>
   useQuery({
     queryKey: queryKeys.leaderboard(period, category),
-    queryFn: () =>
-      getLeaderboardApi({ period, category }).then(
-        expect((d) => Array.isArray(d?.players), 'Could not load the leaderboard.')
-      ),
+    queryFn: async () =>
+      expect(await getLeaderboardApi({ period, category }), (d) => Array.isArray(d?.players), 'Could not load the leaderboard.'),
     placeholderData: keepPreviousData,
   });
 

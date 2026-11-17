@@ -14,10 +14,11 @@ export default function ResetPassword() {
   // Which account is this link for? Also catches expired links up front
   const check = useQuery({
     queryKey: ['reset-token', token],
-    queryFn: () => checkResetTokenApi(token).then((data) => {
+    queryFn: async () => {
+      const data = await checkResetTokenApi(token);
       if (data?.valid) return data;
       throw new Error(data?.message || 'This reset link is invalid or has expired.');
-    }),
+    },
     enabled: !!token,
     retry: false,
     staleTime: Infinity,

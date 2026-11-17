@@ -209,27 +209,30 @@ export function ContextProvider({ children }) {
   const syncTimer = useRef(null);
   const discarded = useRef(null);        // category just restarted: ignore stray saves for it
 
-  const syncToServer = ({ keepalive = false } = {}) => {
+  // Everything before the await runs at once, so a save sent while the tab is closing
+  // (keepalive) has already started when this returns
+  const syncToServer = async ({ keepalive = false } = {}) => {
     clearTimeout(syncTimer.current);
     const s = latest.current;
-    if (s.status !== "start" || !s.userId || !s.categoryId || !s.Questions.length) return Promise.resolve();
-    if (discarded.current === s.categoryId) return Promise.resolve();
+    if (s.status !== "start" || !s.userId || !s.categoryId || !s.Questions.length) return;
+    if (discarded.current === s.categoryId) return;
     lastServerSync.current = Date.now();
-    return saveProgressApi(s.categoryId, {
-      questionIds: s.Questions.map((q) => q._id),
-      answers: s.answers,
-      visited: s.visited,
-      marked: s.marked,
-      index: s.index,
-      secondsRemaining: s.secondsRemaining,
-      savedAt: Date.now(),
-    }, { keepalive })
-      .then(() => {
-        syncedToServer.current = true;
-        queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress });
-      })
+    try {
+      await saveProgressApi(s.categoryId, {
+        questionIds: s.Questions.map((q) => q._id),
+        answers: s.answers,
+        visited: s.visited,
+        marked: s.marked,
+        index: s.index,
+        secondsRemaining: s.secondsRemaining,
+        savedAt: Date.now(),
+      }, { keepalive });
+      syncedToServer.current = true;
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress });
+    } catch (err) {
       // Still resumable from this browser's copy; logged loudly so the cause is visible
-      .catch((err) => console.error('Could not save quiz progress to the server:', err.message));
+      console.error('Could not save quiz progress to the server:', err.message);
+    }
   };
 
   // Local copy, every tick
@@ -270,14 +273,18 @@ export function ContextProvider({ children }) {
   const flushProgress = () => syncToServer({ keepalive: true });
 
   // Throw away the saved copy, e.g. "Exit & restart", "Start over" or after submitting
-  const discardProgress = (catId = categoryId) => {
+  const discardProgress = async (catId = categoryId) => {
     clearTimeout(syncTimer.current);
     discarded.current = catId;
     clearProgress(user?._id, catId);
     setResumed(false);
-    return deleteProgressApi(catId)
-      .catch((err) => console.warn('Could not clear saved quiz:', err.message))
-      .finally(() => queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress }));
+    try {
+      await deleteProgressApi(catId);
+    } catch (err) {
+      console.warn('Could not clear saved quiz:', err.message);
+    } finally {
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedProgress });
+    }
   };
 
   // Server copy vs. this browser's copy: use whichever was saved last.

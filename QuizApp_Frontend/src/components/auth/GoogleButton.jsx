@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuiz } from '../../context/QuizContext';
+import { readJson } from '../../api/readJson';
 
 // Google Identity Services, loaded once and only when Google sign-in is configured
 let gisPromise = null;
@@ -34,10 +35,15 @@ export function GoogleButton({ text = 'continue_with', onError }) {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/auth/google/config')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => alive && setClientId(d?.clientId || null))
-      .catch(() => {});
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/google/config');
+        const data = res.ok ? await res.json() : null;
+        if (alive) setClientId(data?.clientId || null);
+      } catch {
+        // Can't reach the server: Google sign-in simply stays hidden
+      }
+    })();
     return () => { alive = false; };
   }, []);
 
@@ -54,7 +60,7 @@ export function GoogleButton({ text = 'continue_with', onError }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ credential }),
         });
-        const data = await res.json().catch(() => ({}));
+        const data = await readJson(res);
         if (!res.ok || !data.token) throw new Error(data.message || 'Google sign-in failed. Please try again.');
         handlers.current.login(data.token, data.user);
         handlers.current.navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
@@ -65,8 +71,9 @@ export function GoogleButton({ text = 'continue_with', onError }) {
       }
     };
 
-    loadGoogleScript()
-      .then(() => {
+    (async () => {
+      try {
+        await loadGoogleScript();
         if (!alive || !holder.current) return;
         window.google.accounts.id.initialize({ client_id: clientId, callback: onCredential });
         // Google's button takes a pixel width (200-400)
@@ -74,8 +81,10 @@ export function GoogleButton({ text = 'continue_with', onError }) {
         window.google.accounts.id.renderButton(holder.current, {
           theme: 'filled_black', size: 'large', shape: 'rectangular', text, width, logo_alignment: 'center',
         });
-      })
-      .catch((err) => handlers.current.onError?.(err.message));
+      } catch (err) {
+        handlers.current.onError?.(err.message);
+      }
+    })();
 
     return () => { alive = false; };
   }, [clientId, text]);

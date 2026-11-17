@@ -61,7 +61,11 @@ exports.submit = async (req, res) => {
     });
 
     // The quiz is done, so there's nothing left to resume
-    await QuizProgress.deleteOne({ user: req.user._id, category: categoryId }).catch(() => {});
+    try {
+      await QuizProgress.deleteOne({ user: req.user._id, category: categoryId });
+    } catch {
+      // Not worth failing the submit over: a stale save expires after a week anyway
+    }
 
     // Send back evaluated answers so frontend can show correct/wrong
     res.status(201).json({

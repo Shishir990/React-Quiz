@@ -11,7 +11,13 @@ const isServerless = !!process.env.VERCEL;
 const isProduction = process.env.NODE_ENV === 'production' || isServerless;
 
 // Start connecting right away; requests below wait for it
-connectDB().catch(() => {});
+(async () => {
+  try {
+    await connectDB();
+  } catch {
+    // Already logged; each request then gets a 503 from the database gate below
+  }
+})();
 
 const app = express();
 

@@ -1,6 +1,8 @@
 // Saved (unfinished) quizzes on the server, so they can be resumed on any device.
 // Unlike authFetch these throw on network/server errors, which lets the caller
 // tell "nothing saved" (null) apart from "couldn't reach the server".
+import { readJson } from './readJson';
+
 const BASE = '/api/progress';
 
 const headers = () => ({
@@ -14,7 +16,7 @@ async function request(url, options = {}) {
   // without this route) is an error: it must never look like a successful save,
   // or the browser copy gets marked "on the server" and is later thrown away.
   if (res.status === 204) return null;
-  const data = await res.json().catch(() => ({}));
+  const data = await readJson(res);
   if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
   return data;
 }
@@ -29,11 +31,14 @@ export const listProgressApi = () => request('');
 export const pendingSaves = new Map();
 export const pendingDeletes = new Map();
 
-const track = (map, id, promise) => {
+// Runs synchronously up to the await, so the request is registered before anyone can look for it
+const track = async (map, id, promise) => {
   map.set(id, promise);
-  return promise.finally(() => {
+  try {
+    return await promise;
+  } finally {
     if (map.get(id) === promise) map.delete(id); // a newer request may have replaced it
-  });
+  }
 };
 
 // The saved quiz for one category, or null when there isn't one.
@@ -41,7 +46,13 @@ const track = (map, id, promise) => {
 // a copy older than the one this browser just sent.
 export const getProgressApi = async (categoryId) => {
   const inFlight = pendingSaves.get(categoryId) || pendingDeletes.get(categoryId);
-  if (inFlight) await inFlight.catch(() => {});
+  if (inFlight) {
+    try {
+      await inFlight;
+    } catch {
+      // A failed save or delete still counts as finished; read whatever the server has
+    }
+  }
   return request(`/${categoryId}`);
 };
 
