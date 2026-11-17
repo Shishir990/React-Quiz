@@ -205,13 +205,12 @@ export function EmailForm() {
   );
 }
 
-// Name and email share one card, split by a divider
+// Name and email as separate cards, side by side (stacked on narrow screens)
 export function ProfileCard() {
   return (
-    <section className="db-panel st-card">
-      <NameForm />
-      <hr className="st-divider" />
-      <EmailForm />
-    </section>
+    <div className="st-profile-cards">
+      <section className="db-panel st-card"><NameForm /></section>
+      <section className="db-panel st-card"><EmailForm /></section>
+    </div>
   );
 }

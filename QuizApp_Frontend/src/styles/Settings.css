@@ -76,7 +76,11 @@
   min-height: 38px;
 }
 .st-panel { display: flex; flex-direction: column; gap: 1.25rem; }
-.st-divider { border: 0; border-top: 1px solid var(--line); margin: 1.5rem 0; }
+.st-profile-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1.25rem;
+}
 
 /* Wider page with roomier cards for the tab content */
 .st-grid { max-width: 920px; }
