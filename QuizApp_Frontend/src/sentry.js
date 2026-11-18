@@ -5,7 +5,8 @@
 // calls are not reported here: the server reports its own 500s.
 import * as Sentry from '@sentry/react';
 
-const dsn = import.meta.env.VITE_SENTRY_DSN;
+// Pasted values often pick up quotes or a stray space/newline, which Sentry rejects
+const dsn = (import.meta.env.VITE_SENTRY_DSN || '').trim().replace(/^["']+|["']+$/g, '');
 
 // Reset and email-change links carry one-time tokens in the address
 const stripTokens = (url) => (typeof url === 'string' ? url.replace(/([?&](token|code)=)[^&#]*/gi, '$1[removed]') : url);

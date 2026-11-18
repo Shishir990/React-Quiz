@@ -22,9 +22,12 @@ function scrub(value, depth = 0) {
   return value;
 }
 
-if (process.env.SENTRY_DSN) {
+// Pasted values often pick up quotes or a stray space/newline, which Sentry rejects
+const dsn = (process.env.SENTRY_DSN || '').trim().replace(/^["']+|["']+$/g, '');
+
+if (dsn) {
   Sentry.init({
-    dsn: process.env.SENTRY_DSN,
+    dsn,
     // production / preview on Vercel, development locally
     environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
     release: process.env.VERCEL_GIT_COMMIT_SHA,
