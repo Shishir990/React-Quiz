@@ -4,80 +4,114 @@ const Question = require('../Models/Question');
 const Quiz = require('../Models/Quiz');
 const QuizProgress = require('../Models/QuizProgress');
 const serverError = require('../Utils/serverError');
+const { PASS_MARK } = require('../Utils/quizRules');
 
+// What the client gets back after submitting (the same for a first submit and a repeat)
+const submitResponse = (r) => ({
+  _id: r._id,
+  score: r.score,
+  total: r.total,
+  percentage: r.percentage,
+  passed: r.passed,
+  timeTaken: r.timeTaken,
+  answers: r.answers.map(({ question, selectedOption, isCorrect }) => ({ question, selectedOption, isCorrect })),
+});
+
+// POST /api/results/submit  { attemptId, answers: [{ question, selectedOption }], timeTaken }
+// Scores the attempt the server opened when it served the questions (see
+// getQuizQuestions), never a question list sent by the client. Each attempt gives
+// exactly one result: sending the same submit again returns that result unchanged.
 exports.submit = async (req, res) => {
-  const { categoryId, answers = [], timeTaken, questionIds } = req.body || {};
-  // answers: [{ question: "questionId", selectedOption: "answer" }]
-  // questionIds: every question the player was shown, answered or not
-  // Must be a real id string: an object would reach MongoDB as a query operator
-  if (!mongoose.isValidObjectId(categoryId) || typeof categoryId !== 'string') {
-    return res.status(400).json({ message: 'Invalid category' });
+  const { attemptId, categoryId, answers = [], timeTaken } = req.body || {};
+  // Ids must be real id strings: an object would reach MongoDB as a query operator
+  const isIdString = (v) => typeof v === 'string' && mongoose.isValidObjectId(v);
+  if (attemptId !== undefined && !isIdString(attemptId)) {
+    return res.status(400).json({ message: 'Invalid attempt' });
   }
+  if (attemptId === undefined && !isIdString(categoryId)) {
+    return res.status(400).json({ message: 'Invalid attempt' });
+  }
+
   try {
-    // Fetch questions WITH correctAnswer from DB
-    const questions = await Question.find({ category: categoryId });
-    if (!questions.length) {
-      return res.status(404).json({ message: 'Questions not found' });
+    // Clients from before attempt ids send only the category: use its open attempt
+    const attempt = await QuizProgress.findOne(
+      attemptId ? { attemptId, user: req.user._id } : { user: req.user._id, category: categoryId }
+    ).lean();
+
+    if (!attempt) {
+      // Already submitted (a retry after a lost response, a double click): same result again
+      const done = attemptId && await Result.findOne({ attempt: attemptId, user: req.user._id }).lean();
+      if (done) return res.status(200).json(submitResponse(done));
+      return res.status(409).json({ message: 'This quiz is no longer in progress. Start it again to submit a new attempt.' });
     }
 
-    const inCategory = new Map(questions.map((q) => [q._id.toString(), q]));
-    // Score out of the questions actually served. Older clients don't send
-    // questionIds, so fall back to the whole category as before.
-    const served = Array.isArray(questionIds)
-      ? [...new Set(questionIds.map(String))].filter((id) => inCategory.has(id))
-      : [...inCategory.keys()];
-    const servedSet = new Set(served);
+    // Score out of the questions this attempt was served (minus any deleted since)
+    const questions = await Question.find({ _id: { $in: attempt.questions } }).select('correctAnswer').lean();
+    const byId = new Map(questions.map((q) => [String(q._id), q]));
+    const served = attempt.questions.map(String).filter((id) => byId.has(id));
+    if (!served.length) {
+      await QuizProgress.deleteOne({ _id: attempt._id });
+      return res.status(409).json({ message: 'The questions in this quiz no longer exist. Start it again.' });
+    }
 
-    let score = 0;
+    // Each served question counts once; anything else in the request is ignored
     const seen = new Set();
-
-    // Check each answer against DB; count each served question at most once
     const evaluated = (Array.isArray(answers) ? answers : [])
-      .filter(({ question }) => {
-        const id = String(question);
-        if (!servedSet.has(id) || seen.has(id)) return false;
+      .filter((a) => {
+        const id = String(a?.question);
+        if (!byId.has(id) || seen.has(id)) return false;
         seen.add(id);
         return true;
       })
       .map(({ question, selectedOption }) => {
-        const isCorrect = inCategory.get(String(question)).correctAnswer === selectedOption;
-        if (isCorrect) score++;
-        return { question, selectedOption, isCorrect };
+        const chosen = typeof selectedOption === 'string' ? selectedOption : '';
+        return { question, selectedOption: chosen, isCorrect: byId.get(String(question)).correctAnswer === chosen };
       });
 
-    const total = served.length || questions.length;
+    const score = evaluated.filter((a) => a.isCorrect).length;
+    const total = served.length;
     const percentage = Math.round((score / total) * 100);
-    const passed = percentage >= 50; // pass mark
 
-    const result = await Result.create({
-      user: req.user._id,
-      quiz: categoryId,
-      answers: evaluated,
-      score,
-      total,
-      percentage,
-      passed,
-      timeTaken
-    });
+    // The client's time is only accepted within what the server can vouch for:
+    // - at least the time the saves show was used (the stored clock only runs down)
+    // - at most the time since the questions were served, and never over the quiz length
+    const startedAt = new Date(attempt.startedAt || attempt.createdAt).getTime();
+    const maxTime = Math.max(0, Math.min(attempt.totalTime, Math.floor((Date.now() - startedAt) / 1000)));
+    const minTime = Math.min(maxTime, Math.max(0, attempt.totalTime - attempt.secondsRemaining));
+    const claimed = Number.isFinite(Number(timeTaken)) ? Math.round(Number(timeTaken)) : maxTime;
+    const seconds = Math.min(maxTime, Math.max(minTime, claimed));
 
-    // The quiz is done, so there's nothing left to resume
+    let result;
     try {
-      await QuizProgress.deleteOne({ user: req.user._id, category: categoryId });
-    } catch {
-      // Not worth failing the submit over: a stale save expires after a week anyway
+      result = await Result.create({
+        user: req.user._id,
+        quiz: attempt.category, // Result.quiz holds the category id
+        attempt: attempt.attemptId,
+        answers: evaluated,
+        score,
+        total,
+        percentage,
+        passed: percentage >= PASS_MARK,
+        timeTaken: seconds,
+      });
+    } catch (err) {
+      // Two submits of one attempt at the same moment: the unique index lets only
+      // one result in, and the other request returns that one
+      if (err.code === 11000 && attempt.attemptId) {
+        const done = await Result.findOne({ attempt: attempt.attemptId, user: req.user._id }).lean();
+        if (done) return res.status(200).json(submitResponse(done));
+      }
+      throw err;
     }
 
-    // Send back evaluated answers so frontend can show correct/wrong
-    res.status(201).json({
-      _id: result._id,
-      score,
-      total,
-      percentage,
-      passed,
-      timeTaken,
-      answers: evaluated  // ← frontend uses this to highlight correct/wrong
-    });
+    // Used up. Deleted only after the result is saved, so a failed save can be retried.
+    try {
+      await QuizProgress.deleteOne({ _id: attempt._id });
+    } catch {
+      // A leftover attempt can't be scored twice (the result exists) and expires in a week
+    }
 
+    res.status(201).json(submitResponse(result));
   } catch (err) {
     serverError(req, res, err);
   }

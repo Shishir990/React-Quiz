@@ -5,7 +5,7 @@ import '../styles/Finish.css';
 import { scoreTone } from '../utils/results';
 
 export function Finish() {
-  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading,setResult, dispatch,highestScore, submitQuiz, retryQuiz } = useQuiz();
+  const { answersLog, Questions, secondsRemaining, totalTime, result, resloading, submitError, setResult, dispatch,highestScore, submitQuiz, retryQuiz } = useQuiz();
   const navigate = useNavigate();
 
   const categoryId = Questions[0]?.category?._id || Questions[0]?.category;
@@ -78,6 +78,7 @@ export function Finish() {
           : 'Ready to submit your quiz?'}
       </h2>
       <p>Answered: {answersLog?.length} / {Questions.length}</p>
+      {submitError && <div className="auth-error" role="alert">{submitError}</div>}
       <button onClick={handleSubmit} disabled={resloading}>
         {resloading ? 'Submitting...' : 'Submit Quiz ✓'}
       </button>

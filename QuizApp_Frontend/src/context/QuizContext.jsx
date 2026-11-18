@@ -10,6 +10,7 @@ const Context = createContext();
 
 const initialState = { 
   Questions: [],
+  attemptId: null,      // the server's id for this play-through; sent with every save and the submit
   status: "loading",
   score: 0,
   index: 0,
@@ -32,6 +33,7 @@ function reducer(state, action) {
       return {
         ...state,
         Questions: action.payload,
+        attemptId: action.attemptId,
         status: "ready",
         index: 0,
         answer: null,
@@ -44,12 +46,13 @@ function reducer(state, action) {
 
     // Pick up a quiz the player left part-way through
     case "Restore": {
-      const { Questions, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, totalTime } = action.payload;
+      const { Questions, attemptId = null, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, totalTime } = action.payload;
       const answersLog = buildAnswersLog(Questions, answers);
       const at = Math.min(Math.max(index, 0), Questions.length - 1);
       return {
         ...state,
         Questions,
+        attemptId,
         status: "start",
         index: at,
         answer: answers[at] ?? null,
@@ -126,17 +129,6 @@ function reducer(state, action) {
       return { ...state, highestScore: newHighScore };
     }
 
-    // "Try Again" after submitting: same questions, fresh answers and clock
-    case "Reset":
-      return {
-        ...initialState,
-        Questions: state.Questions,
-        status: "start",
-        secondsRemaining:action.payload,
-        totalTime:action.payload,                                                                                                                                                                                                                                                                                                                              
-        highestScore: state.highestScore
-      };
-
     default:
       return state;
   }
@@ -145,7 +137,7 @@ function reducer(state, action) {
 export function ContextProvider({ children }) {
 
   const [
-    { Questions, status, score, index, answer, answers, visited, marked, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
+    { Questions, attemptId, status, score, index, answer, answers, visited, marked, questionsAttempted, questionsCorrect,answersLog, totalTime , highestScore, secondsRemaining },
     dispatch
   ] = useReducer(reducer, initialState);
 
@@ -154,6 +146,7 @@ export function ContextProvider({ children }) {
   const [result, setResult] = useState(null);
   const [resloading, setResLoading] = useState(false);
   const [resumed, setResumed] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const numQuestions = Questions?.length;
 
   // The session lives in httpOnly cookies, so ask the server who is signed in
@@ -213,7 +206,7 @@ export function ContextProvider({ children }) {
   // and synced to the server shortly after each change, every 15s of play, and
   // when the player leaves, so it can be resumed on another device too.
   const latest = useRef({});
-  latest.current = { status, userId: user?._id, categoryId, Questions, answers, visited, marked, index, secondsRemaining, totalTime };
+  latest.current = { status, userId: user?._id, categoryId, attemptId, Questions, answers, visited, marked, index, secondsRemaining, totalTime };
   const syncedToServer = useRef(false);  // has the server got a copy of the current quiz?
   const lastServerSync = useRef(0);
   const syncTimer = useRef(null);
@@ -229,6 +222,7 @@ export function ContextProvider({ children }) {
     lastServerSync.current = Date.now();
     try {
       await saveProgressApi(s.categoryId, {
+        attemptId: s.attemptId || undefined,
         questionIds: s.Questions.map((q) => q._id),
         answers: s.answers,
         visited: s.visited,
@@ -250,9 +244,9 @@ export function ContextProvider({ children }) {
     if (status !== "start" || !user?._id || !categoryId) return;
     if (discarded.current === categoryId) return;
     saveProgress(user._id, categoryId, {
-      Questions, answers, visited, marked, index, secondsRemaining, totalTime, synced: syncedToServer.current,
+      attemptId, Questions, answers, visited, marked, index, secondsRemaining, totalTime, synced: syncedToServer.current,
     });
-  }, [status, user?._id, categoryId, Questions, answers, visited, marked, index, secondsRemaining, totalTime]);
+  }, [status, user?._id, categoryId, attemptId, Questions, answers, visited, marked, index, secondsRemaining, totalTime]);
 
   // Server copy: soon after an answer or a move
   useEffect(() => {
@@ -298,8 +292,9 @@ export function ContextProvider({ children }) {
   };
 
   // Server copy vs. this browser's copy: use whichever was saved last.
-  // "Nothing on the server" wins over an old local copy that had been synced,
-  // since that means the quiz was finished or restarted somewhere else.
+  // The server opens every attempt when it serves the questions, so "nothing on the
+  // server" means the attempt was submitted, restarted or expired, and this browser's
+  // copy can't be submitted any more. A local copy only wins for the same attempt.
   const findSavedQuiz = async (catId) => {
     const local = loadProgress(user?._id, catId);
     let server;
@@ -309,39 +304,45 @@ export function ContextProvider({ children }) {
       return local ? { ...local, fromServer: false } : null; // offline: local is all we have
     }
     if (!server) {
-      if (local?.synced) { clearProgress(user?._id, catId); return null; }
-      return local ? { ...local, fromServer: false } : null;
+      if (local) clearProgress(user?._id, catId);
+      return null;
     }
-    if (local && (local.savedAt || 0) > (server.savedAt || 0)) return { ...local, fromServer: false };
+    // Copies saved before attempts had ids have none; the server's id applies to them
+    const sameAttempt = local && (!local.attemptId || String(local.attemptId) === String(server.attemptId));
+    if (sameAttempt && (local.savedAt || 0) > (server.savedAt || 0)) {
+      return { ...local, attemptId: server.attemptId, fromServer: false };
+    }
     return { ...server, fromServer: true };
   };
 
-  // Play the same questions again after submitting. Submitting marked this quiz as
-  // discarded (so late saves can't revive it); a new attempt must clear that,
-  // or none of its progress would ever be saved.
+  // "Try Again" after submitting: the submitted attempt is used up, so ask the server
+  // for a new one. It serves the same category again, in a new random order.
+  // (fetchQues clears the "discarded" mark that submitting set.)
   const retryQuiz = () => {
-    discarded.current = null;
-    syncedToServer.current = false;
-    lastServerSync.current = Date.now();
+    const catId = categoryId;
     setResult(null);
-    setResumed(false);
-    dispatch({ type: "Reset", payload: Questions.length * SECONDS_PER_QUESTION });
+    setSubmitError('');
+    fetchQues(catId, undefined, { fresh: true });
   };
 
   const submitQuiz = async (categoryId, answers, timeTaken) => {
+    if (resloading) return; // a second click while the first submit is on its way
     setResLoading(true);
+    setSubmitError('');
     try {
+      // The server scores the attempt it served; timeTaken is checked against its own clock
       const data = await authFetch('/results/submit', {
         method: 'POST',
-        // questionIds lets the server score out of the questions shown, not the whole category
-        body: JSON.stringify({ categoryId, answers, timeTaken, questionIds: Questions.map((q) => q._id) }),
+        body: JSON.stringify({ attemptId: attemptId || undefined, categoryId, answers, timeTaken }),
       });
+      if (typeof data?.percentage !== 'number') throw new Error(data?.message || 'Could not submit your quiz. Please try again.');
       setResult(data);
       discardProgress(categoryId);
       invalidateAfterSubmit();
       dispatch({ type: "Finish" });
     } catch (err) {
       console.error('Submit error:', err.message);
+      setSubmitError(err.message);
     } finally {
       setResLoading(false);
     }
@@ -374,7 +375,7 @@ export function ContextProvider({ children }) {
       const data = await authFetch(`/questions/quiz/${categoryId}${limit ? `?limit=${limit}` : ''}`);
       if (stale()) return;
       if (data.questions) {
-        dispatch({ type: "dataReceived", payload: data.questions });
+        dispatch({ type: "dataReceived", payload: data.questions, attemptId: data.attemptId });
         dispatch({ type: "Start", payload: data.questions.length * SECONDS_PER_QUESTION })
       } else {
         dispatch({ type: "Error" });
@@ -406,6 +407,7 @@ export function ContextProvider({ children }) {
         updateUser,
         loading,
         resloading,
+        submitError,
         submitQuiz,
         result,
         answersLog,

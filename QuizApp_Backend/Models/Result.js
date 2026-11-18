@@ -15,6 +15,11 @@ const resultSchema = new mongoose.Schema({
   percentage:     { type: Number, required: true },
   passed:         { type: Boolean, required: true },
   timeTaken:      { type: Number },                       // in seconds
+  // The attempt this result came from (older results have none). Unique, so one
+  // attempt can only ever produce one result, even when two submits race.
+  attempt:        { type: mongoose.Schema.Types.ObjectId },
 }, { timestamps: true });
+
+resultSchema.index({ attempt: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Result', resultSchema);

@@ -3,9 +3,7 @@ const QuizProgress = require('../Models/QuizProgress');
 const Question = require('../Models/Question');
 const serverError = require('../Utils/serverError');
 
-const SECONDS_PER_QUESTION = 10;
-const MAX_QUESTIONS = 500;
-const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // abandoned quizzes expire after a week
+const { MAX_QUESTIONS, MAX_AGE_MS } = require('../Utils/quizRules');
 
 const isId = (id) => mongoose.isValidObjectId(id);
 // "Nothing saved" is a normal answer, not an error: 204 keeps the browser
@@ -54,6 +52,12 @@ exports.getOne = async (req, res) => {
     const progress = await QuizProgress.findOne({ user: req.user._id, category: categoryId }).lean();
     if (!progress) return notFound(res);
 
+    // Saves made before attempts had ids get one now, so they can still be submitted
+    if (!progress.attemptId) {
+      progress.attemptId = new mongoose.Types.ObjectId();
+      await QuizProgress.updateOne({ _id: progress._id, attemptId: { $exists: false } }, { $set: { attemptId: progress.attemptId } });
+    }
+
     if (progress.secondsRemaining <= 0 || Date.now() - new Date(progress.updatedAt) > MAX_AGE_MS) {
       logEvent(req, 'deleted on read: expired', { secondsRemaining: progress.secondsRemaining, updatedAt: progress.updatedAt });
       await QuizProgress.deleteOne({ _id: progress._id });
@@ -94,8 +98,18 @@ exports.getOne = async (req, res) => {
       return notFound(res);
     }
 
+    // Some questions were deleted: store the shortened attempt, so the client's next
+    // save (which sends this list) matches it
+    if (questions.length !== progress.questions.length) {
+      const keys = (obj) => Object.keys(obj).map(Number);
+      await QuizProgress.updateOne({ _id: progress._id }, {
+        $set: { questions: questions.map((q) => q._id), answers, visited: keys(visited), marked: keys(marked), index },
+      });
+    }
+
     res.json({
       categoryId,
+      attemptId: progress.attemptId,
       Questions: questions,
       answers,
       visited,
@@ -111,11 +125,13 @@ exports.getOne = async (req, res) => {
   }
 };
 
-// PUT /api/progress/:categoryId: create or update the saved quiz
+// PUT /api/progress/:categoryId: update the unfinished attempt.
+// Only starting a quiz creates one (GET /api/questions/quiz/:categoryId), so a save
+// can't change which questions were served; it only records answers, position and time.
 exports.save = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { questionIds, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, savedAt } = req.body || {};
+    const { attemptId, questionIds, answers = {}, visited = {}, marked = {}, index = 0, secondsRemaining, savedAt } = req.body || {};
     if (!isId(categoryId)) return reject(req, res, 400, 'Invalid category');
 
     if (!Array.isArray(questionIds) || !questionIds.length || questionIds.length > MAX_QUESTIONS
@@ -125,31 +141,22 @@ exports.save = async (req, res) => {
         count: Array.isArray(questionIds) ? questionIds.length : undefined,
       });
     }
-    const filter = { user: req.user._id, category: categoryId };
+    if (attemptId !== undefined && !isId(attemptId)) return reject(req, res, 400, 'Invalid attempt');
 
-    // Time ran out: nothing left to resume
-    if (!(Number(secondsRemaining) > 0)) {
-      logEvent(req, 'deleted on save: no time left', { secondsRemaining });
-      await QuizProgress.deleteOne(filter);
-      return res.json({ saved: false });
-    }
-
+    // Clients from before attempt ids send none; they match on the question list alone
+    const filter = { user: req.user._id, category: categoryId, ...(attemptId ? { attemptId } : {}) };
     const existing = await QuizProgress.findOne(filter).select('questions secondsRemaining').lean();
-    const sameQuiz = !!existing && existing.questions.map(String).join() === questionIds.map(String).join();
-
-    // A new set of questions must all belong to this category
-    if (!sameQuiz) {
-      const count = await Question.countDocuments({ _id: { $in: questionIds }, category: categoryId });
-      if (count !== questionIds.length) {
-        return reject(req, res, 400, 'Questions do not match this category', { sent: questionIds.length, inCategory: count });
-      }
+    if (!existing) {
+      return reject(req, res, 409, 'This quiz is no longer in progress. Start it again.', { attemptId });
+    }
+    if (existing.questions.map(String).join() !== questionIds.map(String).join()) {
+      return reject(req, res, 409, 'These are not the questions this quiz was started with.', { attemptId });
     }
 
     const n = questionIds.length;
-    const totalTime = n * SECONDS_PER_QUESTION;
-    // The clock only runs down: a save can never add time back
-    let seconds = Math.min(Math.floor(Number(secondsRemaining)), totalTime);
-    if (sameQuiz) seconds = Math.min(seconds, existing.secondsRemaining);
+    // The clock only runs down: a save can never add time back. At 0 the attempt is
+    // kept, so the player can still submit it; it just can't be resumed.
+    const seconds = Math.max(0, Math.min(Math.floor(Number(secondsRemaining) || 0), existing.secondsRemaining));
 
     const cleanAnswers = {};
     for (const [pos, opt] of Object.entries(answers || {})) {
@@ -162,20 +169,17 @@ exports.save = async (req, res) => {
     const at = Number.isInteger(index) && index >= 0 && index < n ? index : 0;
 
     await QuizProgress.updateOne(
-      filter,
+      { _id: existing._id },
       {
         $set: {
-          questions: questionIds,
           answers: cleanAnswers,
           visited: cleanVisited,
           marked: cleanMarked,
           index: at,
           secondsRemaining: seconds,
-          totalTime,
           clientSavedAt: Number.isFinite(savedAt) ? Math.min(savedAt, Date.now()) : Date.now(),
         },
-      },
-      { upsert: true }
+      }
     );
     res.json({ saved: true, secondsRemaining: seconds });
   } catch (err) {

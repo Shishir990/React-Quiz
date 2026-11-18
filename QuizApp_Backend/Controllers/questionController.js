@@ -1,6 +1,8 @@
 const Question = require('../Models/Question');
 const Category = require('../Models/Category');
+const QuizProgress = require('../Models/QuizProgress');
 const mongoose = require('mongoose');
+const { SECONDS_PER_QUESTION } = require('../Utils/quizRules');
 const serverError = require('../Utils/serverError');
 const inputError = require('../Utils/inputError');
 
@@ -143,7 +145,31 @@ exports.getQuizQuestions = async (req, res) => {
       return res.status(404).json({ message: 'No questions found for this category' });
     }
 
-    res.json({ count: questions.length, questions });
+    // Open a new attempt with exactly these questions. It replaces any unfinished one
+    // in this category: the player chose to start over. Submitting scores against
+    // this record, so the client can't pick its own questions or submit twice.
+    const attemptId = new mongoose.Types.ObjectId();
+    const totalTime = questions.length * SECONDS_PER_QUESTION;
+    await QuizProgress.updateOne(
+      { user: req.user._id, category: match.category },
+      {
+        $set: {
+          attemptId,
+          startedAt: new Date(),
+          questions: questions.map((q) => q._id),
+          answers: {},
+          visited: [],
+          marked: [],
+          index: 0,
+          secondsRemaining: totalTime,
+          totalTime,
+        },
+        $unset: { clientSavedAt: '' },
+      },
+      { upsert: true }
+    );
+
+    res.json({ attemptId, count: questions.length, questions });
   } catch (err) {
     serverError(req, res, err);
   }

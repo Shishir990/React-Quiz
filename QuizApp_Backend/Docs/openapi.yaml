@@ -671,8 +671,11 @@ paths:
   /api/questions/quiz/{categoryId}:
     get:
       tags: [Play]
-      summary: Questions for a quiz, shuffled, without answers
-      description: Correct answers and explanations are never included; they come back after submitting.
+      summary: Start a quiz attempt
+      description: |
+        Picks the questions (shuffled, without answers or explanations) and opens a new attempt
+        for them, replacing any unfinished one in this category. Send the returned `attemptId`
+        with every progress save and with the submit.
       parameters:
         - $ref: '#/components/parameters/CategoryId'
         - name: limit
@@ -687,6 +690,7 @@ paths:
               schema:
                 type: object
                 properties:
+                  attemptId: { type: string, description: Identifies this attempt. Send it with saves and the submit. }
                   count: { type: integer, example: 15 }
                   questions:
                     type: array
@@ -698,23 +702,27 @@ paths:
   /api/results/submit:
     post:
       tags: [Play]
-      summary: Submit a finished quiz for scoring
+      summary: Submit a quiz attempt for scoring
       description: |
-        Scores against the stored answers, counting each shown question once.
-        Also deletes the saved progress for this category.
+        Scores the attempt the server opened when it served the questions: the score is out of
+        every question it served, and any other question in `answers` is ignored. `timeTaken`
+        is kept within what the server can confirm (at least the time the saves show was used,
+        at most the time since the questions were served).
+
+        Each attempt gives exactly one result. Sending the same submit again returns that
+        result with status 200, so a retry after a lost response is safe.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [categoryId]
               properties:
-                categoryId: { type: string, example: 6a1f0c2b9d3e4f5a6b7c8d9e }
-                questionIds:
-                  type: array
-                  description: Every question shown to the player, answered or not. The score is out of these.
-                  items: { type: string }
+                attemptId: { type: string, description: 'From GET /api/questions/quiz/{categoryId}' }
+                categoryId:
+                  type: string
+                  description: Only for clients without attemptId; the open attempt in this category is used
+                  example: 6a1f0c2b9d3e4f5a6b7c8d9e
                 answers:
                   type: array
                   items:
@@ -722,8 +730,10 @@ paths:
                     properties:
                       question: { type: string, description: Question id }
                       selectedOption: { type: string, description: The chosen option's text }
-                timeTaken: { type: integer, description: Seconds, example: 95 }
+                timeTaken: { type: integer, description: Seconds, as the client measured them, example: 95 }
       responses:
+        '200':
+          description: This attempt was already submitted; its result is returned again
         '201':
           description: Scored and saved
           content:
@@ -746,12 +756,16 @@ paths:
                         selectedOption: { type: string }
                         isCorrect: { type: boolean }
         '400':
-          description: Invalid category id
+          description: Invalid attempt id
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: No such attempt in progress (never started, restarted or expired)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '500': { $ref: '#/components/responses/ServerError' }
 
   # ── Progress ──────────────────────────────────────────
@@ -799,10 +813,12 @@ paths:
         '500': { $ref: '#/components/responses/ServerError' }
     put:
       tags: [Progress]
-      summary: Save or update the unfinished quiz
+      summary: Save progress on the unfinished attempt
       description: |
-        The clock only runs down: a save can never add time back. Each question is worth
-        10 seconds. A save with no time left deletes the saved quiz instead.
+        Updates the attempt opened by GET /api/questions/quiz/{categoryId}; it never creates one,
+        and the question list must be the one that attempt was served. The clock only runs down:
+        a save can never add time back. At 0 seconds the attempt is kept so it can still be
+        submitted, but it is no longer offered for resuming.
       requestBody:
         required: true
         content:
@@ -811,9 +827,10 @@ paths:
               type: object
               required: [questionIds, secondsRemaining]
               properties:
+                attemptId: { type: string, description: 'From GET /api/questions/quiz/{categoryId}' }
                 questionIds:
                   type: array
-                  description: The questions in the order shown (all from this category, max 500)
+                  description: The attempt's questions in the order shown (max 500)
                   items: { type: string }
                 answers:
                   type: object
@@ -833,7 +850,7 @@ paths:
                 savedAt: { type: integer, description: Client time in ms, used to pick the newer of two copies }
       responses:
         '200':
-          description: Saved, or deleted because no time was left
+          description: Saved
           content:
             application/json:
               schema:
@@ -842,11 +859,16 @@ paths:
                   saved: { type: boolean }
                   secondsRemaining: { type: integer, description: The time actually stored }
         '400':
-          description: Invalid category or question list
+          description: Invalid category, attempt or question list
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: The attempt is no longer in progress, or the question list doesn't match it
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '500': { $ref: '#/components/responses/ServerError' }
     delete:
       tags: [Progress]
@@ -1500,6 +1522,7 @@ components:
       type: object
       properties:
         categoryId: { type: string }
+        attemptId: { type: string, description: Send it with saves and the submit }
         Questions:
           type: array
           items: { $ref: '#/components/schemas/PlayQuestion' }
