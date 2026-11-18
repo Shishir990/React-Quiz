@@ -5,6 +5,7 @@ import { queryClient, queryKeys, invalidateAfterSubmit } from '../api/queries';
 import { getProgressApi, saveProgressApi, deleteProgressApi } from '../api/progress';
 import { saveProgress, loadProgress, clearProgress } from '../utils/quizProgress';
 import { buildAnswersLog, SECONDS_PER_QUESTION } from '../utils/quiz';
+import { setSentryUser } from '../sentry';
 
 const Context = createContext();
 
@@ -169,6 +170,9 @@ export function ContextProvider({ children }) {
     };
     restoreUser();
   }, []);
+
+  // Error reports say which account hit them (the id only)
+  useEffect(() => setSentryUser(user?._id), [user?._id]);
 
   // The session ended and couldn't be renewed (expired, revoked, signed out elsewhere)
   useEffect(() => {

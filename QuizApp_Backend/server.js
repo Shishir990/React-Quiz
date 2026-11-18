@@ -1,3 +1,6 @@
+// Error reporting: must load before Express (does nothing without SENTRY_DSN)
+require('./instrument');
+const reportError = require('./Utils/reportError');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -97,6 +100,8 @@ app.use('/api', async (req, res, next) => {
     next();
   } catch (err) {
     console.error(`[db] 503 ${req.method} ${req.originalUrl}: ${err.message}`);
+    // During an outage every request fails the same way; Sentry groups them into one issue
+    reportError(err, req);
     res.status(503).json({ message: 'Database unavailable, please try again shortly.' });
   }
 });
@@ -125,6 +130,7 @@ app.use((err, req, res, next) => {
     return res.status(err.status).json({ message });
   }
   console.error(`[error] 500 ${req.method} ${req.originalUrl}:`, err.stack || err);
+  reportError(err, req);
   res.status(500).json({ message: 'Something went wrong on our side. Please try again.' });
 });
 

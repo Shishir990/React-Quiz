@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import { useLocation } from 'react-router-dom';
+import { reportError } from '../../sentry';
 import '../../styles/ErrorBoundary.css';
 
 // Catches errors thrown while rendering anything inside it and shows a
@@ -16,9 +17,10 @@ export class ErrorBoundary extends Component {
     return { error };
   }
 
-  // Runs after: a good place to log or report (e.g. Sentry)
+  // Runs after: log it, and report it to Sentry with the component tree that crashed
   componentDidCatch(error, info) {
     console.error('UI crashed:', error, info.componentStack);
+    reportError(error, { contexts: { react: { componentStack: info.componentStack } } });
   }
 
   // A new resetKey (e.g. the URL) clears the error, so navigating away recovers

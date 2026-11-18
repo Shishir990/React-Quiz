@@ -11,6 +11,7 @@
     "server": "json-server --watch Questions.json --port 9000"
   },
   "dependencies": {
+    "@sentry/react": "^11.14.0",
     "@tanstack/react-query": "^5.107.1",
     "json-server": "^1.0.0-beta.15",
     "react": "^19.2.5",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@sentry/vite-plugin": "^11.14.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

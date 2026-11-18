@@ -1,3 +1,5 @@
+// Error reporting first, so it can catch errors from everything below
+import './sentry'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { copyFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import process from 'node:process'
 
 // Client-side pages. Each gets its own copy of index.html in the build so a
 // refresh or direct link (e.g. /dashboard) finds a real file on the host
@@ -24,9 +26,28 @@ const spaRouteCopies = () => ({
   },
 })
 
+// Readable stack traces in Sentry: when SENTRY_AUTH_TOKEN is set (on Vercel), the build
+// makes source maps, uploads them to Sentry, then deletes them so they're never
+// published with the site. Without the token, nothing changes.
+const uploadSourceMaps = !!process.env.SENTRY_AUTH_TOKEN
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), spaRouteCopies()],
+  build: {
+    sourcemap: uploadSourceMaps ? 'hidden' : false,
+  },
+  plugins: [
+    react(),
+    spaRouteCopies(),
+    sentryVitePlugin({
+      disable: !uploadSourceMaps,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+      telemetry: false,
+    }),
+  ],
   server: {
     // In development, forward /api to the local Express server
     // (in production Vercel routes /api to the backend service)
