@@ -1083,6 +1083,16 @@ paths:
         '500': { $ref: '#/components/responses/ServerError' }
 
   # ── Admin ─────────────────────────────────────────────
+  /api/admin/debug-error:
+    get:
+      tags: [Admin]
+      summary: Fail on purpose, to test error reporting (admin only)
+      description: Always answers 500 and reports the error to Sentry when SENTRY_DSN is set.
+      responses:
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
   /api/admin/stats:
     get:
       tags: [Admin]
