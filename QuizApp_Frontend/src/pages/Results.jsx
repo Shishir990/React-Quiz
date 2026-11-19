@@ -5,7 +5,8 @@ import AppShell from '../components/layout/AppShell';
 import { timeAgo, formatDuration } from '../utils/format';
 import { averageScore, groupByCategory } from '../utils/results';
 import '../styles/Results.css';
-import { Icon, ScoreRing } from '../components/ui';
+import { Icon, ScoreRing, ExportButton } from '../components/ui';
+import { exportCSV } from '../utils/csv';
 
 const PAGE_SIZE = 15;
 
@@ -60,6 +61,16 @@ export default function Results() {
     { label: 'Time spent', value: formatDuration(totalTime), icon: 'clock', tone: 'orange' },
   ];
 
+  // Every result matching the current filters and sort (not only the page shown)
+  const exportResults = () => exportCSV('quizapp-results', [
+    { header: 'Date', value: (r) => new Date(r.createdAt) },
+    { header: 'Category', value: (r) => r.category?.name || 'Deleted category' },
+    { header: 'Score (%)', value: (r) => r.percentage },
+    { header: 'Correct answers', value: (r) => r.score },
+    { header: 'Result', value: (r) => (r.passed ? 'Passed' : 'Not passed') },
+    { header: 'Time taken (seconds)', value: (r) => r.timeTaken },
+  ], filtered);
+
   const resetFilters = () => {
     setCategory('all');
     setStatus('all');
@@ -73,9 +84,12 @@ export default function Results() {
           <h1 className="pg-title">Your results</h1>
           <p className="db-section-sub">Every quiz you've finished. Open one to review your answers.</p>
         </div>
-        <button className="db-btn-light" onClick={() => navigate('/dashboard')}>
-          <Icon name="play" size={14} /> Take a quiz
-        </button>
+        <div className="pg-head-actions">
+          {results.length > 0 && <ExportButton className="db-btn-ghost" count={filtered.length} onExport={exportResults} />}
+          <button className="db-btn-light" onClick={() => navigate('/dashboard')}>
+            <Icon name="play" size={14} /> Take a quiz
+          </button>
+        </div>
       </div>
 
       {error && <div className="db-error-msg">{error}</div>}

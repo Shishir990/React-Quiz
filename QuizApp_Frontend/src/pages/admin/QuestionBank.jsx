@@ -3,7 +3,8 @@ import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { createCategoryApi, updateCategoryApi, deleteCategoryApi } from '../../api/admin';
 import { queryClient, adminKeys, useAdminCategories } from '../../api/queries';
 import { shortTimeAgo } from '../../utils/format';
-import { Icon, ConfirmDialog, EmptyState } from '../../components/ui';
+import { Icon, ConfirmDialog, EmptyState, ExportButton } from '../../components/ui';
+import { exportCSV } from '../../utils/csv';
 import { CategoryForm } from '../../components/admin/CategoryForm';
 import { CardMenu } from '../../components/admin/CardMenu';
 import '../../styles/QuestionBank.css';
@@ -118,6 +119,19 @@ export default function Categories() {
     .filter((c) => !q || c.name.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q))
     .sort(SORTS[sort].fn);
 
+  // The categories matching the current filter, search and sort
+  const exportCategories = () => exportCSV('quizapp-categories', [
+    { header: 'Category', value: (c) => c.name },
+    { header: 'Description', value: (c) => c.description },
+    { header: 'Status', value: (c) => (isLive(c) ? 'Live' : 'Draft') },
+    { header: 'Questions', value: (c) => c.questionCount || 0 },
+    { header: 'Easy', value: (c) => c.difficulty?.easy || 0 },
+    { header: 'Medium', value: (c) => c.difficulty?.medium || 0 },
+    { header: 'Hard', value: (c) => c.difficulty?.hard || 0 },
+    { header: 'Last change', value: (c) => (c.lastActivity ? new Date(c.lastActivity) : '') },
+    { header: 'Created', value: (c) => (c.createdAt ? new Date(c.createdAt) : '') },
+  ], shown);
+
   return (
     <div className="qb-layout">
       <div className="qb-main">
@@ -142,9 +156,12 @@ export default function Categories() {
               </p>
             )}
           </div>
-          <button className="ad-btn ad-btn-primary" onClick={() => setEditing({})}>
-            <Icon name="plus" size={15} /> New category
-          </button>
+          <div className="ad-head-actions">
+            {categories && <ExportButton className="ad-btn" count={shown.length} onExport={exportCategories} />}
+            <button className="ad-btn ad-btn-primary" onClick={() => setEditing({})}>
+              <Icon name="plus" size={15} /> New category
+            </button>
+          </div>
         </div>
 
         <div className="qb-toolbar">

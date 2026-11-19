@@ -4,7 +4,8 @@ import { useQuiz } from '../../context/QuizContext';
 import { setUserRoleApi, setUserStatusApi } from '../../api/admin';
 import { queryClient, adminKeys, useAdminUsers } from '../../api/queries';
 import { initialsOf, timeAgo } from '../../utils/format';
-import { Icon, ConfirmDialog, EmptyState, SkeletonRows } from '../../components/ui';
+import { Icon, ConfirmDialog, EmptyState, SkeletonRows, ExportButton } from '../../components/ui';
+import { exportCSV } from '../../utils/csv';
 
 const ROLE_FILTERS = [
   { value: '', label: 'Everyone' },
@@ -84,6 +85,18 @@ export default function Users() {
     && (!filter
       || (filter === 'disabled' ? !u.isActive : u.role === filter))
   );
+  // The users matching the current search and filter
+  const exportUsers = () => exportCSV(`quizapp-users${filter ? `-${filter}` : ''}`, [
+    { header: 'Name', value: (u) => u.name },
+    { header: 'Email', value: (u) => u.email },
+    { header: 'Role', value: (u) => u.role },
+    { header: 'Status', value: (u) => (u.isActive ? 'Active' : 'Disabled') },
+    { header: 'Quizzes', value: (u) => u.quizzes },
+    { header: 'Average score (%)', value: (u) => u.avgScore },
+    { header: 'Last active', value: (u) => (u.lastActive ? new Date(u.lastActive) : '') },
+    { header: 'Joined', value: (u) => new Date(u.createdAt) },
+  ], filtered);
+
   const counts = {
     '': users?.length,
     admin: users?.filter((u) => u.role === 'admin').length,
@@ -98,6 +111,7 @@ export default function Users() {
           <h1 className="ad-title">Users</h1>
           <p className="ad-subtitle">Everyone with a QuizApp account. Promote trusted players to admin here.</p>
         </div>
+        {users && <ExportButton className="ad-btn" count={filtered.length} onExport={exportUsers} />}
       </div>
 
       {error && <div className="ad-alert">{error}</div>}

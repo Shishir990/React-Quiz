@@ -62,6 +62,62 @@ export function parseCSV(input) {
 
 const csvCell = (value) => (/[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
 
+// ── Exports ──
+
+// Spreadsheets run a cell that starts with = + - @ as a formula, so text people typed
+// (a player named "=HYPERLINK(...)") could do things when an admin opens the file.
+// Such text gets a leading apostrophe, which Excel and Sheets show as plain text.
+const safeText = (text) => (/^[=+\-@\t\r]/.test(text) ? `'${text}` : text);
+
+const exportCell = (value) => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (value instanceof Date) return csvDate(value);
+  return csvCell(safeText(String(value)));
+};
+
+// Local date and time in a form every spreadsheet reads as a date: 2026-11-19 14:05
+export function csvDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Build a CSV from rows of data.
+ *   columns  [{ header: 'Score (%)', value: (row) => row.percentage }]
+ * Values are written as they come: numbers stay numbers (so they sum and sort in a
+ * spreadsheet), true/false become Yes/No, Dates become local date-times.
+ */
+export function toCSV(columns, rows) {
+  const lines = [
+    columns.map((c) => exportCell(c.header)).join(','),
+    ...rows.map((row) => columns.map((c) => exportCell(c.value(row))).join(',')),
+  ];
+  return BOM + lines.join('\r\n') + '\r\n';
+}
+
+// Download rows as "<name>-2026-11-19.csv"
+export function exportCSV(name, columns, rows) {
+  const today = csvDate(new Date()).slice(0, 10);
+  const slug = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export';
+  downloadFile(`${slug}-${today}.csv`, toCSV(columns, rows));
+}
+
+// Questions in the import template's columns, so an export can be edited and imported
+// again (the correct answer is written as its letter)
+export function questionsCSV(questions, categoryNameOf) {
+  const rows = questions.map((q) => {
+    const options = LETTERS.map((_, i) => q.options?.[i] ?? '');
+    const correct = LETTERS[(q.options || []).indexOf(q.correctAnswer)] || q.correctAnswer || '';
+    return [q.text, ...options, correct, q.explanation || '', q.difficulty || 'medium', categoryNameOf(q)];
+  });
+  return BOM + [HEADERS, ...rows].map((r) => r.map((v) => csvCell(safeText(String(v ?? '')))).join(',')).join('\r\n') + '\r\n';
+}
+
 // A ready-to-fill template. The BOM makes Excel read symbols like π or ² correctly.
 export function templateCSV(categoryName = 'Science') {
   const rows = [
@@ -116,7 +172,8 @@ export function checkRows(rows, { categories, defaultCategory, existing }) {
 
   const items = rows.slice(1).map((cells, i) => {
     const line = i + 2; // spreadsheet row number (header is row 1)
-    const get = (name) => (col(name) === -1 ? '' : String(cells[col(name)] ?? '').trim());
+    // A leading apostrophe before = + - @ is the formula guard our exports add: drop it
+    const get = (name) => (col(name) === -1 ? '' : String(cells[col(name)] ?? '').trim().replace(/^'(?=[=+\-@])/, ''));
 
     const text = get('question');
     const options = LETTERS.map((l) => get(`option_${l.toLowerCase()}`)).filter(Boolean);

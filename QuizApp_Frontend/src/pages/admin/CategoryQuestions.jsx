@@ -6,8 +6,9 @@ import { categoryTints } from '../../utils/tints';
 import { OPTION_LETTERS } from '../../utils/quiz';
 import QuestionForm from '../../components/admin/QuestionForm';
 import ImportQuestions from '../../components/admin/ImportQuestions';
+import { questionsCSV, downloadFile, csvDate } from '../../utils/csv';
 import '../../styles/Quiz.css';
-import { Icon, ConfirmDialog, EmptyState } from '../../components/ui';
+import { Icon, ConfirmDialog, EmptyState, ExportButton } from '../../components/ui';
 
 // One category's questions, laid out like the player's quiz screen:
 // one question at a time with a numbered palette, or the whole paper at once
@@ -56,6 +57,13 @@ export default function CategoryQuestions() {
   const category = categories.find((c) => c._id === categoryId);
   const tint = categoryTints(categories).get(categoryId) || '#ECFDF5';
   const notFound = questions && categories.length > 0 && !category;
+
+  // Every question in this category, in the import template's columns, so the file
+  // can be edited and imported again (into this or another category)
+  const exportQuestions = () => {
+    const slug = (category?.name || 'category').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    downloadFile(`${slug}-questions-${csvDate(new Date()).slice(0, 10)}.csv`, questionsCSV(all, () => category?.name || ''));
+  };
 
   const goTo = (i) => {
     setIndex(i);
@@ -151,6 +159,7 @@ export default function CategoryQuestions() {
           </div>
 
           <div className="qz-header-actions">
+            <ExportButton className="ad-qv-btn" count={questions ? total : 0} onExport={exportQuestions} />
             <button className="ad-qv-btn" onClick={() => setImporting(true)} disabled={!category || !questions}>
               <Icon name="box" size={15} /> <span>Import CSV</span>
             </button>

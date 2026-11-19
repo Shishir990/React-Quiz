@@ -5,7 +5,8 @@ import { useCategories, useLeaderboard } from '../api/queries';
 import AppShell from '../components/layout/AppShell';
 import { formatDuration } from '../utils/format';
 import { PlayerAvatar } from '../components/leaderboard/PlayerAvatar';
-import { Icon } from '../components/ui';
+import { Icon, ExportButton } from '../components/ui';
+import { exportCSV } from '../utils/csv';
 import '../styles/Leaderboard.css';
 
 const PERIODS = [
@@ -42,6 +43,21 @@ export default function Leaderboard() {
   const selectedCategory = categories.find((c) => c._id === category);
   const periodLabel = PERIODS.find((p) => p.value === period).label.toLowerCase();
 
+  // The board as shown: this period and category, and the search if there is one
+  const exportBoard = () => exportCSV(
+    `leaderboard-${period === 'all' ? 'all-time' : periodLabel}-${selectedCategory?.name || 'all-categories'}`,
+    [
+      { header: 'Rank', value: (p) => p.rank },
+      { header: 'Player', value: (p) => p.name },
+      { header: 'Points', value: (p) => p.points },
+      { header: 'Quizzes', value: (p) => p.quizzes },
+      { header: 'Categories played', value: (p) => p.categories },
+      { header: 'Average score (%)', value: (p) => p.avgScore },
+      { header: 'Time on best attempts (seconds)', value: (p) => p.time },
+    ],
+    rows,
+  );
+
   return (
     <AppShell title="Leaderboard">
       <div className="pg-head">
@@ -69,6 +85,7 @@ export default function Leaderboard() {
             <option value="">All categories</option>
             {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
+          {players.length > 0 && <ExportButton className="db-btn-ghost" count={rows.length} onExport={exportBoard} />}
         </div>
       </div>
 

@@ -6,7 +6,8 @@ import { formatDuration, plural } from '../utils/format';
 import { avg, pct, sum } from '../utils/stats';
 import { PASS_MARK, activityBuckets, categoryKey, groupByCategory, periodStart } from '../utils/results';
 import { Panel, TrendChart, Donut, Columns, BarRows, SERIES, NEUTRAL, PRIMARY, ANSWER_COLORS } from '../components/charts';
-import { Icon } from '../components/ui';
+import { Icon, ExportButton } from '../components/ui';
+import { exportCSV } from '../utils/csv';
 import '../styles/Results.css';
 import '../styles/Analytics.css';
 
@@ -119,6 +120,24 @@ export default function Analytics() {
 
   const periodLabel = PERIODS.find((p) => p.value === period).label.toLowerCase();
 
+  // One row per attempt in the current period and category, with the numbers behind the charts
+  const level = (r, key, field) => r.difficulty?.[key]?.[field] ?? 0;
+  const exportAttempts = () => exportCSV(`quizapp-analytics-${period === 'all' ? 'all-time' : `last-${period}-days`}`, [
+    { header: 'Date', value: (r) => new Date(r.createdAt) },
+    { header: 'Category', value: (r) => r.category?.name || 'Deleted category' },
+    { header: 'Score (%)', value: (r) => r.percentage },
+    { header: 'Result', value: (r) => (r.passed ? 'Passed' : 'Not passed') },
+    { header: 'Questions', value: (r) => r.total },
+    { header: 'Correct', value: (r) => r.correct },
+    { header: 'Wrong', value: (r) => r.wrong },
+    { header: 'Skipped', value: (r) => r.skipped },
+    { header: 'Time taken (seconds)', value: (r) => r.timeTaken },
+    ...DIFFICULTIES.flatMap((d) => [
+      { header: `${d.label} correct`, value: (r) => level(r, d.key, 'correct') },
+      { header: `${d.label} answered`, value: (r) => level(r, d.key, 'answered') },
+    ]),
+  ], [...filtered].reverse()); // newest first, like the Results page
+
   return (
     <AppShell title="Analytics">
       <div className="pg-head">
@@ -144,6 +163,7 @@ export default function Analytics() {
               <option value="all">All categories</option>
               {allCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            <ExportButton className="db-btn-ghost" count={filtered.length} onExport={exportAttempts} />
           </div>
         )}
       </div>

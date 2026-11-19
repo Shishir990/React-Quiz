@@ -1529,6 +1529,9 @@
   gap: 16px;
   margin-bottom: 20px;
 }
+/* Several buttons on the right of a page heading (e.g. Export CSV + Take a quiz) */
+.pg-head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.db-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
 .db-wrapper .pg-title { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
 
 .pg-chips {
@@ -1589,4 +1592,6 @@
 @media (max-width: 560px) {
   .db-wrapper .pg-title { font-size: 19px; }
   .pg-head > .db-btn-light { width: 100%; justify-content: center; }
+  .pg-head-actions { width: 100%; }
+  .pg-head-actions > button { flex: 1; justify-content: center; }
 }
