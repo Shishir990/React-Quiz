@@ -13,8 +13,8 @@ router.patch('/users/:id/role', setRole);
 router.patch('/users/:id/status', setStatus);
 
 // Fails on purpose, to check that errors reach Sentry (see instrument.js)
-router.get('/debug-error', (req, res) => {
-  serverError(req, res, new Error('Sentry test error from /api/admin/debug-error'));
+router.get('/error', (req, res) => {
+  serverError(req, res, new Error('Test Error'));
 });
 
 module.exports = router;
