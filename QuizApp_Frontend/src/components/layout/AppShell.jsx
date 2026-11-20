@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: 'Results', icon: 'results', to: '/results' },
   { label: 'Analytics', icon: 'pie', to: '/analytics' },
   { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
+  { label: 'Live game', icon: 'users', to: '/live' },
   { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
   { label: 'Settings', icon: 'settings', to: '/settings', separate: true },
 ];

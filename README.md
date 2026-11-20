@@ -13,3 +13,10 @@ Interactive docs (Swagger UI): https://react-quiz-five-lovat.vercel.app/api/docs
 - After changing a route, run `npm run docs:check` in `QuizApp_Backend`. It fails if a
   route is missing from the spec, or the spec lists one that no longer exists.
 - Set `API_DOCS=off` to hide the docs page.
+
+## Live games
+
+Live multiplayer (`/live`) runs on a separate Socket.IO server in
+[`QuizApp_Live`](QuizApp_Live/README.md), because Vercel functions can't hold WebSocket
+connections. Setup, deployment and the environment variables it shares with the backend
+(`LIVE_TICKET_SECRET`, `LIVE_SERVER_URL`) are described there.

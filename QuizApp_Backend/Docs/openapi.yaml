@@ -44,6 +44,8 @@ tags:
     description: Unfinished quizzes saved on the server, so they can be resumed on any device
   - name: Results
     description: The signed-in player's attempts, analytics and the leaderboard
+  - name: Live
+    description: Sign-in for live multiplayer games, which run on a separate Socket.IO server (QuizApp_Live)
   - name: Questions (admin)
     description: The question bank, including correct answers
   - name: Admin
@@ -767,6 +769,33 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
         '500': { $ref: '#/components/responses/ServerError' }
+
+  # ── Live ──────────────────────────────────────────────
+  /api/live/ticket:
+    post:
+      tags: [Live]
+      summary: Ticket for connecting to the live game server
+      description: |
+        The live server can't read this site's sign-in cookies, so the app asks here
+        for a ticket and sends it when it connects (Socket.IO `auth.ticket`). Tickets
+        last one minute and are signed with `LIVE_TICKET_SECRET`, shared only by the
+        two servers.
+      responses:
+        '200':
+          description: A ticket and the live server's address
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticket: { type: string, description: Signed ticket, valid for 60 seconds }
+                  url: { type: string, example: 'https://quizapp-live.onrender.com' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503':
+          description: Live games are not set up (LIVE_TICKET_SECRET or LIVE_SERVER_URL missing)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
 
   # ── Progress ──────────────────────────────────────────
   /api/progress:
