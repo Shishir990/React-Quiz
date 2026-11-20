@@ -128,3 +128,10 @@
   .an-filters .pg-select { flex: 1; }
   .an-cols { gap: 2px; }
 }
+
+/* Compact stat cards (Analytics only; the Dashboard keeps the larger ones) */
+.db-wrapper .an-stats .db-stat-card { align-items: center; gap: 12px; padding: 0.75rem 1rem; }
+.db-wrapper .an-stats .db-stat-icon { width: 32px; height: 32px; border-radius: 8px; }
+.db-wrapper .an-stats .db-stat-label { margin-bottom: 2px; }
+.db-wrapper .an-stats .db-stat-value { font-size: 22px; }
+.db-wrapper .an-stats .db-stat-trend { margin-top: 2px; }

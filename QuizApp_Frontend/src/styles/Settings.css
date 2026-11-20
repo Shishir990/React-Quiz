@@ -97,8 +97,14 @@
 .st-grid .st-current,
 .st-grid .st-pending { margin-bottom: 0.75rem; }
 
+/* Tabs sit at the top right of the page heading */
+.st-head { align-items: flex-start; }
+.st-head .st-tab { flex: 0 0 auto; padding-inline: 14px; }
+
 @media (max-width: 560px) {
   .st-grid .st-card { padding: 16px; }
+  .st-head .st-tabs { width: 100%; }
+  .st-head .st-tab { flex: 1; }
 }
 
 /* Sign out of all devices */

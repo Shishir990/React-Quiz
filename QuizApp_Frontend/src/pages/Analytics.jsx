@@ -185,7 +185,7 @@ export default function Analytics() {
         </section>
       ) : !error && (
         <>
-          <div className="db-stats">
+          <div className="db-stats an-stats">
             {stats.map((s, i) => (
               <div key={s.label} className={`db-stat-card tone-${s.tone}`} style={{ animationDelay: `${i * 60}ms` }}>
                 <div className="db-stat-icon"><Icon name={s.icon} size={20} /></div>
