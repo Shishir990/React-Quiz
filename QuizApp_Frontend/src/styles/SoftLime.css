@@ -167,6 +167,14 @@ body,
 .au-input input:focus,
 .mq-search:focus-within { box-shadow: 0 0 0 2px rgba(var(--acc-rgb), 0.25); }
 
+/* Quiz header badge ("LIVE", the solo quiz mark): Quiz.css paints it pale mint, which
+   showed as a white tile on the dark header */
+.qz-brand-icon {
+  background: rgba(var(--acc-rgb), 0.1);
+  border-color: rgba(var(--acc-rgb), 0.3);
+  color: var(--acc);
+}
+
 /* ── 7. Top bar: flat, clock as plain monospace text ── */
 .db-navbar {
   border: none;
