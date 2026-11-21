@@ -254,7 +254,8 @@
 
 /* ── Friends: notifications picture on the left, points on the right ── */
 .lp-friends { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
-.lp-notes { position: relative; padding-bottom: 56px; }
+/* Room under the panel for the pop-up, so it only overlaps the panel's bottom edge, never its text */
+.lp-notes { position: relative; padding-bottom: 76px; }
 .lp-notes .lp-window { overflow: hidden; }
 .lp-notes-head {
   display: flex; align-items: center; justify-content: space-between;
