@@ -1,4 +1,4 @@
-// QuizApp logo: a white "q" with a lime dot on a black rounded tile.
+// QuizApp logo: a "Q" whose tail turns into a tick (the right answer), on a lime tile.
 // The same drawing is the browser-tab icon (public/favicon.svg).
 export function Logo({ size = 34, className = '' }) {
   return (
@@ -10,10 +10,9 @@ export function Logo({ size = 34, className = '' }) {
       role="img"
       aria-label="QuizApp logo"
     >
-      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="#0C0D0C" stroke="#2A2E2A" />
-      <circle cx="18" cy="18" r="7.5" fill="none" stroke="#F2F4EF" strokeWidth="4.2" />
-      <path d="M25.5 12v19" stroke="#F2F4EF" strokeWidth="4.2" strokeLinecap="round" />
-      <circle cx="31.5" cy="31" r="3.2" fill="#A3E635" />
+      <rect width="40" height="40" rx="11" fill="#A3E635" />
+      <path d="M26.16 21.8A9 9 0 1 0 20.33 26.69" fill="none" stroke="#172503" strokeWidth="4" strokeLinecap="round" />
+      <path d="M21.5 25.5L25.5 29.5L33 21" fill="none" stroke="#172503" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

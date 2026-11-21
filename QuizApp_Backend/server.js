@@ -93,6 +93,16 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+// API answers are per user (they depend on the sign-in cookies) and change all the time,
+// so no cache may keep them: not the browser, not Vercel's edge, not a proxy. Without this
+// Vercel labels them "public, max-age=0, must-revalidate", which lets caches store them
+// keyed only by URL, so a reload could show data from before a deploy or an earlier session.
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.vary('Cookie'); // added to CORS's "Vary: Origin", not replacing it
+  next();
+});
+
 // Make sure the database is connected before any API route runs
 app.use('/api', async (req, res, next) => {
   try {
