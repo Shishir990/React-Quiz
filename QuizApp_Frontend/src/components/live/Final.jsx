@@ -32,9 +32,13 @@ export default function Final({ room, myId, onLeave, onResults }) {
         </div>
 
         <p className="db-section-sub lv-saved" role="status">
-          {room.saved === null && 'Saving results…'}
-          {room.saved === true && <><Icon name="check" size={14} /> Saved to everyone&apos;s results and the leaderboard.</>}
-          {room.saved === false && 'Results could not be saved this time.'}
+          {room.custom ? 'Games from your own quizzes are just for fun: they aren’t added to results or the leaderboard.' : (
+            <>
+              {room.saved === null && 'Saving results…'}
+              {room.saved === true && <><Icon name="check" size={14} /> Saved to everyone&apos;s results and the leaderboard.</>}
+              {room.saved === false && 'Results could not be saved this time.'}
+            </>
+          )}
         </p>
 
         <div className="lv-host-bar">

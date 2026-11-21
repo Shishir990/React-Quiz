@@ -24,6 +24,10 @@ Browser ──(cookies)──▶ Vercel API   POST /api/live/ticket  →  { tick
   answer or no answer scores 0.
 - When a game finishes, every player who answered at least once gets a normal result, so
   the game appears in Results, Analytics and the Leaderboard.
+- Games can also be played from a quiz the host wrote in the **Quiz builder** (`/builder`,
+  stored in the `userquizzes` collection). Only its owner can host it, every question is
+  played in the order written, and these games are **not** saved to results or the
+  leaderboard (anyone could write an easy quiz to farm points).
 - Rooms are kept in memory, so **run one instance**. Restarting the server ends the games
   in progress.
 

@@ -44,6 +44,8 @@ tags:
     description: Unfinished quizzes saved on the server, so they can be resumed on any device
   - name: Results
     description: The signed-in player's attempts, analytics and the leaderboard
+  - name: My quizzes
+    description: Quizzes players write themselves to host as live games. Each player only sees their own.
   - name: Live
     description: Sign-in for live multiplayer games, which run on a separate Socket.IO server (QuizApp_Live)
   - name: Questions (admin)
@@ -797,6 +799,95 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Message' }
 
+  # ── My quizzes ────────────────────────────────────────
+  /api/user-quizzes:
+    get:
+      tags: [My quizzes]
+      summary: Quizzes I wrote
+      description: Newest change first, without the questions.
+      responses:
+        '200':
+          description: One entry per quiz
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/UserQuizSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      tags: [My quizzes]
+      summary: Create a quiz
+      description: Up to 50 quizzes per player; 3–50 questions with 2–6 options each.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserQuizInput' }
+      responses:
+        '201':
+          description: The saved quiz
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserQuiz' }
+        '400':
+          description: Something in the quiz is missing or invalid (the message says which question)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/user-quizzes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [My quizzes]
+      summary: One of my quizzes, with the answers
+      responses:
+        '200':
+          description: The quiz
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserQuiz' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    put:
+      tags: [My quizzes]
+      summary: Replace a quiz's title, description and questions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserQuizInput' }
+      responses:
+        '200':
+          description: The saved quiz
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserQuiz' }
+        '400':
+          description: Something in the quiz is missing or invalid
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      tags: [My quizzes]
+      summary: Delete a quiz
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
   # ── Progress ──────────────────────────────────────────
   /api/progress:
     get:
@@ -1382,6 +1473,48 @@ components:
       type: object
       properties:
         message: { type: string }
+    UserQuizQuestion:
+      type: object
+      required: [text, options, correctAnswer]
+      properties:
+        text: { type: string, example: 'Which planet is closest to the Sun?' }
+        options:
+          type: array
+          minItems: 2
+          maxItems: 6
+          items: { type: string }
+          example: [Mercury, Venus, Earth, Mars]
+        correctAnswer: { type: string, description: Must match one of the options, example: Mercury }
+        explanation: { type: string, example: 'Mercury orbits at about 58 million km.' }
+    UserQuizInput:
+      type: object
+      required: [title, questions]
+      properties:
+        title: { type: string, maxLength: 100, example: Space trivia night }
+        description: { type: string, maxLength: 300 }
+        questions:
+          type: array
+          minItems: 3
+          maxItems: 50
+          items: { $ref: '#/components/schemas/UserQuizQuestion' }
+    UserQuiz:
+      allOf:
+        - $ref: '#/components/schemas/UserQuizInput'
+        - type: object
+          properties:
+            _id: { type: string }
+            owner: { type: string }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    UserQuizSummary:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        questionCount: { type: integer, example: 12 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Message:
       type: object
       properties:

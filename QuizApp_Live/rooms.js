@@ -2,13 +2,14 @@
 // scores every answer, and never sends a correct answer before the reveal.
 // Rooms live in this process's memory, so run a single instance of this server.
 const mongoose = require('mongoose');
-const { Category, Question, Result } = require('./models');
+const { Category, Question, UserQuiz, Result } = require('./models');
 
 const LIMITS = {
   MIN_QUESTIONS: 3,
   MAX_QUESTIONS: 30,
   MIN_SECONDS: 10,
   MAX_SECONDS: 60,
+  MAX_CUSTOM_QUESTIONS: 50,   // a player's own quiz is played in full (the builder allows 50)
   MAX_PLAYERS: 50,
 };
 const PASS_MARK = 50;                        // percentage, as in QuizApp_Backend/Utils/quizRules.js
@@ -93,6 +94,7 @@ function snapshot(room, userId) {
     isHost: room.hostId === userId,
     host: { id: room.hostId, name: room.hostName },
     category: room.category,
+    custom: room.custom,
     seconds: room.seconds,
     total: room.questions.length,
     index: room.index,
@@ -210,6 +212,9 @@ async function finish(io, room) {
 // Every player who answered at least once gets a normal result, so the game counts
 // in their history, analytics and the leaderboard. Returns whether all were saved.
 async function saveResults(room) {
+  // A quiz anyone can write would let players farm leaderboard points, and its id
+  // isn't a category, so these games show their podium but aren't saved
+  if (room.custom) return true;
   const total = room.questions.length;
   const docs = [];
   for (const player of room.players.values()) {
@@ -262,43 +267,62 @@ function addSocket(io, room, user, socket) {
   }
 }
 
-async function create(io, socket, payload) {
-  const user = socket.data.user;
-  const categoryId = payload.categoryId;
-  if (typeof categoryId !== 'string' || !mongoose.isValidObjectId(categoryId)) throw new GameError('Choose a category.');
+const isPlayable = (q) => q.text && Array.isArray(q.options) && q.options.length >= 2 && q.options.includes(q.correctAnswer);
+const toGameQuestion = (q) => ({
+  id: q._id,
+  text: q.text,
+  options: q.options,
+  correctAnswer: q.correctAnswer,
+  explanation: q.explanation,
+  difficulty: q.difficulty,
+});
 
+// A random set from one of the shared categories
+async function categoryQuestions(categoryId, count) {
+  if (typeof categoryId !== 'string' || !mongoose.isValidObjectId(categoryId)) throw new GameError('Choose a category.');
   const category = await Category.findById(categoryId).select('name').lean();
   if (!category) throw new GameError('That category no longer exists.');
 
-  const count = clamp(payload.count, LIMITS.MIN_QUESTIONS, LIMITS.MAX_QUESTIONS, 10);
-  const seconds = clamp(payload.seconds, LIMITS.MIN_SECONDS, LIMITS.MAX_SECONDS, 20);
-
-  // A random set, oversampled a little so malformed questions can be skipped
+  // Oversampled a little so malformed questions can be skipped
   const sample = await Question.aggregate([
     { $match: { category: new mongoose.Types.ObjectId(categoryId) } },
     { $sample: { size: count + 10 } },
     { $project: { text: 1, options: 1, correctAnswer: 1, explanation: 1, difficulty: 1 } },
   ]);
-  const questions = sample
-    .filter((q) => q.text && Array.isArray(q.options) && q.options.length >= 2 && q.options.includes(q.correctAnswer))
-    .slice(0, count)
-    .map((q) => ({
-      id: q._id,
-      text: q.text,
-      options: q.options,
-      correctAnswer: q.correctAnswer,
-      explanation: q.explanation,
-      difficulty: q.difficulty,
-    }));
+  const questions = sample.filter(isPlayable).slice(0, count).map(toGameQuestion);
   if (questions.length < LIMITS.MIN_QUESTIONS) {
     throw new GameError(`This category needs at least ${LIMITS.MIN_QUESTIONS} questions for a live game.`);
   }
+  return { source: { id: String(category._id), name: category.name }, questions, custom: false };
+}
+
+// Every question of a quiz the host wrote, in the order they wrote them.
+// Only the owner can host it: someone else's quiz id is "not found".
+async function customQuestions(quizId, userId) {
+  if (typeof quizId !== 'string' || !mongoose.isValidObjectId(quizId)) throw new GameError('Choose one of your quizzes.');
+  const quiz = await UserQuiz.findOne({ _id: quizId, owner: userId }).select('title questions').lean();
+  if (!quiz) throw new GameError('That quiz no longer exists.');
+  const questions = (quiz.questions || []).filter(isPlayable).slice(0, LIMITS.MAX_CUSTOM_QUESTIONS).map(toGameQuestion);
+  if (questions.length < LIMITS.MIN_QUESTIONS) {
+    throw new GameError(`A quiz needs at least ${LIMITS.MIN_QUESTIONS} questions for a live game.`);
+  }
+  return { source: { id: String(quiz._id), name: quiz.title }, questions, custom: true };
+}
+
+async function create(io, socket, payload) {
+  const user = socket.data.user;
+  const seconds = clamp(payload.seconds, LIMITS.MIN_SECONDS, LIMITS.MAX_SECONDS, 20);
+  const { source, questions, custom } = payload.quizId !== undefined
+    ? await customQuestions(payload.quizId, user.id)
+    : await categoryQuestions(payload.categoryId, clamp(payload.count, LIMITS.MIN_QUESTIONS, LIMITS.MAX_QUESTIONS, 10));
 
   const room = {
     code: newCode(),
     hostId: user.id,
     hostName: user.name,
-    category: { id: String(category._id), name: category.name },
+    // `category` is what the game is played from: a shared category, or the host's own quiz
+    category: source,
+    custom,
     seconds,
     questions,
     status: 'lobby',

@@ -24,6 +24,13 @@ const Question = mongoose.model('Question', new mongoose.Schema({
   category: { type: ObjectId, ref: 'Category' },
 }, { strict: false }));
 
+// A quiz a player wrote (QuizApp_Backend/Models/UserQuiz.js), questions inside it
+const UserQuiz = mongoose.model('UserQuiz', new mongoose.Schema({
+  owner: { type: ObjectId, ref: 'User' },
+  title: String,
+  questions: [{ text: String, options: [String], correctAnswer: String, explanation: String }],
+}, { strict: false }));
+
 // Same shape as QuizApp_Backend/Models/Result.js, so live games show up in
 // results, analytics and the leaderboard like any other attempt
 const Result = mongoose.model('Result', new mongoose.Schema({
@@ -42,4 +49,4 @@ const Result = mongoose.model('Result', new mongoose.Schema({
   attempt: ObjectId,
 }, { timestamps: true }));
 
-module.exports = { User, Category, Question, Result };
+module.exports = { User, Category, Question, UserQuiz, Result };

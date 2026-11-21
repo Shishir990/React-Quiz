@@ -5,6 +5,7 @@ import { listProgressApi } from './progress';
 import { getMyResultsApi, getMyAnalyticsApi, getResultApi, getLeaderboardApi } from './results';
 import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi } from './admin';
 import { getSessionsApi } from './auth';
+import { listUserQuizzesApi, getUserQuizApi } from './userQuizzes';
 
 export { queryClient };
 
@@ -18,6 +19,8 @@ export const queryKeys = {
   leaderboard: (period, category) => ['leaderboard', period, category || 'all'],
   savedProgress: ['progress'],
   sessions: ['auth', 'sessions'],
+  userQuizzes: ['userQuizzes'],
+  userQuiz: (id) => ['userQuizzes', id],
 };
 
 // authFetch resolves with the server's error body instead of throwing,
@@ -114,3 +117,18 @@ export const invalidateAfterSubmit = () => {
   queryClient.invalidateQueries({ queryKey: ['results'] });
   queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
 };
+
+// Quizzes the player wrote themselves (list without questions)
+export const useUserQuizzes = () =>
+  useQuery({
+    queryKey: queryKeys.userQuizzes,
+    queryFn: listUserQuizzesApi,
+  });
+
+// One of them with its questions and answers, for the editor
+export const useUserQuiz = (id) =>
+  useQuery({
+    queryKey: queryKeys.userQuiz(id),
+    queryFn: () => getUserQuizApi(id),
+    enabled: !!id,
+  });

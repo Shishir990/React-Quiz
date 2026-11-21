@@ -14,6 +14,8 @@ import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Live from './pages/Live';
+import QuizBuilder from './pages/QuizBuilder';
+import QuizEditor from './pages/QuizEditor';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminOverview from './pages/admin/Overview';
 import AdminQuestionBank from './pages/admin/QuestionBank';
@@ -86,6 +88,23 @@ function App() {
           />
           {/* Active sessions is now a tab on the Settings page */}
           <Route path="/settings/sessions" element={<Navigate to="/settings?tab=sessions" replace />} />
+          <Route
+            path="/builder"
+            element={
+              <ProtectedRoute>
+                <QuizBuilder />
+              </ProtectedRoute>
+            }
+          />
+          {/* New quiz, or ?id= to edit one */}
+          <Route
+            path="/builder/edit"
+            element={
+              <ProtectedRoute>
+                <QuizEditor />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/live"
             element={

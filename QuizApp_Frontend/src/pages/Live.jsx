@@ -131,6 +131,7 @@ export default function Live() {
           onJoin={game.join}
           disabled={connection !== 'online'}
           initialCode={urlCode}
+          initialQuizId={params.get('host') || ''}
         />
       )}
       {room?.status === 'lobby' && <Lobby room={room} myId={myId} onStart={game.start} offline={offline} />}

@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { label: 'Analytics', icon: 'pie', to: '/analytics' },
   { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
   { label: 'Live game', icon: 'users', to: '/live' },
+  { label: 'Quiz builder', icon: 'edit', to: '/builder' },
   { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
   { label: 'Settings', icon: 'settings', to: '/settings', separate: true },
 ];
