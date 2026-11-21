@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import { Icon } from './Icon';
+import { getTheme, setTheme } from '../../theme';
 
-// Light/dark switch. The chosen theme lives on <html data-theme> (set before
-// first paint by the script in index.html) and in localStorage.
-const STORAGE_KEY = 'theme';
-
-const currentTheme = () =>
-  document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
-
+// Light/dark switch for the top bars (see src/theme.js)
 export function ThemeToggle({ className = '' }) {
-  const [theme, setTheme] = useState(currentTheme);
+  const [theme, setLocal] = useState(getTheme);
   const next = theme === 'dark' ? 'light' : 'dark';
 
   const toggle = () => {
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem(STORAGE_KEY, next); } catch { /* private mode: still switches for this visit */ }
     setTheme(next);
+    setLocal(next);
   };
 
   const label = `Switch to ${next} mode`;

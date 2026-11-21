@@ -1,93 +1,86 @@
 /* ════════════════════════════════════════════════════════════════
-   Light mode: active when <html data-theme="light"> (the toggle in the
-   top bar sets it). Theme.css and SoftLime.css colour almost
-   everything through the --th-* / --acc variables, so this mostly
-   swaps those for a light palette, then fixes the few spots that
-   hard-code dark colours. Loaded last (see main.jsx).
+   Light mode = the app's original light design (slate text, white
+   cards, emerald accent). In light mode src/theme.js switches
+   Theme.css and SoftLime.css off, so the page stylesheets show their
+   own colours. The values below are what pages written for the dark
+   theme (Landing, Live, Builder, My Quizzes...) read through the
+   --th-* / --acc variables; in dark mode Theme.css and SoftLime.css
+   load later and replace them.
    ════════════════════════════════════════════════════════════════ */
 
-:root[data-theme='light'] {
-  color-scheme: light;
-
-  /* The names say "on-dark" because the dark theme came first: here they mean main text */
-  --th-bg: #F5F6F3;
+:root {
+  /* "on-dark" names come from the dark theme: here they are the main text colours */
+  --th-bg: #F7F9FC;
   --th-surface: #FFFFFF;
-  --th-surface-hover: #EEF0EA;
-  --th-edge: #E2E5DE;
+  --th-surface-hover: #F1F5F9;
+  --th-edge: #E2E8F0;
   --th-card: #FFFFFF;
-  --th-card-hover: #FAFBF8;
-  --th-card-2: #F3F4F0;
-  --th-card-2-hover: #EAECE6;
-  --th-card-sunk: #EDEFE9;
-  --th-card-edge: #DDE1D8;
-  --th-border-strong: #C7CCC1;
-  --th-on-dark: #15180F;
-  --th-on-dark-2: #3B4136;
-  --th-on-dark-muted: #676E60;
-  --th-faint: #949A8C;
-  --th-deep: #ECF7D4;
-  --th-lime: #4D7C0F;
-  --th-glow: 0, 0, 0;
+  --th-card-hover: #F8FAFC;
+  --th-card-2: #F1F5F9;
+  --th-card-2-hover: #E2E8F0;
+  --th-card-sunk: #F1F5F9;
+  --th-card-edge: #D3DCE6;
+  --th-border-strong: #C3CEDB;
+  --th-on-dark: #0F172A;
+  --th-on-dark-2: #334155;
+  --th-on-dark-muted: #64748B;
+  --th-faint: #94A3B8;
+  --th-pill: #E8F6F0;
+  --th-pill-text: #047857;
+  --th-deep: #D1FAE5;
+  --th-lime: #047857;
+  --th-glow: 16, 185, 129;
 
-  /* A deeper lime: the dark theme's #A3E635 is unreadable as text on white */
-  --acc: #65A30D;
-  --acc-strong: #4D7C0F;
-  --acc-soft: #4D7C0F;
-  --acc-rgb: 101, 163, 13;
-  --acc-ink: #0F1A02;
+  /* The original emerald accent (the fallbacks in the page stylesheets) */
+  --acc: #10B981;
+  --acc-strong: #047857;
+  --acc-soft: #059669;
+  --acc-rgb: 16, 185, 129;
+  --acc-ink: #FFFFFF;
   --acc-glow: none;
 
-  --tone-good: #4D7C0F;
-  --tone-warn: #B45309;
+  --tone-good: #059669;
+  --tone-warn: #D97706;
   --tone-bad: #DC2626;
+
+  --radius-card: 16px;
+  --radius-ctl: 10px;
+
+  /* Charts: the original light palette */
+  --chart-1: #2A78D6;
+  --chart-2: #EB6834;
+  --chart-3: #1BAF7A;
+  --chart-4: #EDA100;
+  --chart-neutral: #CBD5E1;
+  --chart-primary: #2A78D6;
+  --chart-correct: #2A78D6;
+  --chart-wrong: #EB6834;
+
+  color-scheme: light;
 }
-:root:not([data-theme='light']) { color-scheme: dark; }
 
-/* ── Shadows were tuned for black: soften them ── */
-[data-theme='light'] .ad-qv-empty,
-[data-theme='light'] .qz-option,
-[data-theme='light'] .qz-palette,
-[data-theme='light'] .questionContainer { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
-[data-theme='light'] .au-card { box-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.25); }
-[data-theme='light'] .db-chart-tip { box-shadow: 0 10px 24px -12px rgba(15, 23, 42, 0.25); }
-[data-theme='light'] .ad-chart-col:hover,
-[data-theme='light'] .ad-chart-col:focus-visible { background: rgba(15, 23, 42, 0.03); }
-[data-theme='light'] .db-backdrop { background: rgba(15, 23, 42, 0.3); }
+/* Charts in dark mode: tuned for the dark soft-lime cards */
+:root:not([data-theme='light']) {
+  --chart-1: #65A30D;
+  --chart-2: #0284C7;
+  --chart-3: #EC4899;
+  --chart-4: #8B5CF6;
+  --chart-neutral: #3A403A;
+  --chart-primary: #A3E635;
+  --chart-correct: #A3E635;
+  --chart-wrong: #F87171;
 
-/* ── Status colours: pale text for dark, deep text for light ── */
-[data-theme='light'] .db-logout-btn:hover { background: #FEE2E2; border-color: #FECACA; color: #B91C1C; }
-[data-theme='light'] .db-error-msg { background: #FEF2F2; border-color: #FECACA; color: #B91C1C; }
-[data-theme='light'] .db-tag-fail,
-[data-theme='light'] .ad-pill-off,
-[data-theme='light'] .ad-tab-count.is-error { background: #FEE2E2; color: #B91C1C; }
-[data-theme='light'] .ad-tag.is-draft,
-[data-theme='light'] .ad-tab-count.is-duplicate { background: #FEF3C7; color: #B45309; }
-[data-theme='light'] .ad-score.is-fail,
-[data-theme='light'] .rs-q-verdict.is-wrong { color: #DC2626; }
-[data-theme='light'] .rs-option.is-picked-wrong { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; }
-[data-theme='light'] .qz-legend-dot.is-skipped { background: #FEF3C7; border-color: #FCD34D; color: #B45309; }
+  color-scheme: dark;
+}
 
-/* ── Charts and stat colours ── */
-[data-theme='light'] .db-wrapper .db-chart-bar { background: #D9F99D; }
-[data-theme='light'] .db-wrapper .db-chart-col.is-today .db-chart-bar,
-[data-theme='light'] .db-wrapper .db-chart-col.is-peak .db-chart-bar { background: var(--acc); }
-[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-emerald { --stat: #4D7C0F; }
-[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-blue    { --stat: #0284C7; }
-[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-violet  { --stat: #7C3AED; }
-[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-orange  { --stat: #D97706; }
-[data-theme='light'] .ad-kpi.tone-blue   { --stat: #0284C7; }
-[data-theme='light'] .ad-kpi.tone-teal   { --stat: #0D9488; }
-[data-theme='light'] .ad-kpi.tone-green  { --stat: #4D7C0F; }
-[data-theme='light'] .ad-kpi.tone-orange { --stat: #D97706; }
-
-/* ── My Quizzes cards set their own dark surface ── */
+/* My Quizzes cards were designed dark and set their own surface */
 [data-theme='light'] .mq-card {
   --qc-surface: #FFFFFF;
-  --qc-surface-2: #FAFBF8;
-  --qc-border: #DDE1D8;
-  --qc-text: #15180F;
-  --qc-text-2: #4F5648;
-  --qc-text-3: #7A8072;
+  --qc-surface-2: #F8FAFC;
+  --qc-border: #D3DCE6;
+  --qc-text: #0F172A;
+  --qc-text-2: #475569;
+  --qc-text-3: #64748B;
 }
 
 /* ── The toggle itself ── */

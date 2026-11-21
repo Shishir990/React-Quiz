@@ -9,6 +9,8 @@
     <script>
       try { if (localStorage.getItem('theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}
     </script>
+    <!-- Dark background until the app's own styles arrive, so dark mode never flashes white -->
+    <style>html:not([data-theme='light']) body { background: #0C0D0C; }</style>
   </head>
   <body>
     <div id="root"></div>

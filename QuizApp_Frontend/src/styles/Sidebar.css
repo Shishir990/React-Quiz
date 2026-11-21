@@ -1,0 +1,140 @@
+/* ════════════════════════════════════════════════════════════════
+   Sidebar contents, in both light and dark mode. The sidebar stays a
+   floating rounded card (Dashboard.css). Inside: the logo over a
+   divider, then groups of plain rows under small uppercase headings.
+   The selected row gets an accent tint, accent text and a bar on its
+   left edge. Each mode sets its colours through the --sb-* variables.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Colours: dark (default) ── */
+.db-sidebar {
+  --sb-text: #E4E7E1;
+  --sb-icon: var(--th-on-dark-muted);
+  --sb-label: var(--th-on-dark-muted);
+  --sb-hover: rgba(255, 255, 255, 0.05);
+  --sb-active-bg: rgba(var(--acc-rgb), 0.16);
+  --sb-active-text: var(--acc);
+  --sb-divider: rgba(255, 255, 255, 0.08);
+  --sb-danger-bg: #3A1D1D;
+  --sb-danger-edge: #5B2A2A;
+  --sb-danger-text: #FCA5A5;
+}
+
+/* ── Colours: light ── */
+[data-theme='light'] .db-sidebar {
+  --sb-text: #1E293B;
+  --sb-icon: #64748B;
+  --sb-label: #94A3B8;
+  --sb-hover: rgba(15, 23, 42, 0.04);
+  --sb-active-bg: rgba(var(--acc-rgb), 0.12);
+  --sb-active-text: #047857;
+  --sb-divider: #E2E8F0;
+  --sb-danger-bg: #FEE2E2;
+  --sb-danger-edge: #FECACA;
+  --sb-danger-text: #B91C1C;
+}
+
+/* ── Card ── */
+.db-wrapper .db-sidebar {
+  width: 248px;
+  padding: 1.25rem 0.75rem 0.75rem;
+  font-family: var(--font-display);
+}
+/* No scrollbar: the sidebar still scrolls on short screens (wheel / trackpad / touch) */
+.db-wrapper .db-sidebar { scrollbar-width: none; }
+.db-wrapper .db-sidebar::-webkit-scrollbar { display: none; }
+
+/* ── Logo ── */
+.db-wrapper .db-logo {
+  margin: 0 0 0.25rem;
+  padding: 0 0.5rem 0.75rem;
+}
+.db-wrapper .db-logo-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 13px;
+}
+.db-wrapper .db-logo-name {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ── Groups: a small heading over the rows ── */
+.db-wrapper .db-nav-group { padding: 0.75rem 0 0.5rem; }
+.db-wrapper .db-nav-label {
+  margin: 0 0 0.5rem;
+  padding: 0 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sb-label);
+}
+
+/* ── Rows ── */
+.db-wrapper .db-nav { gap: 4px; }
+.db-wrapper .db-sidebar .db-nav-item {
+  position: relative;
+  height: 44px;
+  padding: 0 12px;
+  gap: 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sb-text);
+  transition: background 0.15s, color 0.15s;
+}
+.db-wrapper .db-sidebar .db-nav-item svg {
+  stroke-width: 1.7;
+  color: var(--sb-icon);
+  transition: color 0.15s;
+}
+.db-wrapper .db-sidebar .db-nav-item:hover { background: var(--sb-hover); box-shadow: none; }
+.db-wrapper .db-sidebar .db-nav-item:focus-visible { outline: 2px solid rgba(var(--acc-rgb), 0.55); outline-offset: 1px; }
+
+/* Selected: accent tint, accent text and icon */
+.db-wrapper .db-sidebar .db-nav-item.active,
+.db-wrapper .db-sidebar .db-nav-item.active:hover {
+  background: var(--sb-active-bg);
+  color: var(--sb-active-text);
+  box-shadow: none;
+}
+.db-wrapper .db-sidebar .db-nav-item.active svg { color: var(--sb-active-text); }
+
+/* ── Profile at the bottom ── */
+.db-wrapper .db-sidebar-user {
+  margin-top: auto;
+  padding: 12px 6px 2px;
+  border: none;
+  border-top: 1px solid var(--sb-divider);
+  border-radius: 0;
+  background: transparent;
+}
+.db-wrapper .db-sidebar-user .db-avatar { width: 32px; height: 32px; border-radius: 8px; font-size: 12px; }
+.db-wrapper .db-sidebar-name { font-size: 13px; font-weight: 600; color: var(--sb-text); }
+.db-wrapper .db-sidebar-role { font-size: 11.5px; color: var(--sb-label); }
+.db-wrapper .db-sidebar-user .db-logout-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--sb-icon);
+}
+.db-wrapper .db-sidebar-user .db-logout-btn:hover {
+  background: var(--sb-danger-bg);
+  border-color: var(--sb-danger-edge);
+  color: var(--sb-danger-text);
+}
+
+/* Mobile drawer close button */
+.db-wrapper .db-drawer-close {
+  border: 1px solid var(--sb-divider);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-icon);
+}

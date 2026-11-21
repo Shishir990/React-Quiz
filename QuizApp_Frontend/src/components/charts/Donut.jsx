@@ -30,7 +30,7 @@ export function Donut({ segments, centerValue, centerLabel, label }) {
                 key={a.key}
                 cx={size / 2} cy={size / 2} r={radius}
                 fill="none"
-                stroke={a.color}
+                style={{ stroke: a.color }}
                 strokeWidth={active === a.key ? stroke + 6 : stroke}
                 strokeDasharray={`${a.dash} ${circumference}`}
                 strokeDashoffset={-a.offset}

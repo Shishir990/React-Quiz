@@ -5,16 +5,32 @@ import { initialsOf } from '../../utils/format';
 import { Icon, ThemeToggle } from '../ui';
 import '../../styles/Dashboard.css';
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: 'dashboard', to: '/dashboard' },
-  { label: 'My Quizzes', icon: 'quizzes', to: '/quizzes' },
-  { label: 'Results', icon: 'results', to: '/results' },
-  { label: 'Analytics', icon: 'pie', to: '/analytics' },
-  { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
-  { label: 'Live game', icon: 'users', to: '/live' },
-  { label: 'Quiz builder', icon: 'edit', to: '/builder' },
-  { label: 'Admin console', icon: 'shield', to: '/admin', separate: true, adminOnly: true },
-  { label: 'Settings', icon: 'settings', to: '/settings', separate: true },
+// Sidebar groups, each under a small heading
+const NAV_GROUPS = [
+  {
+    label: 'Main menu',
+    items: [
+      { label: 'Dashboard', icon: 'dashboard', to: '/dashboard' },
+      { label: 'My Quizzes', icon: 'quizzes', to: '/quizzes' },
+      { label: 'Results', icon: 'results', to: '/results' },
+      { label: 'Analytics', icon: 'pie', to: '/analytics' },
+      { label: 'Leaderboard', icon: 'trophy', to: '/leaderboard' },
+    ],
+  },
+  {
+    label: 'Activity',
+    items: [
+      { label: 'Live game', icon: 'users', to: '/live' },
+      { label: 'Quiz builder', icon: 'edit', to: '/builder' },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { label: 'Admin console', icon: 'shield', to: '/admin', adminOnly: true },
+      { label: 'Settings', icon: 'settings', to: '/settings' },
+    ],
+  },
 ];
 
 // Top bar search: filters My Quizzes as you type (writes ?q=); on other pages,
@@ -209,13 +225,14 @@ export default function AppShell({ title, children }) {
           </button>
         </div>
 
-        <nav className="db-nav">
-          {NAV_ITEMS.filter((item) => !item.separate).map((item) => <NavItem key={item.label} item={item} />)}
-        </nav>
-
-        <nav className="db-nav db-nav-secondary">
-          {NAV_ITEMS.filter((item) => item.separate && (!item.adminOnly || isAdmin)).map((item) => <NavItem key={item.label} item={item} />)}
-        </nav>
+        {NAV_GROUPS.map((group) => (
+          <div className="db-nav-group" key={group.label}>
+            <p className="db-nav-label" id={`nav-${group.label.replace(/\s+/g, '-').toLowerCase()}`}>{group.label}</p>
+            <nav className="db-nav" aria-labelledby={`nav-${group.label.replace(/\s+/g, '-').toLowerCase()}`}>
+              {group.items.filter((item) => !item.adminOnly || isAdmin).map((item) => <NavItem key={item.label} item={item} />)}
+            </nav>
+          </div>
+        ))}
 
         <div className="db-sidebar-user">
           <div className="db-avatar db-avatar-brand">{initials}</div>

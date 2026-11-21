@@ -42,7 +42,7 @@
   --radius-ctl: 3px;
 }
 
-/* ── 2. Sidebar: same palette and font, its own layout ── */
+/* ── 2. Sidebar: see Sidebar.css (shared by light and dark mode) ── */
 .db-logo-icon { box-shadow: none; }
 
 /* ── 3. Flat canvas: no radial glow ── */
