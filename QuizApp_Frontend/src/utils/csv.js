@@ -149,12 +149,34 @@ const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
  * Returns { items, missingColumns } where each item is
  *   { line, data?, error?, duplicate, categoryName }
  */
-export function checkRows(rows, { categories, defaultCategory, existing }) {
-  if (rows.length < 2) return { items: [], missingColumns: [], empty: true };
-
+// The header row, read with the spelling aliases above: which column holds what,
+// and which required columns are missing. Shared by both importers.
+function readHeader(rows) {
   const header = rows[0].map((h) => ALIASES[norm(h)] || null);
   const col = (name) => header.indexOf(name);
   const missingColumns = ['question', 'option_a', 'option_b', 'correct'].filter((c) => col(c) === -1);
+  // One cell of a row. A leading apostrophe before = + - @ is the formula guard our
+  // exports add: drop it.
+  const cell = (cells, name) => (col(name) === -1 ? '' : String(cells[col(name)] ?? '').trim().replace(/^'(?=[=+\-@])/, ''));
+  return { col, missingColumns, cell };
+}
+
+// The options of a row (empty cells skipped) and its correct answer: "B" means
+// option B, otherwise the cell must match an option's text. index is -1 when it doesn't.
+function readOptions(cells, cell) {
+  const options = LETTERS.map((l) => cell(cells, `option_${l.toLowerCase()}`)).filter(Boolean);
+  const correctRaw = cell(cells, 'correct');
+  const letterIndex = LETTERS.indexOf(correctRaw.toUpperCase());
+  const index = correctRaw.length === 1 && letterIndex !== -1
+    ? (letterIndex < options.length ? letterIndex : -1)
+    : options.findIndex((o) => norm(o) === norm(correctRaw));
+  return { options, correctRaw, index };
+}
+
+export function checkRows(rows, { categories, defaultCategory, existing }) {
+  if (rows.length < 2) return { items: [], missingColumns: [], empty: true };
+
+  const { missingColumns, cell: readCell } = readHeader(rows);
   if (missingColumns.length) return { items: [], missingColumns };
 
   const byId = new Map(categories.map((c) => [c._id, c]));
@@ -172,8 +194,7 @@ export function checkRows(rows, { categories, defaultCategory, existing }) {
 
   const items = rows.slice(1).map((cells, i) => {
     const line = i + 2; // spreadsheet row number (header is row 1)
-    // A leading apostrophe before = + - @ is the formula guard our exports add: drop it
-    const get = (name) => (col(name) === -1 ? '' : String(cells[col(name)] ?? '').trim().replace(/^'(?=[=+\-@])/, ''));
+    const get = (name) => readCell(cells, name);
 
     const text = get('question');
     const options = LETTERS.map((l) => get(`option_${l.toLowerCase()}`)).filter(Boolean);
@@ -216,4 +237,61 @@ export function checkRows(rows, { categories, defaultCategory, existing }) {
   });
 
   return { items, missingColumns: [] };
+}
+
+// ── Player quizzes (Quiz builder) ──
+
+/**
+ * Turn parsed CSV rows into questions for the quiz builder. Same columns as the admin
+ * template (category and difficulty are ignored), checked against the builder's limits.
+ *   limits  QUIZ_LIMITS from utils/userQuiz.js
+ * Returns { items, missingColumns } where each item is
+ *   { line, text, error?, question? }  and question is { text, options, correct, explanation }
+ */
+export function checkQuizRows(rows, limits) {
+  if (rows.length < 2) return { items: [], missingColumns: [] };
+  const { missingColumns, cell } = readHeader(rows);
+  if (missingColumns.length) return { items: [], missingColumns };
+
+  const items = rows.slice(1).map((cells, i) => {
+    const line = i + 2; // spreadsheet row number (header is row 1)
+    const text = cell(cells, 'question');
+    const explanation = cell(cells, 'explanation');
+    const { options, correctRaw, index } = readOptions(cells, cell);
+
+    let error = null;
+    if (!text) error = 'Question is empty';
+    else if (text.length > limits.TEXT) error = `Question is over ${limits.TEXT} characters`;
+    else if (options.length < limits.MIN_OPTIONS) error = `Needs at least ${limits.MIN_OPTIONS} options`;
+    else if (options.some((o) => o.length > limits.OPTION)) error = `An option is over ${limits.OPTION} characters`;
+    else if (new Set(options.map(norm)).size !== options.length) error = 'Two options are the same';
+    else if (!correctRaw) error = 'Correct answer is empty';
+    else if (index === -1) error = `Correct answer "${correctRaw}" doesn't match an option`;
+    else if (explanation.length > limits.EXPLANATION) error = `Explanation is over ${limits.EXPLANATION} characters`;
+
+    return { line, text, error, question: error ? null : { text, options, correct: index, explanation } };
+  });
+  return { items, missingColumns: [] };
+}
+
+// Template for the quiz builder: the admin columns minus category and difficulty
+export function quizTemplateCSV() {
+  const header = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'option_f', 'correct', 'explanation'];
+  const rows = [
+    header,
+    ['What is the capital of Japan?', 'Seoul', 'Tokyo', 'Beijing', 'Bangkok', '', '', 'B', 'Tokyo has been the capital since 1868.'],
+    ['How many legs does a spider have?', '6', '8', '10', '', '', '', '8', ''],
+    ['Which is the largest ocean?', 'Atlantic', 'Indian', 'Pacific', 'Arctic', '', '', 'C', ''],
+  ];
+  return BOM + rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+
+// A quiz from the builder, in the same columns, so it can be edited in a spreadsheet
+// and imported again (the correct answer is written as its letter)
+export function quizCSV(questions) {
+  const header = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'option_f', 'correct', 'explanation'];
+  const rows = questions.map((q) => [
+    q.text, ...LETTERS.map((_, i) => q.options[i] ?? ''), LETTERS[q.correct] || '', q.explanation || '',
+  ]);
+  return BOM + [header, ...rows].map((r) => r.map((v) => csvCell(safeText(String(v ?? '')))).join(',')).join('\r\n') + '\r\n';
 }

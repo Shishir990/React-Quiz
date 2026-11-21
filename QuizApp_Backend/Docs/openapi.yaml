@@ -47,7 +47,7 @@ tags:
   - name: My quizzes
     description: Quizzes players write themselves to host as live games. Each player only sees their own.
   - name: Live
-    description: Sign-in for live multiplayer games, which run on a separate Socket.IO server (QuizApp_Live)
+    description: Live multiplayer games (they run on a separate Socket.IO server, QuizApp_Live) and the history of past games
   - name: Questions (admin)
     description: The question bank, including correct answers
   - name: Admin
@@ -799,6 +799,39 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Message' }
 
+  /api/live/games:
+    get:
+      tags: [Live]
+      summary: Live games I played
+      description: Finished live games the signed-in player took part in (hosting counts), newest first, up to 100.
+      responses:
+        '200':
+          description: One entry per game
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LiveGameSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/live/games/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Live]
+      summary: One live game I played
+      description: Everyone's final ranking, and a review of every question with only the caller's own answers.
+      responses:
+        '200':
+          description: The game
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LiveGameDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
   # ── My quizzes ────────────────────────────────────────
   /api/user-quizzes:
     get:
@@ -1515,6 +1548,75 @@ components:
         questionCount: { type: integer, example: 12 }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    LiveGameSummary:
+      type: object
+      properties:
+        _id: { type: string }
+        mode: { type: string, enum: [sync, exam], description: 'sync = one question at a time, exam = all at once' }
+        source:
+          type: object
+          properties:
+            kind: { type: string, enum: [category, custom] }
+            name: { type: string, example: Space }
+        hostName: { type: string }
+        isHost: { type: boolean }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time }
+        total: { type: integer, description: Questions in the game }
+        players: { type: integer }
+        me:
+          type: object
+          properties:
+            rank: { type: integer }
+            score: { type: integer }
+            correct: { type: integer }
+        winner:
+          type: object
+          properties:
+            name: { type: string }
+            score: { type: integer }
+    LiveGameDetail:
+      type: object
+      properties:
+        _id: { type: string }
+        code: { type: string, example: K7Q2M }
+        mode: { type: string, enum: [sync, exam] }
+        source:
+          type: object
+          properties:
+            kind: { type: string, enum: [category, custom] }
+            name: { type: string }
+        hostName: { type: string }
+        isHost: { type: boolean }
+        seconds: { type: integer, description: Per question (sync only) }
+        totalSeconds: { type: integer, description: Whole game (exam only) }
+        startedAt: { type: string, format: date-time }
+        endedAt: { type: string, format: date-time }
+        total: { type: integer }
+        ranking:
+          type: array
+          items:
+            type: object
+            properties:
+              rank: { type: integer }
+              name: { type: string }
+              score: { type: integer }
+              correct: { type: integer }
+              timeMs: { type: integer, description: Time used (exam only) }
+              isMe: { type: boolean }
+        review:
+          type: array
+          items:
+            type: object
+            properties:
+              text: { type: string }
+              options: { type: array, items: { type: string } }
+              correctAnswer: { type: string }
+              explanation: { type: string }
+              myAnswer: { type: string, nullable: true }
+              isCorrect: { type: boolean }
+              points: { type: integer }
+              counts: { type: array, items: { type: integer }, description: Players who picked each option }
     Message:
       type: object
       properties:

@@ -6,6 +6,8 @@ import { Icon } from '../components/ui';
 import { queryKeys, useUserQuiz } from '../api/queries';
 import { createUserQuizApi, updateUserQuizApi } from '../api/userQuizzes';
 import { QUIZ_LIMITS, blankQuestion, blankQuiz, editorQuiz, quizPayload, quizProblem } from '../utils/userQuiz';
+import { downloadFile, quizCSV } from '../utils/csv';
+import ImportCSV from '../components/builder/ImportCSV';
 import '../styles/Dashboard.css';
 import '../styles/Builder.css';
 
@@ -15,6 +17,7 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 export default function QuizEditor() {
   const [params] = useSearchParams();
   const id = params.get('id');
+  const startWithImport = params.get('import') === '1';
   const { data: saved, isPending, error: loadError } = useUserQuiz(id);
 
   if (id && isPending) {
@@ -24,7 +27,7 @@ export default function QuizEditor() {
     return <Frame title="Edit quiz"><div className="db-error-msg" role="alert">{loadError.message}</div></Frame>;
   }
   // Keyed by id so opening another quiz starts from its own saved copy
-  return <Editor key={id || 'new'} id={id} initial={saved ? editorQuiz(saved) : blankQuiz()} />;
+  return <Editor key={id || 'new'} id={id} initial={saved ? editorQuiz(saved) : blankQuiz()} startWithImport={startWithImport} />;
 }
 
 function Frame({ title, children }) {
@@ -36,12 +39,20 @@ function Frame({ title, children }) {
   );
 }
 
-function Editor({ id, initial }) {
+// A question nobody has typed into yet (a fresh quiz starts with three of these)
+const isBlank = (q) => !q.text.trim() && q.options.every((o) => !o.trim()) && !q.explanation.trim();
+
+// "friday-office_trivia.csv" -> "friday office trivia"
+const titleFromFile = (name) => name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim().slice(0, QUIZ_LIMITS.TITLE);
+
+function Editor({ id, initial, startWithImport }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form, setForm] = useState(initial);
   const [problem, setProblem] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(startWithImport);
+  const [notice, setNotice] = useState('');
   const dirty = useRef(false);
   const questionRefs = useRef({});
   const L = QUIZ_LIMITS;
@@ -122,6 +133,25 @@ function Editor({ id, initial }) {
     }
   };
 
+  const allBlank = form.questions.every(isBlank);
+
+  const importQuestions = (questions, { replace, fileName }) => {
+    const imported = questions.map((q) => ({ ...q, key: crypto.randomUUID() }));
+    update((f) => ({
+      ...f,
+      // A new quiz without a title is named after the file
+      title: f.title.trim() ? f.title : titleFromFile(fileName),
+      questions: replace ? imported : [...f.questions.filter((q) => !isBlank(q)), ...imported],
+    }));
+    setImporting(false);
+    setNotice(`${imported.length} ${imported.length === 1 ? 'question' : 'questions'} added from ${fileName}. Check them, then save the quiz.`);
+  };
+
+  const exportQuestions = () => {
+    const slug = (form.title.trim() || 'quiz').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'quiz';
+    downloadFile(`${slug}.csv`, quizCSV(form.questions.filter((q) => !isBlank(q))));
+  };
+
   const cancel = () => {
     if (dirty.current && !window.confirm('Discard your changes?')) return;
     dirty.current = false;
@@ -137,6 +167,14 @@ function Editor({ id, initial }) {
             <p className="db-section-sub">Pick the correct option with the circle next to it.</p>
           </div>
           <div className="pg-head-actions">
+            <button type="button" className="db-btn-ghost" onClick={() => setImporting((v) => !v)} aria-expanded={importing} disabled={busy}>
+              <Icon name="box" size={15} /> Import CSV
+            </button>
+            {!allBlank && (
+              <button type="button" className="db-btn-ghost" onClick={exportQuestions} disabled={busy}>
+                <Icon name="download" size={15} /> Download CSV
+              </button>
+            )}
             <button type="button" className="db-btn-ghost" onClick={cancel} disabled={busy}>Cancel</button>
             <button type="submit" className="db-btn-light" disabled={busy}>
               <Icon name="check" size={15} /> {busy ? 'Saving…' : 'Save quiz'}
@@ -145,6 +183,23 @@ function Editor({ id, initial }) {
         </div>
 
         {problem && <div className="db-error-msg bd-msg" role="alert">{problem.message}</div>}
+        {notice && !problem && (
+          <div className="lv-banner is-info bd-msg" role="status">
+            <Icon name="check" size={15} /> {notice}
+            <button type="button" className="lv-banner-close" onClick={() => setNotice('')} aria-label="Dismiss">
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        )}
+
+        {importing && (
+          <ImportCSV
+            current={form.questions.filter((q) => !isBlank(q)).length}
+            replaceable={allBlank}
+            onImport={importQuestions}
+            onClose={() => setImporting(false)}
+          />
+        )}
 
         <section className="db-panel bd-card bd-details">
           <label className="bd-label" htmlFor="bd-title">Title</label>

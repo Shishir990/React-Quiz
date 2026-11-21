@@ -6,7 +6,7 @@ import { useQuiz } from '../context/QuizContext';
 import { useLiveGame } from '../hooks/useLiveGame';
 import Setup from '../components/live/Setup';
 import Lobby from '../components/live/Lobby';
-import QuestionView from '../components/live/QuestionView';
+import LiveQuizScreen from '../components/live/LiveQuizScreen';
 import Final from '../components/live/Final';
 import '../styles/Dashboard.css';
 import '../styles/Leaderboard.css';
@@ -31,6 +31,9 @@ export default function Live() {
   const { room, connection } = game;
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [joinError, setJoinError] = useState('');
+  // The room code from the URL that was already joined (or tried). Only a code we
+  // haven't been in yet is joined automatically: otherwise leaving a room would put
+  // us straight back in, for the moment the old ?code= is still in the address bar.
   const triedCode = useRef('');
 
   // Opened from an invite link or refreshed mid-game: join that room once connected
@@ -45,9 +48,11 @@ export default function Live() {
     });
   }, [connection, room, urlCode, game, setParams]);
 
-  // Keep the address in step with the room we're in
+  // Keep the address in step with the room we're in (created or joined from the form too)
   useEffect(() => {
-    if (room?.code && urlCode !== room.code) setParams({ code: room.code }, { replace: true });
+    if (!room?.code) return;
+    triedCode.current = room.code;
+    if (urlCode !== room.code) setParams({ code: room.code }, { replace: true });
   }, [room?.code, urlCode, setParams]);
 
   // The room was closed under us (host left, or it expired)
@@ -57,19 +62,69 @@ export default function Live() {
 
   const leave = async () => {
     setConfirmLeave(false);
-    triedCode.current = '';
-    await game.leave();
+    // Never rejoin the room being left, and drop its code from the address first
+    if (room?.code) triedCode.current = room.code;
     setParams({}, { replace: true });
+    await game.leave();
   };
+
+  // While the game is being played it fills the screen, like a solo quiz
+  const playing = room && ['question', 'reveal', 'exam'].includes(room.status);
 
   // Leaving mid-game needs a confirm; the lobby and the final screen don't
   const askLeave = () => {
-    if (room && (room.status === 'question' || room.status === 'reveal')) setConfirmLeave(true);
+    if (playing) setConfirmLeave(true);
     else leave();
   };
 
   const offline = connection === 'offline';
   const notice = game.closed || joinError;
+
+  const confirmBanner = confirmLeave && room && (
+    <div className="lv-banner lv-confirm" role="alertdialog" aria-labelledby="lv-confirm-title">
+      <div>
+        <p id="lv-confirm-title" className="lv-confirm-title">
+          {room.isHost ? 'End this game for everyone?' : 'Leave this game?'}
+        </p>
+        <p className="db-section-sub">
+          {room.isHost
+            ? 'Every player is sent back to the start and no results are saved.'
+            : 'You can rejoin with the same code while the game is running.'}
+        </p>
+      </div>
+      <div className="lv-confirm-actions">
+        {/* Only shown while playing, so it uses the quiz screen's buttons */}
+        <button className="qz-prev" onClick={() => setConfirmLeave(false)} autoFocus>Keep playing</button>
+        <button className="qz-next lv-danger" onClick={leave}>{room.isHost ? 'End game' : 'Leave'}</button>
+      </div>
+    </div>
+  );
+  const offlineBanner = offline && (
+    <div className={`lv-banner ${room ? 'is-warn' : ''}`} role="status">
+      <span className="lv-pulse is-warn" aria-hidden="true" />
+      {game.error || 'Connection lost. Reconnecting…'}
+      {room && <span className="lv-muted"> Your place and score are kept.</span>}
+    </div>
+  );
+
+  if (playing) {
+    return (
+      <LiveQuizScreen
+          key={room.code}
+          room={room}
+          myId={myId}
+          myName={user?.name}
+          offline={offline}
+          clockOffset={game.clockOffset}
+          notices={(confirmBanner || offlineBanner) && <div className="lv-qz-notices">{confirmBanner}{offlineBanner}</div>}
+          onAnswer={game.answer}
+          onNext={game.next}
+          onExamAnswer={game.examAnswer}
+          onExamSubmit={game.examSubmit}
+          onLeave={askLeave}
+        />
+    );
+  }
 
   return (
     <AppShell title="Live game">
@@ -78,6 +133,11 @@ export default function Live() {
           <h1 className="pg-title">Live game</h1>
           <p className="db-section-sub">{room ? SUBTITLES[room.status] : 'Play a quiz with friends, everyone at the same time.'}</p>
         </div>
+        {!room && (
+          <button className="db-btn-ghost" onClick={() => navigate('/live/history')}>
+            <Icon name="clock" size={15} /> Past games
+          </button>
+        )}
         {room && (
           <div className="pg-head-actions">
             <span className="lv-head-code" aria-label={`Game code ${room.code}`}>{room.code}</span>
@@ -88,31 +148,8 @@ export default function Live() {
         )}
       </div>
 
-      {confirmLeave && room && (
-        <div className="lv-banner lv-confirm" role="alertdialog" aria-labelledby="lv-confirm-title">
-          <div>
-            <p id="lv-confirm-title" className="lv-confirm-title">
-              {room.isHost ? 'End this game for everyone?' : 'Leave this game?'}
-            </p>
-            <p className="db-section-sub">
-              {room.isHost
-                ? 'Every player is sent back to the start and no results are saved.'
-                : 'You can rejoin with the same code while the game is running.'}
-            </p>
-          </div>
-          <div className="lv-confirm-actions">
-            <button className="db-btn-ghost" onClick={() => setConfirmLeave(false)} autoFocus>Keep playing</button>
-            <button className="db-btn-light lv-danger" onClick={leave}>{room.isHost ? 'End game' : 'Leave'}</button>
-          </div>
-        </div>
-      )}
-      {offline && (
-        <div className={`lv-banner ${room ? 'is-warn' : ''}`} role="status">
-          <span className="lv-pulse is-warn" aria-hidden="true" />
-          {game.error || 'Connection lost. Reconnecting…'}
-          {room && <span className="lv-muted"> Your place and score are kept.</span>}
-        </div>
-      )}
+      {confirmBanner}
+      {offlineBanner}
       {connection === 'connecting' && !room && (
         <div className="lv-banner" role="status"><span className="lv-pulse" aria-hidden="true" /> Connecting to the live server…</div>
       )}
@@ -135,19 +172,8 @@ export default function Live() {
         />
       )}
       {room?.status === 'lobby' && <Lobby room={room} myId={myId} onStart={game.start} offline={offline} />}
-      {(room?.status === 'question' || room?.status === 'reveal') && (
-        <QuestionView
-          key={room.index}
-          room={room}
-          myId={myId}
-          offline={offline}
-          clockOffset={game.clockOffset}
-          onAnswer={game.answer}
-          onNext={game.next}
-        />
-      )}
       {room?.status === 'finished' && (
-        <Final room={room} myId={myId} onLeave={leave} onResults={() => navigate('/results')} />
+        <Final room={room} myId={myId} onLeave={leave} onHistory={(id) => navigate(`/live/history/game?id=${id}`)} />
       )}
 
     </AppShell>

@@ -14,6 +14,8 @@ import Leaderboard from './pages/Leaderboard';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Live from './pages/Live';
+import LiveHistory from './pages/LiveHistory';
+import LiveGameDetail from './pages/LiveGameDetail';
 import QuizBuilder from './pages/QuizBuilder';
 import QuizEditor from './pages/QuizEditor';
 import AdminLayout from './components/layout/AdminLayout';
@@ -102,6 +104,23 @@ function App() {
             element={
               <ProtectedRoute>
                 <QuizEditor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/live/history"
+            element={
+              <ProtectedRoute>
+                <LiveHistory />
+              </ProtectedRoute>
+            }
+          />
+          {/* One past game: ?id= */}
+          <Route
+            path="/live/history/game"
+            element={
+              <ProtectedRoute>
+                <LiveGameDetail />
               </ProtectedRoute>
             }
           />

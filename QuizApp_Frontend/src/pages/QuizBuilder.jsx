@@ -44,9 +44,14 @@ export default function QuizBuilder() {
           <h1 className="pg-title">Quiz builder</h1>
           <p className="db-section-sub">Write your own quizzes and host them as live games for friends.</p>
         </div>
-        <button className="db-btn-light" onClick={() => navigate('/builder/edit')} disabled={full} title={full ? `Up to ${QUIZ_LIMITS.MAX_QUIZZES} quizzes` : undefined}>
-          <Icon name="plus" size={15} /> New quiz
-        </button>
+        <div className="pg-head-actions">
+          <button className="db-btn-ghost" onClick={() => navigate('/builder/edit?import=1')} disabled={full}>
+            <Icon name="box" size={15} /> Import CSV
+          </button>
+          <button className="db-btn-light" onClick={() => navigate('/builder/edit')} disabled={full} title={full ? `Up to ${QUIZ_LIMITS.MAX_QUIZZES} quizzes` : undefined}>
+            <Icon name="plus" size={15} /> New quiz
+          </button>
+        </div>
       </div>
 
       {(error || message) && <div className="db-error-msg bd-msg" role="alert">{message || error.message}</div>}
@@ -62,9 +67,14 @@ export default function QuizBuilder() {
           <p className="db-empty-text">
             Write questions on any topic, then host the quiz live: everyone answers at the same time.
           </p>
-          <button className="db-btn-light" onClick={() => navigate('/builder/edit')}>
-            <Icon name="plus" size={15} /> Create your first quiz
-          </button>
+          <div className="bd-card-actions bd-empty-actions">
+            <button className="db-btn-light" onClick={() => navigate('/builder/edit')}>
+              <Icon name="plus" size={15} /> Create your first quiz
+            </button>
+            <button className="db-btn-ghost" onClick={() => navigate('/builder/edit?import=1')}>
+              <Icon name="box" size={15} /> Import from CSV
+            </button>
+          </div>
         </section>
       ) : (
         <div className="bd-grid">

@@ -117,6 +117,8 @@ io.on('connection', (socket) => {
   handle('game:start', actions.start);
   handle('game:next', actions.next);
   handle('game:answer', actions.answer);
+  handle('exam:answer', actions.examAnswer);
+  handle('exam:submit', actions.examSubmit);
 
   const { user } = socket.data;
   console.log(`[live] connect user ${user.id} via ${socket.conn.transport.name}`);

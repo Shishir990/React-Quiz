@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '../ui';
 import Scoreboard from './Scoreboard';
+import { formatDuration } from '../../utils/format';
 
 // Waiting room: the code to share, who has joined, and the host's Start button
 export default function Lobby({ room, myId, onStart, offline }) {
@@ -35,7 +36,9 @@ export default function Lobby({ room, myId, onStart, offline }) {
         <p className="lv-eyebrow">Game code</p>
         <p className="lv-code" aria-label={`Game code ${room.code.split('').join(' ')}`}>{room.code}</p>
         <p className="db-section-sub">
-          {room.category.name} · {room.total} questions · {room.seconds}s each
+          {room.category.name} · {room.total} questions · {room.mode === 'exam'
+            ? `all at once, ${formatDuration(room.totalSeconds)} total`
+            : `one at a time, ${formatDuration(room.seconds)} each`}
         </p>
         <button className="db-btn-ghost lv-copy" onClick={copy}>
           <Icon name={copied ? 'check' : 'users'} size={15} /> {copied ? 'Link copied' : 'Copy invite link'}

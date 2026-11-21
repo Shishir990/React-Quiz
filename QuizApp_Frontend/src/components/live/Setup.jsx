@@ -4,8 +4,67 @@ import { useCategories, useUserQuizzes } from '../../api/queries';
 import { Icon } from '../ui';
 
 const COUNTS = [5, 10, 15, 20];
-const TIMES = [10, 20, 30];
 const MIN_QUESTIONS = 3; // same as the live server
+
+// Timing, with the live server's limits
+const MODES = [
+  { value: 'sync', label: 'One at a time', hint: 'Everyone sees the same question, with the answer after each one.' },
+  { value: 'exam', label: 'All at once', hint: 'Every question together with one timer. Answer in any order, then submit.' },
+];
+const TIMING = {
+  sync: { label: 'Time per question', unit: 'seconds', short: 's', presets: [10, 20, 30, 60], min: 5, max: 300, initial: 20 },
+  exam: { label: 'Total time', unit: 'minutes', short: ' min', presets: [5, 10, 15, 30], min: 1, max: 180, initial: 10 },
+};
+
+// Preset chips plus "Custom", which shows a number box
+function TimeChoice({ timing, value, custom, onPreset, onCustom }) {
+  const invalid = custom !== null && !(Number(custom) >= timing.min && Number(custom) <= timing.max && Number.isInteger(Number(custom)));
+  return (
+    <>
+      <p className="lv-label">{timing.label}</p>
+      <div className="pg-chips lv-time-chips" role="group" aria-label={timing.label}>
+        {timing.presets.map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={`pg-chip ${custom === null && value === t ? 'is-active' : ''}`}
+            aria-pressed={custom === null && value === t}
+            onClick={() => onPreset(t)}
+          >
+            {t}{timing.short}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`pg-chip ${custom !== null ? 'is-active' : ''}`}
+          aria-pressed={custom !== null}
+          onClick={() => onCustom(custom ?? String(value))}
+        >
+          Custom
+        </button>
+      </div>
+      {custom !== null && (
+        <div className="lv-custom-time">
+          <input
+            type="number"
+            inputMode="numeric"
+            className="lv-number"
+            min={timing.min}
+            max={timing.max}
+            step={1}
+            value={custom}
+            onChange={(e) => onCustom(e.target.value)}
+            aria-label={`${timing.label} in ${timing.unit}`}
+            aria-invalid={invalid}
+            autoFocus
+          />
+          <span className="db-section-sub">{timing.unit} ({timing.min}–{timing.max})</span>
+        </div>
+      )}
+      {invalid && <p className="lv-inline-error">Enter a whole number from {timing.min} to {timing.max}.</p>}
+    </>
+  );
+}
 
 // Before a game: host a new room (from a category or one of your own quizzes),
 // or join one with a code. `initialQuizId` preselects one of your quizzes.
@@ -19,7 +78,10 @@ export default function Setup({ onCreate, onJoin, disabled, initialCode = '', in
   const [quizId, setQuizId] = useState(initialQuizId);
   const [categoryId, setCategoryId] = useState('');
   const [count, setCount] = useState(10);
-  const [seconds, setSeconds] = useState(20);
+  const [mode, setMode] = useState('sync');
+  // Chosen time per mode: a preset, or the text in the Custom box (null when not custom)
+  const [times, setTimes] = useState({ sync: TIMING.sync.initial, exam: TIMING.exam.initial });
+  const [customTimes, setCustomTimes] = useState({ sync: null, exam: null });
   const [code, setCode] = useState(initialCode);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
@@ -35,14 +97,20 @@ export default function Setup({ onCreate, onJoin, disabled, initialCode = '', in
     if (!res?.ok) setMessage(res?.message || 'Something went wrong.');
   };
 
+  const timing = TIMING[mode];
+  const custom = customTimes[mode];
+  const timeValue = custom === null ? times[mode] : Number(custom);
+  const timeOk = Number.isInteger(timeValue) && timeValue >= timing.min && timeValue <= timing.max;
+
   const host = (e) => {
     e.preventDefault();
+    const timingPayload = mode === 'exam' ? { mode, totalSeconds: timeValue * 60 } : { mode, seconds: timeValue };
     run('host', () => onCreate(source === 'mine'
-      ? { quizId, seconds }
-      : { categoryId, count: Math.min(count, maxCount), seconds }));
+      ? { quizId, ...timingPayload }
+      : { categoryId, count: Math.min(count, maxCount), ...timingPayload }));
   };
   const chosenQuiz = hostable.find((q) => q._id === quizId);
-  const ready = source === 'mine' ? !!chosenQuiz : !!categoryId;
+  const ready = (source === 'mine' ? !!chosenQuiz : !!categoryId) && timeOk;
   const join = (e) => {
     e.preventDefault();
     run('join', () => onJoin(code.trim().toUpperCase()));
@@ -140,20 +208,33 @@ export default function Setup({ onCreate, onJoin, disabled, initialCode = '', in
             </>
           )}
 
-          <p className="lv-label">Time per question</p>
-          <div className="pg-chips" role="group" aria-label="Seconds per question">
-            {TIMES.map((s) => (
+          <p className="lv-label">How questions are given</p>
+          <div className="pg-chips" role="group" aria-label="How questions are given">
+            {MODES.map((m) => (
               <button
-                key={s}
+                key={m.value}
                 type="button"
-                className={`pg-chip ${seconds === s ? 'is-active' : ''}`}
-                aria-pressed={seconds === s}
-                onClick={() => setSeconds(s)}
+                className={`pg-chip ${mode === m.value ? 'is-active' : ''}`}
+                aria-pressed={mode === m.value}
+                onClick={() => setMode(m.value)}
               >
-                {s}s
+                {m.label}
               </button>
             ))}
           </div>
+          <p className="db-section-sub lv-hint">{MODES.find((m) => m.value === mode).hint}</p>
+
+          <TimeChoice
+            key={mode}
+            timing={timing}
+            value={times[mode]}
+            custom={custom}
+            onPreset={(t) => {
+              setTimes((v) => ({ ...v, [mode]: t }));
+              setCustomTimes((v) => ({ ...v, [mode]: null }));
+            }}
+            onCustom={(text) => setCustomTimes((v) => ({ ...v, [mode]: text }))}
+          />
 
           <button className="db-btn-light lv-submit" type="submit" disabled={disabled || !ready || !!busy}>
             {busy === 'host' ? 'Creating…' : 'Create room'} <Icon name="arrow" size={15} />

@@ -6,6 +6,7 @@ import { getMyResultsApi, getMyAnalyticsApi, getResultApi, getLeaderboardApi } f
 import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi } from './admin';
 import { getSessionsApi } from './auth';
 import { listUserQuizzesApi, getUserQuizApi } from './userQuizzes';
+import { getPastGamesApi, getPastGameApi } from './live';
 
 export { queryClient };
 
@@ -21,6 +22,8 @@ export const queryKeys = {
   sessions: ['auth', 'sessions'],
   userQuizzes: ['userQuizzes'],
   userQuiz: (id) => ['userQuizzes', id],
+  pastGames: ['liveGames'],
+  pastGame: (id) => ['liveGames', id],
 };
 
 // authFetch resolves with the server's error body instead of throwing,
@@ -131,4 +134,20 @@ export const useUserQuiz = (id) =>
     queryKey: queryKeys.userQuiz(id),
     queryFn: () => getUserQuizApi(id),
     enabled: !!id,
+  });
+
+// Live games this player took part in (newest first)
+export const usePastGames = () =>
+  useQuery({
+    queryKey: queryKeys.pastGames,
+    queryFn: getPastGamesApi,
+  });
+
+// One of them, with the ranking and a review of this player's answers. Never changes.
+export const usePastGame = (id) =>
+  useQuery({
+    queryKey: queryKeys.pastGame(id),
+    queryFn: () => getPastGameApi(id),
+    enabled: !!id,
+    staleTime: Infinity,
   });

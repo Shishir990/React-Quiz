@@ -20,8 +20,17 @@ Browser ──(cookies)──▶ Vercel API   POST /api/live/ticket  →  { tick
   server never sees `JWT_SECRET`, so it can't create real sign-in tokens.
 - The server is the authority: it picks the questions, runs the clock, scores answers,
   and only sends a question's correct answer at the reveal.
-- Scoring: a correct answer is worth 500–1000 points, more the faster it is. A wrong
-  answer or no answer scores 0.
+- Two ways to play, chosen by the host:
+  - **One at a time** (`mode: 'sync'`): everyone gets the same question, with a reveal
+    after each. 5–300 seconds per question. A correct answer is worth 500–1000 points,
+    more the faster it is.
+  - **All at once** (`mode: 'exam'`): every question together with one deadline
+    (1 minute to 3 hours). Players answer in any order and can change answers until they
+    submit. 1000 points per correct answer; ties go to whoever finished first. Scores and
+    answers stay hidden until everyone has submitted, time runs out, or the host ends it.
+- Every finished game is saved to the `livegames` collection for each player's **Past
+  games** (`/live/history`), including games from custom quizzes. The main API serves it
+  (`GET /api/live/games`), showing each player the full ranking but only their own answers.
 - When a game finishes, every player who answered at least once gets a normal result, so
   the game appears in Results, Analytics and the Leaderboard.
 - Games can also be played from a quiz the host wrote in the **Quiz builder** (`/builder`,

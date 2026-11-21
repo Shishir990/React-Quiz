@@ -49,4 +49,32 @@ const Result = mongoose.model('Result', new mongoose.Schema({
   attempt: ObjectId,
 }, { timestamps: true }));
 
-module.exports = { User, Category, Question, UserQuiz, Result };
+// A finished live game, for every player's "Past games". Written only here; the main
+// API (QuizApp_Backend/Models/LiveGame.js) reads it. Keep the two in step.
+const liveGameSchema = new mongoose.Schema({
+  code: String,
+  host: { type: ObjectId, ref: 'User' },
+  hostName: String,
+  mode: { type: String, enum: ['sync', 'exam'] },
+  source: { kind: { type: String, enum: ['category', 'custom'] }, id: String, name: String },
+  seconds: Number,        // per question (sync)
+  totalSeconds: Number,   // whole game (exam)
+  questions: [{ _id: false, text: String, options: [String], correctAnswer: String, explanation: String }],
+  players: [{
+    _id: false,
+    user: { type: ObjectId, ref: 'User' },
+    name: String,
+    rank: Number,
+    score: Number,
+    correct: Number,
+    timeMs: Number,
+    answers: [{ _id: false, option: String, isCorrect: Boolean, points: Number, ms: Number }],
+  }],
+  startedAt: Date,
+  endedAt: Date,
+}, { timestamps: true });
+// "Games I played", newest first
+liveGameSchema.index({ 'players.user': 1, endedAt: -1 });
+const LiveGame = mongoose.model('LiveGame', liveGameSchema);
+
+module.exports = { User, Category, Question, UserQuiz, Result, LiveGame };

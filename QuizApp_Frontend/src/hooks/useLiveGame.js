@@ -29,6 +29,7 @@ export function useLiveGame() {
   const codeRef = useRef(null);        // the room to rejoin after a reconnect
   const savedRef = useRef(null);       // the finished room whose results were already refetched
   const offsetRef = useRef(null);      // best estimate of server clock minus this device's clock
+  const leftRef = useRef(null);        // the room we just left on purpose (its "closed" notice isn't for us)
   const [connection, setConnection] = useState('connecting'); // connecting | online | offline
   const [error, setError] = useState('');
   const [room, setRoom] = useState(null);
@@ -147,6 +148,8 @@ export function useLiveGame() {
       });
 
       socket.on('room:state', (state) => {
+        // A late update from the room we just left: don't pull us back into it
+        if (state.code === leftRef.current) return;
         sampleClock(state.serverNow);
         codeRef.current = state.code;
         setRoom(state);
@@ -156,8 +159,14 @@ export function useLiveGame() {
           queryClient.invalidateQueries({ queryKey: ['results'] });
           queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
         }
+        // The game is in this player's Past games now
+        if (state.status === 'finished' && state.gameId) queryClient.invalidateQueries({ queryKey: ['liveGames'], exact: true });
       });
-      socket.on('room:closed', ({ reason } = {}) => forgetRoom(reason || 'The game was closed.'));
+      socket.on('room:closed', ({ reason } = {}) => {
+        // The host ending the game hears about it too; they know already
+        if (!codeRef.current) return;
+        forgetRoom(reason || 'The game was closed.');
+      });
     })();
 
     return () => {
@@ -184,24 +193,32 @@ export function useLiveGame() {
 
   const create = useCallback((options) => {
     setClosed('');
+    leftRef.current = null;
     return emit('room:create', options);
   }, [emit]);
 
   const join = useCallback((code) => {
     setClosed('');
+    leftRef.current = null; // joining again, even the room we left, is on purpose
     return emit('room:join', { code });
   }, [emit]);
 
+  // Back to the start screen at once; the server is told in the background (if the
+  // connection is down, it notices the player is gone by itself)
   const leave = useCallback(async () => {
-    const res = await emit('room:leave');
-    codeRef.current = null;
+    leftRef.current = codeRef.current;
+    codeRef.current = null; // also stops a reconnect from rejoining it
     setRoom(null);
-    return res;
+    setClosed('');
+    return emit('room:leave');
   }, [emit]);
 
   const start = useCallback(() => emit('game:start'), [emit]);
   const next = useCallback(() => emit('game:next'), [emit]);
   const answer = useCallback((index, option) => emit('game:answer', { index, option }), [emit]);
+  // Exam mode: pick, change or clear (null) any question's answer, then hand in
+  const examAnswer = useCallback((index, option) => emit('exam:answer', { index, option }), [emit]);
+  const examSubmit = useCallback(() => emit('exam:submit'), [emit]);
 
   return {
     connection,
@@ -216,5 +233,7 @@ export function useLiveGame() {
     start,
     next,
     answer,
+    examAnswer,
+    examSubmit,
   };
 }
