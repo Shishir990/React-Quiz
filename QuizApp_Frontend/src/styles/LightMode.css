@@ -83,6 +83,13 @@
   --qc-text-3: #64748B;
 }
 
+/* Landing page: small accent text uses the deeper emerald (#10B981 is too faint on white) */
+[data-theme='light'] .lp-eyebrow,
+[data-theme='light'] .lp-q-eyebrow,
+[data-theme='light'] .lp-kicker,
+[data-theme='light'] .lp-step-num,
+[data-theme='light'] .lp-q-tick { color: var(--acc-strong); }
+
 /* ── The toggle itself ── */
 .theme-toggle svg { transition: transform 0.3s ease; }
 .theme-toggle:hover svg { transform: rotate(-15deg); }

@@ -29,7 +29,8 @@
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 32px;
   max-width: 1180px; margin: 0 auto; padding: 18px 32px;
-  background: rgba(12, 13, 12, 0.85);
+  /* The page background, slightly see-through (works in light and dark mode) */
+  background: color-mix(in srgb, var(--th-bg) 85%, transparent);
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .lp-brand { display: flex; align-items: center; gap: 10px; }
