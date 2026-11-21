@@ -48,6 +48,10 @@ tags:
     description: Quizzes players write themselves to host as live games. Each player only sees their own.
   - name: Live
     description: Live multiplayer games (they run on a separate Socket.IO server, QuizApp_Live) and the history of past games
+  - name: Friends
+    description: Finding players, friend requests and inviting friends to live games
+  - name: Notifications
+    description: Friend requests, accepted requests and game invites for the signed-in player
   - name: Questions (admin)
     description: The question bank, including correct answers
   - name: Admin
@@ -1437,6 +1441,241 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '500': { $ref: '#/components/responses/ServerError' }
 
+  /api/users/search:
+    get:
+      tags: [Friends]
+      summary: Find players by name
+      description: |
+        Case-insensitive match anywhere in the name; at least 2 characters (shorter returns
+        an empty list). At most 20 players, never the caller or disabled accounts. Only names
+        and avatars are returned, never emails. Limited to 60 searches a minute.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, example: ana }
+      responses:
+        '200':
+          description: Matching players, each with how they relate to the caller
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PlayerSearchResult' }
+        '400':
+          description: Search text over 60 characters
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends:
+    get:
+      tags: [Friends]
+      summary: My friends and friend requests
+      responses:
+        '200':
+          description: Friends (A–Z), requests sent to me and requests I sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FriendLists' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/requests:
+    post:
+      tags: [Friends]
+      summary: Send a friend request
+      description: |
+        Notifies the other player. If they had already sent the caller a request, this
+        accepts it instead (`status: accepted`). Up to 500 friends and 50 waiting requests
+        per player; 40 requests an hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId: { type: string }
+      responses:
+        '201':
+          description: Request sent
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FriendRequestResult' }
+        '200':
+          description: They had asked first, so now you are friends
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FriendRequestResult' }
+        '400':
+          description: No player given, or it is the caller
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Already friends, already requested, or a limit was reached
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/requests/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    delete:
+      tags: [Friends]
+      summary: Cancel a request I sent
+      description: Also removes it from the other player's notifications.
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/requests/{id}/accept:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Friends]
+      summary: Accept a request sent to me
+      description: The sender is notified.
+      responses:
+        '200':
+          description: Now friends
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FriendRequestResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/requests/{id}/decline:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Friends]
+      summary: Decline a request sent to me
+      description: The sender is not told; they can ask again later.
+      responses:
+        '200':
+          description: Declined
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/invite:
+    post:
+      tags: [Friends]
+      summary: Invite friends to a live game
+      description: |
+        Sends a `game_invite` notification with the room code to each friend in `userIds`
+        (players who are not friends are skipped). A friend gets at most one invite per room
+        per minute from the same player. Up to 20 friends at once; 30 invites per 10 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userIds, code]
+              properties:
+                userIds: { type: array, items: { type: string }, maxItems: 20 }
+                code: { type: string, example: K7Q2M, description: "The live game's 5-character room code" }
+                quizName: { type: string, maxLength: 80, description: "Shown in the invite, e.g. the category" }
+      responses:
+        '200':
+          description: The friends that are (now) invited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invited: { type: array, items: { type: string } }
+        '400':
+          description: Invalid code, or no friends chosen
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/friends/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string, example: 6a1f0c2b9d3e4f5a6b7c8d9e }
+    delete:
+      tags: [Friends]
+      summary: Remove a friend
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: My latest notifications
+      description: |
+        The 30 newest, plus how many are unread. New ones are also pushed instantly over the
+        live server's Socket.IO `/notify` namespace (event `notification`, same shape as an
+        item here). Notifications are deleted after 30 days.
+      responses:
+        '200':
+          description: Newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+                  unread: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /api/notifications/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notifications as read
+      description: Marks the given ids, or every notification when `ids` is left out.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Marked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
 components:
   securitySchemes:
     cookieAuth:
@@ -1617,6 +1856,68 @@ components:
               isCorrect: { type: boolean }
               points: { type: integer }
               counts: { type: array, items: { type: integer }, description: Players who picked each option }
+    PlayerRef:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        avatar: { type: string }
+    PlayerSearchResult:
+      allOf:
+        - $ref: '#/components/schemas/PlayerRef'
+        - type: object
+          properties:
+            relation:
+              type: string
+              enum: [none, friends, sent, received]
+              description: "sent: the caller asked them; received: they asked the caller"
+            requestId: { type: string, description: Only while a request is pending }
+    FriendRequestResult:
+      type: object
+      properties:
+        status: { type: string, enum: [pending, accepted] }
+        requestId: { type: string }
+    FriendLists:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/PlayerRef'
+              - type: object
+                properties:
+                  since: { type: string, format: date-time }
+        incoming:
+          type: array
+          items: { $ref: '#/components/schemas/FriendRequest' }
+        outgoing:
+          type: array
+          items: { $ref: '#/components/schemas/FriendRequest' }
+    FriendRequest:
+      type: object
+      properties:
+        requestId: { type: string }
+        user: { $ref: '#/components/schemas/PlayerRef' }
+        sentAt: { type: string, format: date-time }
+    Notification:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [friend_request, friend_accepted, game_invite] }
+        actor:
+          type: object
+          properties:
+            id: { type: string }
+            name: { type: string }
+        data:
+          type: object
+          properties:
+            requestId: { type: string, description: friend_request only }
+            code: { type: string, description: "game_invite only: the live room" }
+            quizName: { type: string, description: "game_invite only, when given" }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
     Message:
       type: object
       properties:

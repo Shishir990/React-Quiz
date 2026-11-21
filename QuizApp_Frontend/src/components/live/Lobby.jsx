@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Icon } from '../ui';
 import Scoreboard from './Scoreboard';
+import InviteFriends from './InviteFriends';
 import { formatDuration } from '../../utils/format';
 
 // Waiting room: the code to share, who has joined, and the host's Start button
-export default function Lobby({ room, myId, onStart, offline }) {
+export default function Lobby({ room, myId, onStart, offline, invited, onInvited }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -60,13 +61,16 @@ export default function Lobby({ room, myId, onStart, offline }) {
         )}
       </section>
 
-      <section className="db-panel lv-card">
-        <div className="lv-card-head">
-          <h2 className="db-section-title">Players</h2>
-          <span className="db-pill">{room.players.length}</span>
-        </div>
-        <Scoreboard players={room.players} myId={myId} mode="lobby" />
-      </section>
+      <div className="lv-side">
+        <section className="db-panel lv-card">
+          <div className="lv-card-head">
+            <h2 className="db-section-title">Players</h2>
+            <span className="db-pill">{room.players.length}</span>
+          </div>
+          <Scoreboard players={room.players} myId={myId} mode="lobby" />
+        </section>
+        <InviteFriends room={room} invited={invited} onInvited={onInvited} />
+      </div>
     </div>
   );
 }

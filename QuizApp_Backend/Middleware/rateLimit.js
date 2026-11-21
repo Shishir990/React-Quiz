@@ -53,3 +53,20 @@ exports.refreshLimiter = limiter({
   minutes: 15, max: 60,
   message: 'Too many session refreshes. Please wait a few minutes and try again.',
 });
+
+// Player search: generous for typing, but stops anyone listing every account
+exports.userSearchLimiter = limiter({
+  minutes: 1, max: 60,
+  message: 'Too many searches. Please wait a minute and try again.',
+});
+
+// Friend requests and game invites each notify another player, so keep spam in check
+exports.friendRequestLimiter = limiter({
+  minutes: 60, max: 40,
+  message: 'Too many friend requests. Please try again later.',
+});
+
+exports.inviteLimiter = limiter({
+  minutes: 10, max: 30,
+  message: 'Too many invites. Please wait a few minutes and try again.',
+});

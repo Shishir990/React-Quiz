@@ -61,7 +61,7 @@ process.on('unhandledRejection', (err) => console.error('[live] unhandled reject
 process.on('uncaughtException', (err) => console.error('[live] uncaught exception:', err));
 
 // Every connection must carry a valid ticket for an active account
-io.use(async (socket, next) => {
+const requireTicket = async (socket, next) => {
   try {
     const ticket = socket.handshake.auth?.ticket;
     if (typeof ticket !== 'string') throw new Error('no ticket');
@@ -76,6 +76,39 @@ io.use(async (socket, next) => {
     console.warn(`[live] refused a connection: ${err.message}`);
     next(new Error('unauthorized'));
   }
+};
+io.use(requireTicket);
+
+// ── Notifications ──
+// The app keeps one connection to /notify open on every signed-in page; each player
+// is in a private channel, `user:<id>`. Clients only listen here: no events are accepted.
+const notifyNs = io.of('/notify');
+notifyNs.use(requireTicket);
+notifyNs.on('connection', (socket) => {
+  socket.join(`user:${socket.data.user.id}`);
+  // Anything a client sends here is ignored
+  socket.onAny(() => {});
+});
+
+// The main API calls this when it saves notifications (QuizApp_Backend/Utils/notify.js).
+// It signs a 30-second token with LIVE_TICKET_SECRET for an audience browsers' tickets
+// never have, so only the API can push.
+const MAX_PUSH_ITEMS = 100;
+app.post('/internal/notify', express.json({ limit: '100kb' }), (req, res) => {
+  try {
+    const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : '';
+    jwt.verify(bearer, process.env.LIVE_TICKET_SECRET, { audience: 'quizapp-live-internal' });
+  } catch {
+    return res.status(401).json({ message: 'unauthorized' });
+  }
+  const items = Array.isArray(req.body?.items) ? req.body.items.slice(0, MAX_PUSH_ITEMS) : [];
+  let sent = 0;
+  for (const { userId, notification } of items) {
+    if (typeof userId !== 'string' || !/^[a-f0-9]{24}$/i.test(userId) || !notification || typeof notification !== 'object') continue;
+    notifyNs.to(`user:${userId}`).emit('notification', notification);
+    sent += 1;
+  }
+  res.json({ sent });
 });
 
 // At most this many events per second per connection (far more than a person can

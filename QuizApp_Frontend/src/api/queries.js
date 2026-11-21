@@ -7,6 +7,7 @@ import { getAdminStatsApi, getUsersApi, getAdminCategoriesApi, getQuestionsApi }
 import { getSessionsApi } from './auth';
 import { listUserQuizzesApi, getUserQuizApi } from './userQuizzes';
 import { getPastGamesApi, getPastGameApi } from './live';
+import { getFriendsApi, getNotificationsApi, searchUsersApi } from './social';
 
 export { queryClient };
 
@@ -24,6 +25,9 @@ export const queryKeys = {
   userQuiz: (id) => ['userQuizzes', id],
   pastGames: ['liveGames'],
   pastGame: (id) => ['liveGames', id],
+  friends: ['friends'],
+  userSearch: (q) => ['friends', 'search', q],
+  notifications: ['notifications'],
 };
 
 // authFetch resolves with the server's error body instead of throwing,
@@ -150,4 +154,35 @@ export const usePastGame = (id) =>
     queryFn: () => getPastGameApi(id),
     enabled: !!id,
     staleTime: Infinity,
+  });
+
+// Friends, and friend requests both ways
+export const useFriends = (options = {}) =>
+  useQuery({
+    queryKey: queryKeys.friends,
+    queryFn: getFriendsApi,
+    staleTime: 30 * 1000,
+    ...options,
+  });
+
+// Players matching a name (runs from 2 characters). Under ['friends'], so it refreshes
+// with the friend lists after a request is sent or answered.
+export const useUserSearch = (q) =>
+  useQuery({
+    queryKey: queryKeys.userSearch(q),
+    queryFn: () => searchUsersApi(q),
+    enabled: q.length >= 2,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
+  });
+
+// The bell. New ones arrive instantly over the live server (useNotificationSocket);
+// polling is the fallback for when that connection is down.
+export const useNotifications = ({ enabled = true, live = false } = {}) =>
+  useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: getNotificationsApi,
+    enabled,
+    refetchInterval: live ? 5 * 60 * 1000 : 45 * 1000,
+    refetchOnWindowFocus: true,
   });

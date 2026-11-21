@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell';
 import { Icon } from '../components/ui';
 import { useQuiz } from '../context/QuizContext';
 import { useLiveGame } from '../hooks/useLiveGame';
+import { inviteFriendsApi } from '../api/social';
 import Setup from '../components/live/Setup';
 import Lobby from '../components/live/Lobby';
 import LiveQuizScreen from '../components/live/LiveQuizScreen';
@@ -35,6 +36,19 @@ export default function Live() {
   // haven't been in yet is joined automatically: otherwise leaving a room would put
   // us straight back in, for the moment the old ?code= is still in the address bar.
   const triedCode = useRef('');
+  // Friends invited to the current room (reset for each new room)
+  const [invited, setInvited] = useState({ code: '', ids: new Set() });
+  const invitedHere = invited.code === room?.code ? invited.ids : new Set();
+  const addInvited = (ids) => setInvited((prev) => ({
+    code: room.code,
+    ids: new Set([...(prev.code === room.code ? prev.ids : []), ...ids]),
+  }));
+  // "Play" on the Friends page: host a game, and invite that friend once the room is open.
+  // Copied into state on arrival: the address is rewritten (dropping location.state)
+  // as soon as a room exists.
+  const location = useLocation();
+  const [pendingInvite, setPendingInvite] = useState(() => location.state?.invite || null);
+  const inviteSent = useRef(false); // once per visit, even if effects run twice
 
   // Opened from an invite link or refreshed mid-game: join that room once connected
   useEffect(() => {
@@ -47,6 +61,22 @@ export default function Live() {
       }
     });
   }, [connection, room, urlCode, game, setParams]);
+
+  // The room is open: send the invite that "Play" on the Friends page asked for
+  const [inviteError, setInviteError] = useState('');
+  useEffect(() => {
+    const friend = pendingInvite;
+    if (!friend || inviteSent.current || !room?.isHost || room.status !== 'lobby') return;
+    inviteSent.current = true;
+    const code = room.code;
+    inviteFriendsApi({ userIds: [friend.id], code, quizName: room.category?.name })
+      .then((res) => setInvited((prev) => ({
+        code,
+        ids: new Set([...(prev.code === code ? prev.ids : []), ...(res.invited || [])]),
+      })))
+      .catch((err) => setInviteError(`Could not invite ${friend.name}: ${err.message}`))
+      .finally(() => setPendingInvite(null));
+  }, [pendingInvite, room?.isHost, room?.status, room?.code, room?.category?.name]);
 
   // Keep the address in step with the room we're in (created or joined from the form too)
   useEffect(() => {
@@ -162,6 +192,22 @@ export default function Live() {
         </div>
       )}
 
+      {inviteError && room?.status === 'lobby' && (
+        <div className="lv-banner is-warn" role="alert">
+          {inviteError}
+          <button className="lv-banner-close" onClick={() => setInviteError('')} aria-label="Dismiss">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
+      {!room && pendingInvite && (
+        <div className="lv-banner is-info" role="status">
+          <Icon name="userPlus" size={15} /> Pick a quiz and create the game: {pendingInvite.name} gets an invite as soon as it's open.
+          <button className="lv-banner-close" onClick={() => setPendingInvite(null)} aria-label="Don't invite">
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      )}
       {!room && (
         <Setup
           onCreate={game.create}
@@ -171,7 +217,9 @@ export default function Live() {
           initialQuizId={params.get('host') || ''}
         />
       )}
-      {room?.status === 'lobby' && <Lobby room={room} myId={myId} onStart={game.start} offline={offline} />}
+      {room?.status === 'lobby' && (
+        <Lobby room={room} myId={myId} onStart={game.start} offline={offline} invited={invitedHere} onInvited={addInvited} />
+      )}
       {room?.status === 'finished' && (
         <Final room={room} myId={myId} onLeave={leave} onHistory={(id) => navigate(`/live/history/game?id=${id}`)} />
       )}

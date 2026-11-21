@@ -40,6 +40,23 @@ Browser ──(cookies)──▶ Vercel API   POST /api/live/ticket  →  { tick
 - Rooms are kept in memory, so **run one instance**. Restarting the server ends the games
   in progress.
 
+## Live notifications
+
+The same server pushes notifications (friend requests, accepted requests, game invites):
+
+```
+Vercel API ──(saves to `notifications`)──▶ POST /internal/notify ──▶ /notify namespace ──▶ browser
+```
+
+- Every signed-in page keeps one Socket.IO connection to the **`/notify`** namespace, signed
+  in with the same one-minute ticket. Each player joins a private channel (`user:<id>`) and
+  receives a `notification` event for each new one. Clients can't send anything there.
+- The API saves each notification, then calls **`POST /internal/notify`** with a 30-second
+  token signed with `LIVE_TICKET_SECRET` for the audience `quizapp-live-internal`. Browser
+  tickets have a different audience, so only the API can push.
+- If this server is down or asleep, nothing is lost: notifications are in MongoDB, and the
+  app polls `GET /api/notifications` (every 45 seconds while the live connection is down).
+
 ## Run locally
 
 ```bash

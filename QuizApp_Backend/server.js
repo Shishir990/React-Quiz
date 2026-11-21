@@ -115,6 +115,9 @@ app.use('/api/admin',      require('./Routes/adminRoutes'));
 app.use('/api/progress',   require('./Routes/progressRoutes'));
 app.use('/api/live',       require('./Routes/liveRoutes'));
 app.use('/api/user-quizzes', require('./Routes/userQuizRoutes'));
+app.use('/api/users',      require('./Routes/userRoutes'));
+app.use('/api/friends',    require('./Routes/friendRoutes'));
+app.use('/api/notifications', require('./Routes/notificationRoutes'));
 
 // 404 handler
 app.use((req, res) => {

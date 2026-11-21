@@ -27,11 +27,15 @@ import { ErrorScreen } from './pages/ErrorScreen'
 import { QuestionScreen } from './pages/QuestionScreen'
 import { Finish } from './pages/FinishScreen'
 import { RouteErrorBoundary } from './components/layout/ErrorBoundary'
+import Friends from './pages/Friends';
+import { NotificationsProvider } from './context/NotificationsContext';
 function App() {
   return (
     <>
     <BrowserRouter>
       <RouteErrorBoundary>
+        {/* Live notifications on every signed-in page (inside the router: toasts link to pages) */}
+        <NotificationsProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -125,6 +129,14 @@ function App() {
             }
           />
           <Route
+            path="/friends"
+            element={
+              <ProtectedRoute>
+                <Friends />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/live"
             element={
               <ProtectedRoute>
@@ -186,6 +198,7 @@ function App() {
           {/* Unknown addresses go to the home page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </NotificationsProvider>
       </RouteErrorBoundary>
     </BrowserRouter>
     

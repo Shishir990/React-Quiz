@@ -3,6 +3,8 @@ import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
 import { Icon, ThemeToggle, Logo } from '../ui';
+import NotificationBell from '../social/NotificationBell';
+import { useFriends } from '../../api/queries';
 import '../../styles/Dashboard.css';
 
 // Sidebar groups, each under a small heading
@@ -20,7 +22,8 @@ const NAV_GROUPS = [
   {
     label: 'Activity',
     items: [
-      { label: 'Live game', icon: 'users', to: '/live' },
+      { label: 'Live game', icon: 'play', to: '/live' },
+      { label: 'Friends', icon: 'users', to: '/friends', badge: 'requests' },
       { label: 'Quiz builder', icon: 'edit', to: '/builder' },
     ],
   },
@@ -91,8 +94,14 @@ function TopSearch() {
   );
 }
 
-function NavItem({ item }) {
-  const content = <><Icon name={item.icon} size={17} />{item.label}</>;
+function NavItem({ item, badges }) {
+  const count = item.badge ? badges[item.badge] : 0;
+  const content = (
+    <>
+      <Icon name={item.icon} size={17} />{item.label}
+      {count > 0 && <span className="db-nav-badge" aria-label={`${count} waiting`}>{count > 9 ? '9+' : count}</span>}
+    </>
+  );
   if (!item.to) return <a className="db-nav-item" href="#">{content}</a>;
   return (
     <NavLink to={item.to} className={({ isActive }) => `db-nav-item ${isActive ? 'active' : ''}`}>
@@ -197,6 +206,10 @@ export default function AppShell({ title, children }) {
 
   const initials = initialsOf(user?.name);
 
+  // Friend requests waiting for an answer, shown on the Friends item
+  const { data: friendLists } = useFriends({ enabled: !!user });
+  const badges = { requests: friendLists?.incoming?.length || 0 };
+
   return (
     <div className="db-wrapper">
 
@@ -229,7 +242,7 @@ export default function AppShell({ title, children }) {
           <div className="db-nav-group" key={group.label}>
             <p className="db-nav-label" id={`nav-${group.label.replace(/\s+/g, '-').toLowerCase()}`}>{group.label}</p>
             <nav className="db-nav" aria-labelledby={`nav-${group.label.replace(/\s+/g, '-').toLowerCase()}`}>
-              {group.items.filter((item) => !item.adminOnly || isAdmin).map((item) => <NavItem key={item.label} item={item} />)}
+              {group.items.filter((item) => !item.adminOnly || isAdmin).map((item) => <NavItem key={item.label} item={item} badges={badges} />)}
             </nav>
           </div>
         ))}
@@ -270,10 +283,7 @@ export default function AppShell({ title, children }) {
           <div className="db-navbar-right">
             <LiveClock />
             <ThemeToggle className="db-icon-btn" />
-            <button className="db-icon-btn" title="Notifications">
-              <Icon name="bell" size={18} />
-              <span className="db-dot" />
-            </button>
+            <NotificationBell />
             <UserMenu user={user} initials={initials} onLogout={handleLogout} />
           </div>
         </header>

@@ -9,7 +9,7 @@ import process from 'node:process'
 // Client-side pages. Each gets its own copy of index.html in the build so a
 // refresh or direct link (e.g. /dashboard) finds a real file on the host
 // instead of a 404. Keep in sync with the <Route> paths in src/App.jsx.
-const SPA_ROUTES = ['login', 'register', 'forgot-password', 'reset-password', 'confirm-email','dashboard', 'quizzes', 'results', 'analytics', 'leaderboard', 'live', 'live/history', 'live/history/game', 'builder', 'builder/edit', 'settings', 'settings/sessions', 'error', 'quiz', 'finish', 'admin', 'admin/questions', 'admin/questions/category', 'admin/categories', 'admin/users']
+const SPA_ROUTES = ['login', 'register', 'forgot-password', 'reset-password', 'confirm-email','dashboard', 'quizzes', 'results', 'analytics', 'leaderboard', 'friends', 'live', 'live/history', 'live/history/game', 'builder', 'builder/edit', 'settings', 'settings/sessions', 'error', 'quiz', 'finish', 'admin', 'admin/questions', 'admin/questions/category', 'admin/categories', 'admin/users']
 
 const spaRouteCopies = () => ({
   name: 'spa-route-copies',
