@@ -6,7 +6,7 @@ import Scoreboard from './Scoreboard';
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // One question: answering while the clock runs, then the reveal with the right answer
-export default function QuestionView({ room, myId, clockOffset, onAnswer, onNext }) {
+export default function QuestionView({ room, myId, offline, clockOffset, onAnswer, onNext }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   // What this player tapped, shown at once before the server confirms it
@@ -19,7 +19,7 @@ export default function QuestionView({ room, myId, clockOffset, onAnswer, onNext
   const isLast = room.index === room.total - 1;
 
   const choose = async (option) => {
-    if (revealed || myAnswer || busy) return;
+    if (revealed || myAnswer || busy || offline) return;
     setPicked({ index: room.index, option });
     setBusy(true);
     setMessage('');
@@ -67,7 +67,7 @@ export default function QuestionView({ room, myId, clockOffset, onAnswer, onNext
               key={option}
               className={`lv-option ${optionClass(option)}`}
               onClick={() => choose(option)}
-              disabled={revealed || !!myAnswer}
+              disabled={revealed || !!myAnswer || offline}
               aria-pressed={option === myAnswer}
             >
               <span className="lv-option-letter">{LETTERS[i]}</span>
@@ -98,11 +98,11 @@ export default function QuestionView({ room, myId, clockOffset, onAnswer, onNext
         {room.isHost && (
           <div className="lv-host-bar">
             {revealed ? (
-              <button className="db-btn-light" onClick={next} disabled={busy}>
+              <button className="db-btn-light" onClick={next} disabled={busy || offline}>
                 {isLast ? 'See final results' : 'Next question'} <Icon name="arrow" size={15} />
               </button>
             ) : (
-              <button className="db-btn-ghost" onClick={next} disabled={busy}>End question now</button>
+              <button className="db-btn-ghost" onClick={next} disabled={busy || offline}>End question now</button>
             )}
           </div>
         )}

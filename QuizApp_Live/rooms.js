@@ -168,7 +168,10 @@ function checkEmpty(io, room) {
 function askNext(io, room) {
   clearTimeout(room.timer);
   room.index += 1;
-  if (room.index >= room.questions.length) return finish(io, room);
+  if (room.index >= room.questions.length) {
+    finish(io, room).catch((err) => console.error(`[live] room ${room.code}: finishing failed:`, err));
+    return;
+  }
 
   room.status = 'question';
   room.startedAt = Date.now();

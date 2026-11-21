@@ -48,7 +48,17 @@ const io = new Server(server, {
   cors: { origin: (origin, done) => done(null, originAllowed(origin)) },
   // Small messages only; anything bigger is not from our client
   maxHttpBufferSize: 10_000,
+  // A heartbeat every 20s; a connection is only given up after 30s more of silence.
+  // Phones and busy Wi-Fi often go quiet for a few seconds, and dropping a player
+  // for that (Socket.IO's default is 20s) shows up as random disconnects.
+  pingInterval: 20_000,
+  pingTimeout: 30_000,
 });
+
+// Rooms live in memory, so a crash ends every game at once. Log unexpected errors
+// instead of exiting (Railway would restart the process and wipe all rooms).
+process.on('unhandledRejection', (err) => console.error('[live] unhandled rejection:', err));
+process.on('uncaughtException', (err) => console.error('[live] uncaught exception:', err));
 
 // Every connection must carry a valid ticket for an active account
 io.use(async (socket, next) => {
@@ -108,7 +118,18 @@ io.on('connection', (socket) => {
   handle('game:next', actions.next);
   handle('game:answer', actions.answer);
 
-  socket.on('disconnect', () => actions.leave(io, socket, { explicit: false }));
+  const { user } = socket.data;
+  console.log(`[live] connect user ${user.id} via ${socket.conn.transport.name}`);
+  socket.on('disconnect', (reason) => {
+    // The reason tells a network problem ("ping timeout", "transport close") from the
+    // player leaving the page ("client namespace disconnect")
+    console.log(`[live] disconnect user ${user.id} room ${socket.data.code || '-'}: ${reason}`);
+    try {
+      actions.leave(io, socket, { explicit: false });
+    } catch (err) {
+      console.error('[live] cleanup after disconnect failed:', err);
+    }
+  });
 });
 
 mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 10000 })

@@ -68,7 +68,7 @@ export default function Live() {
     else leave();
   };
 
-  const offline = connection === 'offline' || connection === 'error';
+  const offline = connection === 'offline';
   const notice = game.closed || joinError;
 
   return (
@@ -106,8 +106,12 @@ export default function Live() {
           </div>
         </div>
       )}
-      {offline && game.error && (
-        <div className="lv-banner" role="status"><span className="lv-pulse is-warn" aria-hidden="true" /> {game.error}</div>
+      {offline && (
+        <div className={`lv-banner ${room ? 'is-warn' : ''}`} role="status">
+          <span className="lv-pulse is-warn" aria-hidden="true" />
+          {game.error || 'Connection lost. Reconnecting…'}
+          {room && <span className="lv-muted"> Your place and score are kept.</span>}
+        </div>
       )}
       {connection === 'connecting' && !room && (
         <div className="lv-banner" role="status"><span className="lv-pulse" aria-hidden="true" /> Connecting to the live server…</div>
@@ -129,12 +133,13 @@ export default function Live() {
           initialCode={urlCode}
         />
       )}
-      {room?.status === 'lobby' && <Lobby room={room} myId={myId} onStart={game.start} />}
+      {room?.status === 'lobby' && <Lobby room={room} myId={myId} onStart={game.start} offline={offline} />}
       {(room?.status === 'question' || room?.status === 'reveal') && (
         <QuestionView
           key={room.index}
           room={room}
           myId={myId}
+          offline={offline}
           clockOffset={game.clockOffset}
           onAnswer={game.answer}
           onNext={game.next}

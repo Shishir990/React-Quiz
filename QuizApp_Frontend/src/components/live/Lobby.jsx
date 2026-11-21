@@ -3,7 +3,7 @@ import { Icon } from '../ui';
 import Scoreboard from './Scoreboard';
 
 // Waiting room: the code to share, who has joined, and the host's Start button
-export default function Lobby({ room, myId, onStart }) {
+export default function Lobby({ room, myId, onStart, offline }) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -45,7 +45,7 @@ export default function Lobby({ room, myId, onStart }) {
 
         {room.isHost ? (
           <>
-            <button className="db-btn-light lv-submit" onClick={start} disabled={busy}>
+            <button className="db-btn-light lv-submit" onClick={start} disabled={busy || offline}>
               <Icon name="play" size={15} /> {busy ? 'Starting…' : 'Start game'}
             </button>
             <p className="db-section-sub lv-hint">

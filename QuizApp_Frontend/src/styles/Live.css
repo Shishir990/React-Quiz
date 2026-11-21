@@ -62,6 +62,7 @@
   font-size: 13px;
 }
 .lv-banner.is-info { border-color: var(--th-border-strong, #CBD5E1); }
+.lv-banner.is-warn { border-color: var(--tone-warn, #F59E0B); }
 .lv-confirm { flex-wrap: wrap; justify-content: space-between; border-color: var(--tone-bad, #F87171); }
 .lv-confirm-title { margin: 0 0 2px; font-weight: 700; color: var(--th-on-dark, var(--ink)); }
 .lv-confirm .db-section-sub { margin: 0; }
