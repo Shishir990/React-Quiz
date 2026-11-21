@@ -191,8 +191,11 @@ body,
 .ad-filterbar { backdrop-filter: none; -webkit-backdrop-filter: none; }
 .db-cat-card:hover,
 .ad-cat:hover,
-.ad-cat:focus-within,
-.qz-option:hover:not(:disabled) { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+.ad-cat:focus-within { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+/* Options: mouse and trackpad only (touch screens keep :hover on the last tapped spot) */
+@media (hover: hover) and (pointer: fine) {
+  .qz-option:hover:not(:disabled) { background: var(--th-card-hover); border-color: var(--th-border-strong); }
+}
 .db-cat-active, .db-cat-active:hover { background: var(--th-card-hover); }
 
 /* Things inside cards */
@@ -507,8 +510,10 @@ thead tr { background: transparent; color: inherit; }
 .db-navbar .db-search:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px rgba(var(--acc-rgb), 0.15), 0 0 14px rgba(var(--acc-rgb), 0.2); }
 .db-cat-card:hover,
 .db-stat-card:hover,
-.ad-cat:hover,
-.qz-option:hover:not(:disabled):not(.is-selected) { border-color: rgba(var(--acc-rgb), 0.45); box-shadow: 0 0 20px -6px rgba(var(--acc-rgb), 0.35); }
+.ad-cat:hover { border-color: rgba(var(--acc-rgb), 0.45); box-shadow: 0 0 20px -6px rgba(var(--acc-rgb), 0.35); }
+@media (hover: hover) and (pointer: fine) {
+  .qz-option:hover:not(:disabled):not(.is-selected) { border-color: rgba(var(--acc-rgb), 0.45); box-shadow: 0 0 20px -6px rgba(var(--acc-rgb), 0.35); }
+}
 .lb-podium .lb-avatar-xl,
 .lb-podium .lb-avatar-lg,
 .ad-qv-btn.is-primary,

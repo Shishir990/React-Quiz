@@ -129,6 +129,14 @@ export default function Live() {
       </div>
     </div>
   );
+  // The same account in this game from another tab or device: it's one player, so the
+  // other screen's answers show up (and count) here. Say so instead of looking broken.
+  const elsewhereBanner = room?.me?.openElsewhere && (
+    <div className="lv-banner is-warn" role="status">
+      You're also in this game in another tab or device with this account. It's the same player:
+      an answer given there shows and counts here. To play against someone, use a different account.
+    </div>
+  );
   const offlineBanner = offline && (
     <div className={`lv-banner ${room ? 'is-warn' : ''}`} role="status">
       <span className="lv-pulse is-warn" aria-hidden="true" />
@@ -146,7 +154,7 @@ export default function Live() {
           myName={user?.name}
           offline={offline}
           clockOffset={game.clockOffset}
-          notices={(confirmBanner || offlineBanner) && <div className="lv-qz-notices">{confirmBanner}{offlineBanner}</div>}
+          notices={(confirmBanner || offlineBanner || elsewhereBanner) && <div className="lv-qz-notices">{confirmBanner}{offlineBanner}{elsewhereBanner}</div>}
           onAnswer={game.answer}
           onNext={game.next}
           onExamAnswer={game.examAnswer}
@@ -180,6 +188,7 @@ export default function Live() {
 
       {confirmBanner}
       {offlineBanner}
+      {elsewhereBanner}
       {connection === 'connecting' && !room && (
         <div className="lv-banner" role="status"><span className="lv-pulse" aria-hidden="true" /> Connecting to the live server…</div>
       )}

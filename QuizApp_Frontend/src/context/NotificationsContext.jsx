@@ -88,6 +88,9 @@ export function NotificationsProvider({ children }) {
       let pending = first.ticket;
       socket = io(`${first.url.replace(/\/$/, '')}/notify`, {
         transports: ['websocket', 'polling'],
+        // Its own connection: Socket.IO would otherwise share one with the live game
+        // (same server), and reconnects or errors here must never touch a game
+        forceNew: true,
         // A fresh ticket for every reconnect (each one is valid for a minute)
         auth: (cb) => {
           if (pending) {

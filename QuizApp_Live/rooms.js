@@ -141,10 +141,15 @@ function snapshot(room, userId) {
     } : null,
     me: me ? {
       answer: myAnswer?.option ?? null,
-      isCorrect: revealed && myAnswer ? myAnswer.isCorrect : null,
-      points: revealed && myAnswer ? myAnswer.points : null,
+      // One at a time: players learn right away whether their own answer was right
+      // (the answer itself and everyone else's scores wait for the reveal)
+      isCorrect: myAnswer && (revealed || room.status === 'question') ? myAnswer.isCorrect : null,
+      points: myAnswer && (revealed || room.status === 'question') ? myAnswer.points : null,
       answers: exam ? room.questions.map((_x, i) => me.answers[i]?.option ?? null) : undefined,
       submitted: room.mode === 'exam' ? !!me.submittedAt : undefined,
+      // This account is in the game from more than one tab or device. They're all the
+      // same player, so an answer given in one shows (and counts) in the others.
+      openElsewhere: me.sockets.size > 1,
     } : null,
     players: ranking(room).map(({ player, points, correct }, i) => ({
       id: player.id,

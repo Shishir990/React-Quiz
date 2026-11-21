@@ -135,16 +135,32 @@ function SyncView({ room, myId, offline, clockOffset, answeredCount, onAnswer, o
     if (!res?.ok) setMessage(res?.message || 'Could not move on.');
   };
 
+  // The server says right away whether my answer was right (before the reveal it
+  // doesn't say which option was correct)
+  const judged = !revealed && !!me?.answer && typeof me.isCorrect === 'boolean';
+
   const optionClass = (option) => {
-    if (!revealed) return option === myAnswer ? 'is-selected' : '';
+    if (!revealed) {
+      if (option !== myAnswer) return '';
+      if (judged) return me.isCorrect ? 'lv-is-correct' : 'lv-is-wrong';
+      return 'is-selected';
+    }
     if (option === reveal.correctAnswer) return 'lv-is-correct';
     if (option === myAnswer) return 'lv-is-wrong';
     return 'lv-is-dim';
   };
 
-  const hint = revealed
-    ? (me?.isCorrect ? `Correct! +${me.points.toLocaleString()} points` : myAnswer ? 'Not quite.' : "Time's up, no answer.")
-    : myAnswer ? 'Answer locked in. Waiting for the others…' : 'Select one answer. Faster correct answers score more.';
+  let hint;
+  if (revealed) {
+    hint = me?.isCorrect ? `Correct! +${(me.points || 0).toLocaleString()} points` : myAnswer ? 'Not quite.' : "Time's up, no answer.";
+  } else if (judged) {
+    hint = me.isCorrect
+      ? `Correct! +${(me.points || 0).toLocaleString()} points. Waiting for the others…`
+      : 'Wrong answer, no points. The right one is shown when the question ends.';
+  } else {
+    hint = myAnswer ? 'Answer locked in…' : 'Select one answer. Faster correct answers score more.';
+  }
+  const hintTone = revealed || judged ? (me?.isCorrect ? 'lv-hint-good' : 'lv-hint-bad') : '';
 
   return (
     <div className="qz-layout">
@@ -154,7 +170,7 @@ function SyncView({ room, myId, offline, clockOffset, answeredCount, onAnswer, o
             <p className="qz-eyebrow">Question {pad(room.index + 1)}{question.difficulty ? ` · ${question.difficulty}` : ''}</p>
             {!revealed && <Countdown endsAt={room.endsAt} seconds={room.seconds} clockOffset={clockOffset} />}
             <h1 id="lv-question-text" className="qz-question-text">{question.text}</h1>
-            <p className={`qz-hint ${revealed ? (me?.isCorrect ? 'lv-hint-good' : 'lv-hint-bad') : ''}`} role={revealed ? 'status' : undefined}>{hint}</p>
+            <p className={`qz-hint ${hintTone}`} role={revealed || judged ? 'status' : undefined}>{hint}</p>
           </div>
 
           <div className="qz-options" role="radiogroup" aria-label="Answer options">

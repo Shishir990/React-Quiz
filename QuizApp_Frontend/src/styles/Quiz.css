@@ -179,10 +179,14 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.qz-option:hover:not(:disabled) {
-  border-color: var(--acc, #10B981);
-  background: #FAFFFD;
-  transform: translateY(-1px);
+/* Mouse and trackpad only: touch screens keep :hover on whatever was last tapped, so the
+   option in that spot on the next question looked already picked */
+@media (hover: hover) and (pointer: fine) {
+  .qz-option:hover:not(:disabled) {
+    border-color: var(--acc, #10B981);
+    background: #FAFFFD;
+    transform: translateY(-1px);
+  }
 }
 .qz-option:disabled { cursor: default; }
 .qz-option:disabled:not(.is-selected) { opacity: 0.6; }
