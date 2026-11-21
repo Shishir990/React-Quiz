@@ -1,0 +1,99 @@
+/* ════════════════════════════════════════════════════════════════
+   Light mode: active when <html data-theme="light"> (the toggle in the
+   top bar sets it). Theme.css and SoftLime.css colour almost
+   everything through the --th-* / --acc variables, so this mostly
+   swaps those for a light palette, then fixes the few spots that
+   hard-code dark colours. Loaded last (see main.jsx).
+   ════════════════════════════════════════════════════════════════ */
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* The names say "on-dark" because the dark theme came first: here they mean main text */
+  --th-bg: #F5F6F3;
+  --th-surface: #FFFFFF;
+  --th-surface-hover: #EEF0EA;
+  --th-edge: #E2E5DE;
+  --th-card: #FFFFFF;
+  --th-card-hover: #FAFBF8;
+  --th-card-2: #F3F4F0;
+  --th-card-2-hover: #EAECE6;
+  --th-card-sunk: #EDEFE9;
+  --th-card-edge: #DDE1D8;
+  --th-border-strong: #C7CCC1;
+  --th-on-dark: #15180F;
+  --th-on-dark-2: #3B4136;
+  --th-on-dark-muted: #676E60;
+  --th-faint: #949A8C;
+  --th-deep: #ECF7D4;
+  --th-lime: #4D7C0F;
+  --th-glow: 0, 0, 0;
+
+  /* A deeper lime: the dark theme's #A3E635 is unreadable as text on white */
+  --acc: #65A30D;
+  --acc-strong: #4D7C0F;
+  --acc-soft: #4D7C0F;
+  --acc-rgb: 101, 163, 13;
+  --acc-ink: #0F1A02;
+  --acc-glow: none;
+
+  --tone-good: #4D7C0F;
+  --tone-warn: #B45309;
+  --tone-bad: #DC2626;
+}
+:root:not([data-theme='light']) { color-scheme: dark; }
+
+/* ── Shadows were tuned for black: soften them ── */
+[data-theme='light'] .ad-qv-empty,
+[data-theme='light'] .qz-option,
+[data-theme='light'] .qz-palette,
+[data-theme='light'] .questionContainer { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+[data-theme='light'] .au-card { box-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.25); }
+[data-theme='light'] .db-chart-tip { box-shadow: 0 10px 24px -12px rgba(15, 23, 42, 0.25); }
+[data-theme='light'] .ad-chart-col:hover,
+[data-theme='light'] .ad-chart-col:focus-visible { background: rgba(15, 23, 42, 0.03); }
+[data-theme='light'] .db-backdrop { background: rgba(15, 23, 42, 0.3); }
+
+/* ── Status colours: pale text for dark, deep text for light ── */
+[data-theme='light'] .db-logout-btn:hover { background: #FEE2E2; border-color: #FECACA; color: #B91C1C; }
+[data-theme='light'] .db-error-msg { background: #FEF2F2; border-color: #FECACA; color: #B91C1C; }
+[data-theme='light'] .db-tag-fail,
+[data-theme='light'] .ad-pill-off,
+[data-theme='light'] .ad-tab-count.is-error { background: #FEE2E2; color: #B91C1C; }
+[data-theme='light'] .ad-tag.is-draft,
+[data-theme='light'] .ad-tab-count.is-duplicate { background: #FEF3C7; color: #B45309; }
+[data-theme='light'] .ad-score.is-fail,
+[data-theme='light'] .rs-q-verdict.is-wrong { color: #DC2626; }
+[data-theme='light'] .rs-option.is-picked-wrong { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; }
+[data-theme='light'] .qz-legend-dot.is-skipped { background: #FEF3C7; border-color: #FCD34D; color: #B45309; }
+
+/* ── Charts and stat colours ── */
+[data-theme='light'] .db-wrapper .db-chart-bar { background: #D9F99D; }
+[data-theme='light'] .db-wrapper .db-chart-col.is-today .db-chart-bar,
+[data-theme='light'] .db-wrapper .db-chart-col.is-peak .db-chart-bar { background: var(--acc); }
+[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-emerald { --stat: #4D7C0F; }
+[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-blue    { --stat: #0284C7; }
+[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-violet  { --stat: #7C3AED; }
+[data-theme='light'] .db-stats:not(.is-graded) .db-stat-card.tone-orange  { --stat: #D97706; }
+[data-theme='light'] .ad-kpi.tone-blue   { --stat: #0284C7; }
+[data-theme='light'] .ad-kpi.tone-teal   { --stat: #0D9488; }
+[data-theme='light'] .ad-kpi.tone-green  { --stat: #4D7C0F; }
+[data-theme='light'] .ad-kpi.tone-orange { --stat: #D97706; }
+
+/* ── My Quizzes cards set their own dark surface ── */
+[data-theme='light'] .mq-card {
+  --qc-surface: #FFFFFF;
+  --qc-surface-2: #FAFBF8;
+  --qc-border: #DDE1D8;
+  --qc-text: #15180F;
+  --qc-text-2: #4F5648;
+  --qc-text-3: #7A8072;
+}
+
+/* ── The toggle itself ── */
+.theme-toggle svg { transition: transform 0.3s ease; }
+.theme-toggle:hover svg { transform: rotate(-15deg); }
+.ad-btn.theme-toggle { padding-left: 0; padding-right: 0; width: 36px; justify-content: center; }
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle svg { transition: none; }
+}

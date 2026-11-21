@@ -3,7 +3,7 @@ import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
 import '../../styles/Admin.css';
-import { Icon, Toasts } from '../ui';
+import { Icon, Toasts, ThemeToggle } from '../ui';
 
 const NAV = [
   { to: '/admin', label: 'Overview', end: true },
@@ -162,6 +162,7 @@ export default function AdminLayout() {
             <Link to="/dashboard" className="ad-btn ad-btn-glass ad-player-link">
               <Icon name="play" size={13} /> Player app
             </Link>
+            <ThemeToggle className="ad-btn ad-btn-glass" />
             <UserMenu user={user} onLogout={handleLogout} />
           </div>
         </div>

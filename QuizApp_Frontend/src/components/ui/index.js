@@ -7,3 +7,4 @@ export { Toasts } from './Toasts';
 export { EmptyState } from './EmptyState';
 export { SkeletonRows } from './SkeletonRows';
 export { ExportButton } from './ExportButton';
+export { ThemeToggle } from './ThemeToggle';

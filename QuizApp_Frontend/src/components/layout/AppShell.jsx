@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
-import { Icon } from '../ui';
+import { Icon, ThemeToggle } from '../ui';
 import '../../styles/Dashboard.css';
 
 const NAV_ITEMS = [
@@ -252,6 +252,7 @@ export default function AppShell({ title, children }) {
 
           <div className="db-navbar-right">
             <LiveClock />
+            <ThemeToggle className="db-icon-btn" />
             <button className="db-icon-btn" title="Notifications">
               <Icon name="bell" size={18} />
               <span className="db-dot" />
