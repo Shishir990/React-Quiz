@@ -36,7 +36,7 @@
 
 /* ── Card ── */
 .db-wrapper .db-sidebar {
-  width: 248px;
+  width: 220px;
   padding: 1.25rem 0.75rem 0.75rem;
   font-family: var(--font-display);
 }
