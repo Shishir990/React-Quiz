@@ -42,8 +42,115 @@
   --radius-ctl: 3px;
 }
 
-/* ── 2. Sidebar: same palette and font, its own layout ── */
-.db-logo-icon { box-shadow: none; }
+/* ── 2. Sidebar: flat, full height, like the top bar ── */
+.db-wrapper .db-sidebar {
+  width: 232px;
+  height: 100%;
+  margin: 0;
+  padding: 16px 0.75rem 0.75rem;
+  border: none;
+  border-right: 1px solid var(--th-edge);
+  border-radius: 0;
+  background: var(--th-bg);
+  box-shadow: none;
+}
+
+/* Logo row is as tall as the top bar, so their bottom lines meet at the same height */
+.db-wrapper .db-logo {
+  height: calc(1.2rem + 39px);
+  margin: 0 -0.75rem 0.5rem;
+  padding: 0 1.35rem;
+  border-bottom: 1px solid var(--th-edge);
+}
+.db-logo-icon {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-ctl);
+  box-shadow: none;
+}
+.db-logo-name { font-size: 16px; letter-spacing: -0.02em; }
+
+/* Group labels ("Menu", "Account") */
+.db-nav-label {
+  margin: 14px 0 6px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--th-faint);
+}
+.db-nav-label-secondary {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--th-edge);
+}
+.db-wrapper .db-nav-secondary { margin: 0; padding: 0; border: none; }
+
+/* Items: quiet by default; the selected one gets a lime bar, lime icon and a faint tint */
+.db-wrapper .db-nav { gap: 2px; }
+.db-wrapper .db-nav-item {
+  position: relative;
+  height: 38px;
+  border-radius: var(--radius-ctl);
+  font-size: 13.5px;
+  color: var(--th-on-dark-muted);
+}
+.db-wrapper .db-nav-item:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+.db-wrapper .db-nav-item.active,
+.db-wrapper .db-nav-item.active:hover {
+  background: rgba(var(--acc-rgb), 0.08);
+  color: var(--th-on-dark);
+  font-weight: 600;
+  box-shadow: none;
+}
+.db-wrapper .db-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 9px; bottom: 9px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--acc);
+}
+.db-wrapper .db-nav-item.active svg { color: var(--acc); }
+.db-wrapper .db-nav-item:focus-visible { outline: 2px solid rgba(var(--acc-rgb), 0.6); outline-offset: -2px; }
+
+/* Profile: a small card pinned to the bottom */
+.db-wrapper .db-sidebar-user {
+  margin-top: auto;
+  padding: 10px;
+  border: 1px solid var(--th-card-edge);
+  border-radius: var(--radius-card);
+  background: var(--th-card);
+}
+.db-wrapper .db-sidebar-user .db-avatar { border-radius: var(--radius-ctl); }
+.db-wrapper .db-sidebar-name { font-size: 13px; color: var(--th-on-dark); }
+.db-wrapper .db-sidebar-role { font-size: 11.5px; color: var(--th-on-dark-muted); }
+.db-wrapper .db-logout-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-ctl);
+  background: transparent;
+  border-color: var(--th-card-edge);
+  color: var(--th-on-dark-muted);
+}
+.db-wrapper .db-logout-btn:hover { background: #3A1D1D; border-color: #5B2A2A; color: #FCA5A5; }
+
+/* Mobile drawer: flush to the left edge; close button in the dark palette */
+@media (max-width: 900px) {
+  .db-wrapper .db-sidebar {
+    top: 0; left: 0; bottom: 0;
+    height: auto;
+    transform: translateX(-100%);
+  }
+  .db-wrapper .db-sidebar.is-open { transform: translateX(0); }
+  .db-wrapper .db-drawer-close {
+    border: 1px solid var(--th-card-edge);
+    border-radius: var(--radius-ctl);
+    background: transparent;
+    color: var(--th-on-dark-2);
+  }
+  .db-wrapper .db-drawer-close:hover { background: var(--th-surface-hover); color: var(--th-on-dark); }
+  .db-backdrop { background: rgba(0, 0, 0, 0.6); }
+}
 
 /* ── 3. Flat canvas: no radial glow ── */
 body,

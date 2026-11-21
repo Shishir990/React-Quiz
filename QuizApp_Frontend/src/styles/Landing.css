@@ -113,6 +113,83 @@
   font-size: 11.5px; font-weight: 600;
 }
 
+/* Live game preview in the hero */
+.lp-window-bar { align-items: center; }
+.lp-window-title {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font-style: normal; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+  color: var(--th-on-dark-2);
+}
+.lp-window-bar .lp-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--tone-bad);
+  animation: lp-blink 1.4s ease-in-out infinite;
+}
+@keyframes lp-blink { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .lp-window-bar .lp-live-dot { animation: none; } }
+.lp-q-time { height: 4px; border-radius: 2px; background: var(--th-card-edge); }
+.lp-q-time span { display: block; height: 100%; border-radius: inherit; background: var(--tone-good); }
+
+.lp-players {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px; border: 1px solid var(--th-card-edge); border-radius: 3px; background: var(--th-card-2);
+}
+.lp-players-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; font-size: 13px; font-weight: 600; }
+.lp-players-head em { font-style: normal; font-size: 11px; font-weight: 400; color: var(--th-on-dark-muted); }
+.lp-player {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 7px; border: 1px solid var(--th-card-edge); border-radius: 3px;
+  font-size: 12px;
+}
+.lp-player.is-me { border-color: var(--acc); }
+.lp-player-rank { width: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--th-on-dark-muted); }
+.lp-player-avatar {
+  width: 20px; height: 20px; display: grid; place-items: center; flex-shrink: 0;
+  border-radius: 50%; background: var(--th-card); font-size: 8.5px; font-weight: 700; color: var(--th-on-dark-2);
+}
+.lp-player-name { flex: 1; min-width: 0; font-weight: 600; }
+/* Answered / still thinking, as a dot: the preview column is too narrow for words */
+.lp-player-state {
+  width: 7px; height: 7px; flex-shrink: 0; overflow: hidden;
+  border-radius: 50%; background: var(--th-border-strong);
+  font-size: 0;
+}
+.lp-player-state.is-done { background: var(--tone-good); }
+.lp-player code { font-family: var(--font-mono); font-size: 11px; color: var(--th-on-dark); }
+
+/* Play together */
+.lp-live { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 56px; }
+.lp-live .lp-h2 { margin-bottom: 28px; }
+.lp-live-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.lp-live-points li { display: flex; gap: 14px; align-items: flex-start; }
+.lp-live-points .lp-feature-icon { flex-shrink: 0; }
+.lp-live-points h3 { margin: 2px 0 4px; font-size: 15.5px; font-weight: 700; }
+.lp-live-points p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--th-on-dark-2); }
+.lp-live-cta { margin-top: 28px; }
+
+.lp-lobby-body { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 24px; text-align: center; }
+.lp-lobby-label { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--th-on-dark-muted); }
+.lp-lobby-code { margin: 0; font-family: var(--font-mono); font-size: 52px; font-weight: 700; letter-spacing: 0.18em; line-height: 1.1; color: var(--acc); }
+.lp-lobby-meta { margin: 0 0 6px; font-size: 13px; color: var(--th-on-dark-2); }
+.lp-lobby-modes {
+  display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 3px;
+  border: 1px solid var(--th-card-edge); border-radius: 3px; background: var(--th-card-sunk);
+}
+.lp-lobby-modes span { padding: 6px 10px; border-radius: 2px; font-size: 12px; font-weight: 600; color: var(--th-on-dark-muted); }
+.lp-lobby-modes span.is-on { background: var(--th-card-2); color: var(--th-on-dark); }
+.lp-lobby-people { display: flex; align-items: center; gap: 0; margin-top: 6px; }
+.lp-lobby-people span {
+  width: 30px; height: 30px; display: grid; place-items: center; margin-left: -6px;
+  border-radius: 50%; border: 2px solid var(--th-card); background: var(--th-card-2);
+  font-size: 10px; font-weight: 700; color: var(--th-on-dark-2);
+}
+.lp-lobby-people span:first-child { margin-left: 0; }
+.lp-lobby-people em { margin-left: 10px; font-style: normal; font-size: 12.5px; color: var(--tone-good); }
+.lp-lobby-start {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 9px 18px; border-radius: 3px; background: var(--acc); color: var(--acc-ink);
+  font-size: 13px; font-weight: 700;
+}
+
 /* Sections */
 .lp-section { padding: 72px 0; border-top: 1px solid var(--th-edge); }
 .lp-kicker { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--acc); }
@@ -153,6 +230,7 @@
 /* Tablet and phone */
 @media (max-width: 960px) {
   .lp-hero { grid-template-columns: minmax(0, 1fr); padding: 48px 0 64px; gap: 40px; }
+  .lp-live { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .lp-features, .lp-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
@@ -164,6 +242,8 @@
   .lp-features, .lp-steps { grid-template-columns: minmax(0, 1fr); }
   .lp-hero-actions .lp-btn { flex: 1 1 100%; }
   .lp-cta { padding: 24px; }
+  .lp-live-cta { width: 100%; }
+  .lp-lobby-code { font-size: 40px; }
   .lp-cta .lp-btn { flex: 1 1 100%; }
   .lp-footer { padding: 24px 16px 32px; }
 }

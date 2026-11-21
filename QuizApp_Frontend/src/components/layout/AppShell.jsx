@@ -209,11 +209,13 @@ export default function AppShell({ title, children }) {
           </button>
         </div>
 
-        <nav className="db-nav">
+        <p className="db-nav-label" aria-hidden="true">Menu</p>
+        <nav className="db-nav" aria-label="Main">
           {NAV_ITEMS.filter((item) => !item.separate).map((item) => <NavItem key={item.label} item={item} />)}
         </nav>
 
-        <nav className="db-nav db-nav-secondary">
+        <p className="db-nav-label db-nav-label-secondary" aria-hidden="true">Account</p>
+        <nav className="db-nav db-nav-secondary" aria-label="Account">
           {NAV_ITEMS.filter((item) => item.separate && (!item.adminOnly || isAdmin)).map((item) => <NavItem key={item.label} item={item} />)}
         </nav>
 
