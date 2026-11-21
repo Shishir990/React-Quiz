@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuiz } from '../context/QuizContext';
-import { Icon } from '../components/ui';
+import { Icon, Logo } from '../components/ui';
 import '../styles/Landing.css';
 
 const FEATURES = [
@@ -48,7 +48,7 @@ export default function Landing() {
     <div className="lp">
       <header className="lp-nav">
         <Link to="/" className="lp-brand" aria-label="QuizApp home">
-          <span className="lp-brand-mark">Q/</span>
+          <Logo size={32} />
           <span className="lp-brand-name">QuizApp</span>
         </Link>
         <nav className="lp-nav-links" aria-label="Sections">

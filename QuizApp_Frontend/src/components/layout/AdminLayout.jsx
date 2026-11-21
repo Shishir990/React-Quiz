@@ -3,7 +3,7 @@ import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
 import '../../styles/Admin.css';
-import { Icon, Toasts, ThemeToggle } from '../ui';
+import { Icon, Toasts, ThemeToggle, Logo } from '../ui';
 
 const NAV = [
   { to: '/admin', label: 'Overview', end: true },
@@ -143,7 +143,7 @@ export default function AdminLayout() {
       <header className="ad-navbar">
         <div className="ad-navbar-inner">
           <Link to="/admin" className="ad-brand">
-            <span className="ad-brand-mark">Q</span>
+            <Logo size={30} />
             <span className="ad-brand-name">QuizApp</span>
             <span className="ad-brand-tag">Admin</span>
           </Link>

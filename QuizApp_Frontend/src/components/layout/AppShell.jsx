@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuiz } from '../../context/QuizContext';
 import { initialsOf } from '../../utils/format';
-import { Icon, ThemeToggle } from '../ui';
+import { Icon, ThemeToggle, Logo } from '../ui';
 import '../../styles/Dashboard.css';
 
 // Sidebar groups, each under a small heading
@@ -214,7 +214,7 @@ export default function AppShell({ title, children }) {
         onClick={(e) => e.target.closest('.db-nav-item') && setDrawerOpen(false)}
       >
         <div className="db-logo">
-          <div className="db-logo-icon">Q/</div>
+          <Logo size={34} />
           <span className="db-logo-name">QuizApp</span>
           <button
             className="db-drawer-close"

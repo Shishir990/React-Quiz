@@ -1,4 +1,5 @@
 import { AuthIcon } from '../auth';
+import { Logo } from '../ui';
 import '../../styles/Auth.css';
 
 const features = [
@@ -13,7 +14,7 @@ export default function AuthLayout({ title, subtitle, children }) {
     <div className="au-wrapper">
       <aside className="au-panel">
         <div className="au-logo">
-          <div className="au-logo-icon">Q/</div>
+          <Logo size={36} />
           <span className="au-logo-name">QuizApp</span>
         </div>
 
@@ -35,7 +36,7 @@ export default function AuthLayout({ title, subtitle, children }) {
       <main className="au-main">
         <div className="au-card">
           <div className="au-logo au-logo-mobile">
-            <div className="au-logo-icon">Q/</div>
+            <Logo size={36} />
             <span className="au-logo-name">QuizApp</span>
           </div>
           <h1 className="au-title">{title}</h1>
