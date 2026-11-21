@@ -154,7 +154,7 @@ export default function CategoryQuestions() {
             <div className="qz-brand-icon" style={{ background: tint }} aria-hidden="true">{category?.icon || '📁'}</div>
             <div>
               <p className="qz-brand-name">{category?.name || 'Loading…'}</p>
-              <p className="qz-brand-sub">QuizApp Admin · {total} {total === 1 ? 'question' : 'questions'} · {timeLimit} time limit</p>
+              <p className="qz-brand-sub">Quizora Admin · {total} {total === 1 ? 'question' : 'questions'} · {timeLimit} time limit</p>
             </div>
           </div>
 

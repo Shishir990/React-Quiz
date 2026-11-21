@@ -1,4 +1,4 @@
-// QuizApp logo: a "Q" whose tail turns into a tick (the right answer), on a lime tile.
+// Quizora logo: a "Q" whose tail turns into a tick (the right answer), on a lime tile.
 // The same drawing is the browser-tab icon (public/favicon.svg).
 export function Logo({ size = 34, className = '' }) {
   return (
@@ -8,7 +8,7 @@ export function Logo({ size = 34, className = '' }) {
       height={size}
       viewBox="0 0 40 40"
       role="img"
-      aria-label="QuizApp logo"
+      aria-label="Quizora logo"
     >
       <rect width="40" height="40" rx="11" fill="#A3E635" />
       <path d="M26.16 21.8A9 9 0 1 0 20.33 26.69" fill="none" stroke="#172503" strokeWidth="4" strokeLinecap="round" />

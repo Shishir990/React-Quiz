@@ -1,4 +1,4 @@
-// QuizApp live games: a long-running Socket.IO server, separate from the Vercel API
+// Quizora live games: a long-running Socket.IO server, separate from the Vercel API
 // (serverless functions can't hold WebSocket connections open).
 //
 // Sign-in: the browser asks the main API for a one-minute ticket (POST /api/live/ticket)
@@ -36,7 +36,7 @@ const originAllowed = (origin) =>
   !!origin && (allowedOrigins.includes(origin) || (!isProduction && /^http:\/\/localhost:\d+$/.test(origin)));
 
 const app = express();
-app.get('/', (req, res) => res.json({ message: 'QuizApp live server is running ✅' }));
+app.get('/', (req, res) => res.json({ message: 'Quizora live server is running ✅' }));
 // For the host's health checks (Render, Railway, Fly all poll a URL like this)
 app.get('/health', (req, res) => {
   const db = mongoose.connection.readyState === 1;

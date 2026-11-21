@@ -48,7 +48,7 @@ export function NameForm() {
         <div className="st-card-icon"><Icon name="user" size={18} /></div>
         <div>
           <h3 className="st-card-title">Name</h3>
-          <p className="db-section-sub">How you appear across QuizApp, including the leaderboard.</p>
+          <p className="db-section-sub">How you appear across Quizora, including the leaderboard.</p>
         </div>
       </div>
 

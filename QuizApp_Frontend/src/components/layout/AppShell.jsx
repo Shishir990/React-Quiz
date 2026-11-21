@@ -196,7 +196,7 @@ export default function AppShell({ title, children }) {
   }, [drawerOpen]);
 
   useEffect(() => {
-    document.title = `${title} · QuizApp`;
+    document.title = `${title} · Quizora`;
   }, [title]);
 
   const handleLogout = () => {
@@ -228,7 +228,7 @@ export default function AppShell({ title, children }) {
       >
         <div className="db-logo">
           <Logo size={34} />
-          <span className="db-logo-name">QuizApp</span>
+          <span className="db-logo-name">Quizora</span>
           <button
             className="db-drawer-close"
             onClick={() => setDrawerOpen(false)}
@@ -274,7 +274,7 @@ export default function AppShell({ title, children }) {
             <Icon name="menu" size={18} />
           </button>
           <div className="db-navbar-title">
-            <p className="db-crumb">QuizApp / <span>{title}</span></p>
+            <p className="db-crumb">Quizora / <span>{title}</span></p>
             <h2 className="db-navbar-heading">{title}</h2>
           </div>
 

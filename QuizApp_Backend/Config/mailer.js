@@ -21,7 +21,7 @@ const getTransporter = () => {
 
 const sendMail = ({ to, subject, text, html }) =>
   getTransporter().sendMail({
-    from: process.env.MAIL_FROM || `QuizApp <${process.env.SMTP_USER}>`,
+    from: process.env.MAIL_FROM || `Quizora <${process.env.SMTP_USER}>`,
     to,
     subject,
     text,

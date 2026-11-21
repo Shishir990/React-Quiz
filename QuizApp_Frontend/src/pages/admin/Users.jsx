@@ -109,7 +109,7 @@ export default function Users() {
       <div className="ad-page-head">
         <div>
           <h1 className="ad-title">Users</h1>
-          <p className="ad-subtitle">Everyone with a QuizApp account. Promote trusted players to admin here.</p>
+          <p className="ad-subtitle">Everyone with a Quizora account. Promote trusted players to admin here.</p>
         </div>
         {users && <ExportButton className="ad-btn" count={filtered.length} onExport={exportUsers} />}
       </div>

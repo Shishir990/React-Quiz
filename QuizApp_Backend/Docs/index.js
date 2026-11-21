@@ -17,7 +17,7 @@ const page = `<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QuizApp API docs</title>
+  <title>Quizora API docs</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="${SWAGGER_UI}/swagger-ui.css">
   <style>body { margin: 0; } .swagger-ui .topbar { display: none; }</style>

@@ -120,7 +120,7 @@ export default function AdminLayout() {
   const focusMode = /^\/admin\/questions\/[^/]+/.test(pathname);
 
   useEffect(() => {
-    document.title = `${current.label} · QuizApp Admin`;
+    document.title = `${current.label} · Quizora Admin`;
   }, [current.label]);
 
   const dismiss = useCallback((id) => setToasts((list) => list.filter((t) => t.id !== id)), []);
@@ -144,7 +144,7 @@ export default function AdminLayout() {
         <div className="ad-navbar-inner">
           <Link to="/admin" className="ad-brand">
             <Logo size={30} />
-            <span className="ad-brand-name">QuizApp</span>
+            <span className="ad-brand-name">Quizora</span>
             <span className="ad-brand-tag">Admin</span>
           </Link>
 

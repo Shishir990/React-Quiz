@@ -142,14 +142,14 @@ exports.requestEmailChange = async (req, res) => {
     try {
       await sendMail({
         to: email,
-        subject: 'Confirm your new QuizApp email',
+        subject: 'Confirm your new Quizora email',
         text:
-          `Hi ${user.name},\n\nOpen this link to make ${email} the email for your QuizApp account ` +
+          `Hi ${user.name},\n\nOpen this link to make ${email} the email for your Quizora account ` +
           `(it expires in ${EMAIL_CHANGE_TTL_MINUTES} minutes):\n\n${link}\n\n` +
           `If you didn't ask for this, ignore this email; nothing will change.`,
         html: actionEmailHtml({
           heading: 'Confirm your new email',
-          body: `Hi ${escapeHtml(user.name)}, open this link to make <b>${escapeHtml(email)}</b> the email for your QuizApp account. It expires in ${EMAIL_CHANGE_TTL_MINUTES} minutes.`,
+          body: `Hi ${escapeHtml(user.name)}, open this link to make <b>${escapeHtml(email)}</b> the email for your Quizora account. It expires in ${EMAIL_CHANGE_TTL_MINUTES} minutes.`,
           button: 'Confirm new email',
           link,
           footer: "If you didn't ask for this, you can ignore this email. Nothing will change.",
@@ -167,14 +167,14 @@ exports.requestEmailChange = async (req, res) => {
     // Heads-up to the current address; failing to send it shouldn't block the change
     sendMail({
       to: user.email,
-      subject: 'Your QuizApp email is being changed',
+      subject: 'Your Quizora email is being changed',
       text:
-        `Hi ${user.name},\n\nSomeone signed in to your QuizApp account asked to change its email to ${maskEmail(email)}. ` +
+        `Hi ${user.name},\n\nSomeone signed in to your Quizora account asked to change its email to ${maskEmail(email)}. ` +
         `If this was you, there's nothing to do.\n\nIf it wasn't, change your password and sign out of all devices ` +
         `in Settings right away.`,
       html: actionEmailHtml({
         heading: 'Your email is being changed',
-        body: `Hi ${escapeHtml(user.name)}, someone signed in to your QuizApp account asked to change its email to <b>${escapeHtml(maskEmail(email))}</b>. If this was you, there's nothing to do.`,
+        body: `Hi ${escapeHtml(user.name)}, someone signed in to your Quizora account asked to change its email to <b>${escapeHtml(maskEmail(email))}</b>. If this was you, there's nothing to do.`,
         footer: "If it wasn't you, change your password and sign out of all devices in Settings right away.",
       }),
     }).catch((err) => console.warn(`[auth] email change notice failed: ${err.message}`));
@@ -301,9 +301,9 @@ exports.forgotPassword = async (req, res) => {
     try {
       await sendMail({
         to: user.email,
-        subject: 'Reset your QuizApp password',
+        subject: 'Reset your Quizora password',
         text:
-          `Hi ${user.name},\n\nWe received a request to reset your QuizApp password. ` +
+          `Hi ${user.name},\n\nWe received a request to reset your Quizora password. ` +
           `Open this link to choose a new one (it expires in ${RESET_TTL_MINUTES} minutes):\n\n${link}\n\n` +
           `If you didn't ask for this, you can ignore this email; your password won't change.`,
         html: resetEmailHtml(user.name, link),
@@ -385,7 +385,7 @@ const escapeHtml = (s) =>
 const resetEmailHtml = (name, link) => `
 <div style="background:#F8FAFD;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
   <div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px">
-    <p style="margin:0 0 24px;font-size:18px;font-weight:700">QuizApp</p>
+    <p style="margin:0 0 24px;font-size:18px;font-weight:700">Quizora</p>
     <h1 style="margin:0 0 12px;font-size:22px">Reset your password</h1>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.5;color:#334155">
       Hi ${escapeHtml(name)}, we received a request to reset your password.
@@ -403,7 +403,7 @@ const resetEmailHtml = (name, link) => `
 const actionEmailHtml = ({ heading, body, button, link, footer }) => `
 <div style="background:#F8FAFD;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
   <div style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:32px">
-    <p style="margin:0 0 24px;font-size:18px;font-weight:700">QuizApp</p>
+    <p style="margin:0 0 24px;font-size:18px;font-weight:700">Quizora</p>
     <h1 style="margin:0 0 12px;font-size:22px">${escapeHtml(heading)}</h1>
     <p style="margin:0 0 24px;font-size:15px;line-height:1.5;color:#334155">${body}</p>
     ${button && link ? `<a href="${link}" style="display:inline-block;background:#10B981;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:10px">${escapeHtml(button)}</a>` : ''}

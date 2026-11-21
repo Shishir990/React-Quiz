@@ -15,7 +15,7 @@ export default function AuthLayout({ title, subtitle, children }) {
       <aside className="au-panel">
         <div className="au-logo">
           <Logo size={36} />
-          <span className="au-logo-name">QuizApp</span>
+          <span className="au-logo-name">Quizora</span>
         </div>
 
         <div className="au-panel-body">
@@ -30,14 +30,14 @@ export default function AuthLayout({ title, subtitle, children }) {
           </ul>
         </div>
 
-        <p className="au-panel-foot">© {new Date().getFullYear()} QuizApp</p>
+        <p className="au-panel-foot">© {new Date().getFullYear()} Quizora</p>
       </aside>
 
       <main className="au-main">
         <div className="au-card">
           <div className="au-logo au-logo-mobile">
             <Logo size={36} />
-            <span className="au-logo-name">QuizApp</span>
+            <span className="au-logo-name">Quizora</span>
           </div>
           <h1 className="au-title">{title}</h1>
           <p className="au-subtitle">{subtitle}</p>

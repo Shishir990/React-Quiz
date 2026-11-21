@@ -251,3 +251,72 @@
 
 /* Older global heading colours are for light pages: headings here use the light ink */
 .lp :is(h1, h2, h3) { color: var(--th-on-dark); }
+
+/* ── Friends: notifications picture on the left, points on the right ── */
+.lp-friends { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.lp-notes { position: relative; padding-bottom: 56px; }
+.lp-notes .lp-window { overflow: hidden; }
+.lp-notes-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--th-card-edge);
+  font-size: 14px; font-weight: 700;
+}
+.lp-notes-head em {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-style: normal; font-size: 12px; font-weight: 600; color: var(--acc);
+}
+[data-theme='light'] .lp-notes-head em { color: var(--acc-strong); }
+.lp-notes-head .lp-live-dot { background: var(--acc); }
+
+.lp-note {
+  position: relative;
+  display: flex; gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--th-card-edge);
+}
+.lp-note:last-child { border-bottom: none; }
+.lp-note.is-new { background: rgba(var(--acc-rgb), 0.06); }
+.lp-note-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  background: var(--th-card-2);
+  color: var(--th-on-dark-2);
+}
+.lp-note-icon.is-invite { background: rgba(var(--acc-rgb), 0.14); color: var(--acc); }
+[data-theme='light'] .lp-note-icon.is-invite { color: var(--acc-strong); }
+.lp-note-body { flex: 1; min-width: 0; }
+.lp-note-body p { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--th-on-dark-2); }
+.lp-note-body b { color: var(--th-on-dark); font-weight: 600; }
+.lp-note-body small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--th-on-dark-muted); }
+.lp-note-actions { display: flex; gap: 8px; }
+.lp-note-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px; height: 28px; padding: 0 11px;
+  border: 1px solid var(--th-border-strong);
+  border-radius: 6px;
+  font-size: 12px; font-weight: 600; color: var(--th-on-dark);
+}
+.lp-note-btn.is-primary { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); }
+.lp-note-dot { position: absolute; top: 20px; right: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
+
+/* The pop-up, overlapping the panel's corner */
+.lp-toast {
+  position: absolute; right: -16px; bottom: 0;
+  width: min(300px, 85%);
+  display: flex; gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--th-card-edge);
+  border-left: 3px solid var(--acc);
+  border-radius: 12px;
+  background: var(--th-card);
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.6);
+}
+[data-theme='light'] .lp-toast { box-shadow: 0 20px 40px -20px rgba(15, 23, 42, 0.3); }
+
+@media (max-width: 960px) {
+  .lp-friends { grid-template-columns: minmax(0, 1fr); }
+  .lp-friends .lp-live-copy { order: -1; } /* text first on narrow screens */
+  .lp-toast { right: 0; }
+}

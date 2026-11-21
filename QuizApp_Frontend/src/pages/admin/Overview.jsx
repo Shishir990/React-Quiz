@@ -69,7 +69,7 @@ export default function Overview() {
           <span className="ad-hero-icon"><Icon name="dashboard" size={22} /></span>
           <div>
             <h1 className="ad-title">{greeting()}, {user?.name?.split(' ')[0] || 'admin'}</h1>
-            <p className="ad-subtitle">Here's how QuizApp is doing today.</p>
+            <p className="ad-subtitle">Here's how Quizora is doing today.</p>
           </div>
         </div>
         <div className="ad-head-actions">

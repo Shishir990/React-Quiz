@@ -56,7 +56,7 @@ export default function ConfirmEmail() {
   }
 
   return (
-    <AuthLayout title="Confirm your new email" subtitle="Click below to make this address the email for your QuizApp account.">
+    <AuthLayout title="Confirm your new email" subtitle="Click below to make this address the email for your Quizora account.">
       <AuthAlert>{error}</AuthAlert>
       <form onSubmit={confirm} noValidate>
         <AuthSubmit loading={loading} loadingText="Confirming…">Confirm new email</AuthSubmit>

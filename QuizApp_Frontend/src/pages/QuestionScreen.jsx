@@ -94,7 +94,7 @@ export function QuestionScreen() {
           <div className="qz-brand">
             <div className="qz-brand-icon" aria-hidden="true">{category?.icon || "Q/"}</div>
             <div>
-              <p className="qz-brand-name">QuizApp</p>
+              <p className="qz-brand-name">Quizora</p>
               <p className="qz-brand-sub">{category?.name || "Quiz"}</p>
             </div>
           </div>

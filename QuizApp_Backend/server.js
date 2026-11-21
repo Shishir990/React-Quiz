@@ -74,7 +74,7 @@ if (!isProduction) {
 }
 
 app.get('/', (req, res) => {
-  res.json({ message: 'QuizApp API is running ✅' });
+  res.json({ message: 'Quizora API is running ✅' });
 });
 
 // Readiness check: 200 when MongoDB answers a ping, 503 otherwise

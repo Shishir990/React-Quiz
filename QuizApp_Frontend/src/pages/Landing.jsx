@@ -22,9 +22,24 @@ const LIVE_POINTS = [
   { icon: 'results', title: 'Past games', text: 'Every game is kept: the final ranking, and a review of your answers next to what everyone else picked.' },
 ];
 
+// Friends and notifications, shown next to the notifications picture
+const FRIEND_POINTS = [
+  { icon: 'search', title: 'Find your friends', text: 'Search players by name and send a friend request. Only names are shown, never email addresses.' },
+  { icon: 'userPlus', title: 'Invite with one click', text: 'Open a game and invite friends straight from the lobby, or press Play next to a friend to host one for them.' },
+  { icon: 'bell', title: 'Live notifications', text: 'Friend requests and game invites pop up the moment they arrive, on any page. Accept or join right from the alert.' },
+  { icon: 'check', title: 'Instant results', text: 'In a live game you see straight away whether your answer was right, and how many points it earned.' },
+];
+
+// The notifications picture: an invite, a friend request and an accepted request
+const PREVIEW_NOTES = [
+  { icon: 'play', who: 'Maya', text: 'invited you to a live game: Science', action: 'Join · K7Q2M', isNew: true, invite: true },
+  { icon: 'userPlus', who: 'Leo', text: 'sent you a friend request', accept: true, isNew: true },
+  { icon: 'userCheck', who: 'Sofia', text: 'accepted your friend request' },
+];
+
 const STEPS = [
   { title: 'Pick a topic or write your own', text: 'Browse categories from history to science, or build a quiz in minutes and import questions from a spreadsheet.' },
-  { title: 'Play solo or host a live game', text: 'Answer against the clock on your own, or share a code and play with friends at the same time.' },
+  { title: 'Play solo or with friends', text: 'Answer against the clock on your own, or host a live game and invite your friends with one click.' },
   { title: 'Review and improve', text: 'See every answer explained, how you ranked, and how you are trending over time.' },
 ];
 
@@ -34,25 +49,26 @@ const PREVIEW_PLAYERS = [
   { name: 'Leo', initials: 'LE', score: '1,980', done: false },
 ];
 
-// Public home page: what QuizApp is, with links to sign up or sign in
+// Public home page: what Quizora is, with links to sign up or sign in
 export default function Landing() {
   const { user } = useQuiz();
   const signedIn = !!user;
   const home = user?.role === 'admin' ? '/admin' : '/dashboard';
 
   useEffect(() => {
-    document.title = 'QuizApp: quiz solo or live with friends';
+    document.title = 'Quizora: quiz solo or live with friends';
   }, []);
 
   return (
     <div className="lp">
       <header className="lp-nav">
-        <Link to="/" className="lp-brand" aria-label="QuizApp home">
+        <Link to="/" className="lp-brand" aria-label="Quizora home">
           <Logo size={32} />
-          <span className="lp-brand-name">QuizApp</span>
+          <span className="lp-brand-name">Quizora</span>
         </Link>
         <nav className="lp-nav-links" aria-label="Sections">
           <a href="#live">Play live</a>
+          <a href="#friends">Friends</a>
           <a href="#features">Features</a>
           <a href="#how">How it works</a>
         </nav>
@@ -72,12 +88,12 @@ export default function Landing() {
         {/* Hero */}
         <section className="lp-hero">
           <div className="lp-hero-copy">
-            <span className="lp-eyebrow">New: live games and your own quizzes</span>
+            <span className="lp-eyebrow">New: friends, invites and live notifications</span>
             <h1 className="lp-title">Quiz solo, or live with friends.</h1>
             <p className="lp-lead">
               Timed quizzes across many topics, progress that follows you between devices, and
-              live games where everyone answers at once: share a code, pick your timer, and see
-              who comes out on top.
+              live games where everyone answers at once. Add your friends, invite them with one
+              click, and see who comes out on top.
             </p>
             <div className="lp-hero-actions">
               {signedIn ? (
@@ -184,6 +200,63 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Friends and notifications */}
+        <section className="lp-section lp-live lp-friends" id="friends">
+          {/* The notifications panel, as a player sees it */}
+          <div className="lp-notes" aria-hidden="true">
+            <div className="lp-window">
+              <div className="lp-notes-head">
+                <span>Notifications</span>
+                <em><b className="lp-live-dot" /> Live</em>
+              </div>
+              {PREVIEW_NOTES.map((n) => (
+                <div key={n.who} className={`lp-note ${n.isNew ? 'is-new' : ''}`}>
+                  <span className={`lp-note-icon ${n.invite ? 'is-invite' : ''}`}><Icon name={n.icon} size={15} /></span>
+                  <div className="lp-note-body">
+                    <p><b>{n.who}</b> {n.text}</p>
+                    <small>just now</small>
+                    {n.invite && <span className="lp-note-btn is-primary"><Icon name="play" size={12} /> {n.action}</span>}
+                    {n.accept && (
+                      <span className="lp-note-actions">
+                        <span className="lp-note-btn is-primary">Accept</span>
+                        <span className="lp-note-btn">Decline</span>
+                      </span>
+                    )}
+                  </div>
+                  {n.isNew && <span className="lp-note-dot" />}
+                </div>
+              ))}
+            </div>
+            {/* A pop-up, as it appears on any page */}
+            <div className="lp-toast">
+              <span className="lp-note-icon is-invite"><Icon name="play" size={15} /></span>
+              <div className="lp-note-body">
+                <p><b>Maya</b> invited you to a live game</p>
+                <span className="lp-note-btn is-primary"><Icon name="play" size={12} /> Join game</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="lp-live-copy">
+            <p className="lp-kicker">Friends</p>
+            <h2 className="lp-h2">Bring your friends, get invited instantly</h2>
+            <ul className="lp-live-points">
+              {FRIEND_POINTS.map((p) => (
+                <li key={p.title}>
+                  <span className="lp-feature-icon"><Icon name={p.icon} size={17} /></span>
+                  <div>
+                    <h3>{p.title}</h3>
+                    <p>{p.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Link to={signedIn ? '/friends' : '/register'} className="lp-btn is-primary is-lg lp-live-cta">
+              {signedIn ? 'Find friends' : 'Sign up and add friends'} <Icon name="arrow" size={16} />
+            </Link>
+          </div>
+        </section>
+
         {/* Features */}
         <section className="lp-section" id="features">
           <p className="lp-kicker">Practise on your own</p>
@@ -218,7 +291,7 @@ export default function Landing() {
         <section className="lp-cta">
           <div>
             <h2>Ready to play?</h2>
-            <p>Start a streak on your own, or host your first live game tonight. Sign up free with email or Google.</p>
+            <p>Start a streak on your own, or add your friends and host your first live game tonight. Sign up free with email or Google.</p>
           </div>
           <Link to={signedIn ? home : '/register'} className="lp-btn is-primary is-lg">
             {signedIn ? 'Open dashboard' : 'Create your account'} <Icon name="arrow" size={16} />
@@ -227,7 +300,7 @@ export default function Landing() {
       </main>
 
       <footer className="lp-footer">
-        <span>© {new Date().getFullYear()} QuizApp</span>
+        <span>© {new Date().getFullYear()} Quizora</span>
         <nav aria-label="Footer">
           <Link to="/login">Sign in</Link>
           <Link to="/register">Create account</Link>

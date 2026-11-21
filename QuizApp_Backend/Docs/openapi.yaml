@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: QuizApp API
+  title: Quizora API
   version: 1.0.0
   description: |
-    REST API behind QuizApp: accounts, quiz categories and questions, playing and
+    REST API behind Quizora: accounts, quiz categories and questions, playing and
     saving quizzes, results, leaderboards and the admin console.
 
     **Authentication.** Signing in (`POST /api/auth/login`, register or Google) sets two
