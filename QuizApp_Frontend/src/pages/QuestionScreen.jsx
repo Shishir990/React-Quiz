@@ -7,6 +7,7 @@ import { ExitDialog } from "../components/quiz/ExitDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Finish } from "./FinishScreen";
+import { Logo } from "../components/ui";
 import "../styles/Pages.css";
 import "../styles/Quiz.css";
 
@@ -92,7 +93,8 @@ export function QuestionScreen() {
       <header className="qz-header">
         <div className="qz-header-row">
           <div className="qz-brand">
-            <div className="qz-brand-icon" aria-hidden="true">{category?.icon || "Q/"}</div>
+            {/* The category's own icon, or the Quizora logo when it has none */}
+            {category?.icon ? <div className="qz-brand-icon" aria-hidden="true">{category.icon}</div> : <Logo size={40} className="qz-brand-logo" />}
             <div>
               <p className="qz-brand-name">Quizora</p>
               <p className="qz-brand-sub">{category?.name || "Quiz"}</p>
