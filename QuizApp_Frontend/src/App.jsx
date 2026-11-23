@@ -29,10 +29,13 @@ import { Finish } from './pages/FinishScreen'
 import { RouteErrorBoundary } from './components/layout/ErrorBoundary'
 import Friends from './pages/Friends';
 import { NotificationsProvider } from './context/NotificationsContext';
+import { TopProgress } from './components/ui';
 function App() {
   return (
     <>
     <BrowserRouter>
+      {/* Lime loading bar at the top while pages load or saves run */}
+      <TopProgress />
       <RouteErrorBoundary>
         {/* Live notifications on every signed-in page (inside the router: toasts link to pages) */}
         <NotificationsProvider>
