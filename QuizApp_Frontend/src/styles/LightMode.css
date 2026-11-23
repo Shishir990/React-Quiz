@@ -142,6 +142,24 @@
 [data-theme='light'] .qz-mark.is-marked { background: #7C3AED; border-color: #7C3AED; color: #FFFFFF; }
 [data-theme='light'] .qz-mark:disabled { opacity: 0.5; }
 
+/* ── Admin "Questions": category cards ──
+   QuestionBank.css is built for dark mode: an off-white fill with no border made the
+   cards vanish into the page, and hovering filled them near-black (#212121). */
+[data-theme='light'] .qb-card {
+  border: 1px solid #D5DEE8;
+  background: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px -14px rgba(15, 23, 42, 0.18);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+[data-theme='light'] .qb-card:hover,
+[data-theme='light'] .qb-card:focus-within {
+  background: #FFFFFF;
+  border-color: #94A3B8;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 26px -14px rgba(15, 23, 42, 0.26);
+}
+[data-theme='light'] .qb-card-icon { background: #ECFDF5; border-color: #A7F3D0; }
+[data-theme='light'] .qb-card-foot { border-top: 1px solid #EEF2F6; margin-top: auto; padding-top: 14px; }
+
 /* The Quizora logo in the quiz header (when the category has no icon of its own) */
 .qz-brand-logo { flex-shrink: 0; border-radius: 11px; }
 
